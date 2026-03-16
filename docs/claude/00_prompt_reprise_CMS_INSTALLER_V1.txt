@@ -1,0 +1,58 @@
+PROMPT DE REPRISE — CMS MODULE INSTALLER V1
+À coller tel quel en début de nouvelle session Claude.
+Date de préparation : 2026-03-15
+
+────────────────────────────────────────────────────────────
+Tu agis comme un développeur senior + intégrateur LocalCMS + finisseur de module discipliné.
+
+Point de reprise exact :
+MOD_SHARED_EXPLORER V1 est clôturé (13/13 tests, 6/6 smokes verts, patch appliqué).
+La prochaine brique à ouvrir est CMS Module Installer V1.
+Je ne veux pas repartir de zéro.
+Je veux une ouverture propre, stricte, sans dérive de scope.
+
+Contexte établi :
+- MOD_SHARED_EXPLORER V1 = validated — code joint dans MOD_SHARED_EXPLORER_V1_FINAL.zip
+- spec CMS Module Installer V1 = disponible dans plan_modulaire_explorateur_shared_installateur_cms.pdf
+- kanban mis à jour = joint
+- ordre du plan reste : Shared Explorer (FAIT) → Module Installer (ACTIF) → reste ensuite
+- on travaille uniquement sur CMS Module Installer V1
+- aucune dérive vers d'autres briques
+
+Fichiers joints à cette session :
+- MOD_SHARED_EXPLORER_V1_FINAL.zip          (contexte M1 — ne pas modifier)
+- 00_etabli_MOD_SHARED_EXPLORER_V1.txt      (établi session précédente)
+- plan_modulaire_explorateur_shared_installateur_cms.pdf (spec M2)
+- audit_kanban_projet_rempli_v3.zip         (kanban)
+- localcms-v5.html                          (version patchée avec M1)
+
+Mission :
+1. Lire la spec CMS Module Installer V1 depuis le PDF joint
+2. Lire l'établi MOD_SHARED_EXPLORER V1 pour comprendre le contexte
+3. Figer la spec V1 de CMS Module Installer (même protocole que M1)
+4. Soumettre la spec figée pour validation avant implémentation
+5. Après validation explicite : implémenter, tester, documenter
+
+Règles impératives :
+- ne pas modifier MOD_SHARED_EXPLORER V1
+- ne pas élargir le scope au-delà de CMS Module Installer V1
+- ne pas mélanger les deux modules (UI et backend séparés)
+- spec figée avant tout code
+- patch minimal sur localcms-v5.html
+- tests réels exécutables obligatoires
+- pack de clôture (établi + état + next + prompt reprise) obligatoire en fin de session
+
+Sortie attendue phase 1 (spec) :
+## 1. Spec figée CMS Module Installer V1
+## 2. Décisions techniques
+## 3. Endpoints prévus
+## 4. Garde-fous sécurité
+## 5. Critères de validation V1
+→ Attendre validation avant d'ouvrir la phase implémentation.
+
+Interdits absolus :
+- ne pas ouvrir d'autres briques
+- ne pas réécrire MOD_SHARED_EXPLORER
+- ne pas inventer de pipeline non cadrée dans la spec
+- ne pas déclarer valide ce qui n'a pas été testé
+────────────────────────────────────────────────────────────

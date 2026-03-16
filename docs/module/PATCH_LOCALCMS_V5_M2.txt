@@ -1,0 +1,84 @@
+PATCH_LOCALCMS_V5_M2.txt — CMS Module Installer V1
+Date : 2026-03-15
+Module : MOD_CMS_INSTALLER
+Cible : localcms-v5.html (version patchée M1)
+
+Règle : 3 insertions, 0 modification de ligne existante.
+Rollback : supprimer les 3 blocs ajoutés.
+
+──────────────────────────────────────────────────────────────────────────────
+INSERTION 1 — NAV sidebar-config (section "Outils")
+──────────────────────────────────────────────────────────────────────────────
+
+LOCALISER cette ligne dans la section "Outils" de #sidebar-config :
+
+      <div class="c-nav" data-panel="installer"             onclick="BUS.emit('nav:goto','installer')">   <span class="c-nav__icon">⬇</span>  Installer</div>
+
+INSÉRER APRÈS (nouvelle ligne ajoutée juste en dessous) :
+
+      <div class="c-nav" data-panel="cms_installer"         onclick="BUS.emit('nav:goto','cms_installer')"><span class="c-nav__icon">📦</span> CMS Installer</div>
+
+──────────────────────────────────────────────────────────────────────────────
+INSERTION 2 — PANEL dans la zone .l-scroll
+──────────────────────────────────────────────────────────────────────────────
+
+LOCALISER cette ligne (panel installer existant) dans la zone .l-scroll :
+
+<div class="c-panel" id="panel-installer">
+
+INSÉRER AVANT (nouvelle ligne ajoutée juste au-dessus) :
+
+<div class="c-panel" id="panel-cms_installer"><div class="c-section"><span class="c-section__title">📦 CMS Module Installer</span></div><div id="cms-installer-content"></div></div>
+
+──────────────────────────────────────────────────────────────────────────────
+INSERTION 3 — BOOT (init au démarrage)
+──────────────────────────────────────────────────────────────────────────────
+
+LOCALISER ce commentaire dans la section de boot (fin du fichier, après les inits) :
+
+/* ═══ BOOT ═══ */
+
+ou, si déjà patchée M1, localiser la ligne :
+
+  MOD_SHARED_EXPLORER.init();
+
+INSÉRER APRÈS la dernière ligne d'init existante :
+
+  MOD_CMS_INSTALLER.init();
+
+──────────────────────────────────────────────────────────────────────────────
+INSERTION 4 — SCRIPT (si cms-installer.js est un fichier séparé)
+──────────────────────────────────────────────────────────────────────────────
+
+Option A — fichier séparé (recommandé) :
+  Dans <head>, après le tag <script> de shared-explorer.js :
+
+  <script src="modules/cms-installer.js"></script>
+
+Option B — inline :
+  Coller le contenu de modules/cms-installer.js
+  dans le bloc <script> principal, juste avant /* ═══ BOOT ═══ */
+  et après MOD_SHARED_EXPLORER.
+
+──────────────────────────────────────────────────────────────────────────────
+ROUTE NAV (si MOD_NAV.routes est une map explicite)
+──────────────────────────────────────────────────────────────────────────────
+
+Si localcms-v5.html déclare un objet routes dans MOD_NAV, ajouter :
+
+    cms_installer : { title: 'CMS Installer', path: '/ shared · bundles' },
+
+en suivant le même pattern que les autres routes.
+
+──────────────────────────────────────────────────────────────────────────────
+ROLLBACK
+──────────────────────────────────────────────────────────────────────────────
+
+Pour annuler intégralement :
+1. Supprimer la ligne nav ajoutée (Insertion 1)
+2. Supprimer le bloc panel cms_installer (Insertion 2)
+3. Supprimer MOD_CMS_INSTALLER.init() (Insertion 3)
+4. Supprimer la balise script (Insertion 4)
+
+Aucun autre fichier n'est modifié.
+MOD_INSTALLER legacy reste intact.

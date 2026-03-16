@@ -1,0 +1,49 @@
+INDEX FICHIERS À RÉUPLOADER — PROCHAINE SESSION
+Module cible : CMS Module Installer V1
+Date : 2026-03-15
+
+────────────────────────────────────────────────────────────
+FICHIERS OBLIGATOIRES (contexte minimal)
+────────────────────────────────────────────────────────────
+1. MOD_SHARED_EXPLORER_V1_FINAL.zip
+   → code final M1 (shared-explorer.js, shared_explorer.py, tests, patch, README)
+   → ne pas modifier, contexte de référence seulement
+
+2. 00_etabli_MOD_SHARED_EXPLORER_V1.txt
+   → résumé de ce qui est établi, règles à préserver, limites connues
+
+3. 00_prompt_reprise_CMS_INSTALLER_V1.txt
+   → prompt prêt à coller pour démarrer CMS Module Installer V1
+
+4. plan_modulaire_explorateur_shared_installateur_cms.pdf
+   → spec M2 CMS Module Installer V1 (pipeline Scan→Install→Finalize)
+
+5. localcms-v5.html (version patchée avec M1 appliqué)
+   → base d'intégration pour M2
+
+────────────────────────────────────────────────────────────
+FICHIERS OPTIONNELS (contexte étendu)
+────────────────────────────────────────────────────────────
+6. audit_kanban_projet_rempli_v3.zip
+   → kanban mis à jour si des tickets ont évolué
+
+7. 00_rapport_execution_MOD_SHARED_EXPLORER_V1.txt
+   → rapport d'exécution détaillé si la validation orchestrateur le requiert
+
+────────────────────────────────────────────────────────────
+FICHIERS À NE PAS RÉUPLOADER
+────────────────────────────────────────────────────────────
+- localcms_session_M4.4_ALL.zip    (sessions précédentes, non nécessaires pour M2)
+- claude-20260315T230043Z-3-001.zip (idem)
+- nouveau_1.txt                    (log de conversation, non utile)
+
+────────────────────────────────────────────────────────────
+ORDRE D'ENVOI RECOMMANDÉ
+────────────────────────────────────────────────────────────
+1. Coller le prompt depuis 00_prompt_reprise_CMS_INSTALLER_V1.txt
+2. Joindre dans cet ordre :
+   - plan_modulaire_explorateur_shared_installateur_cms.pdf
+   - MOD_SHARED_EXPLORER_V1_FINAL.zip
+   - 00_etabli_MOD_SHARED_EXPLORER_V1.txt
+   - localcms-v5.html (patchée)
+   - audit_kanban_projet_rempli_v3.zip (optionnel)

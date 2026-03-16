@@ -1,0 +1,117 @@
+PATCH — Intégration MOD_SHARED_EXPLORER dans localcms-v5.html
+=============================================================
+Date   : 2026-03-15
+Module : MOD_SHARED_EXPLORER V1
+Fichier: localcms-v5.html
+Opérations : 3 insertions (nav + panel + boot)
+
+
+════════════════════════════════════════════════════════════
+PATCH 1/3 — ENTRÉE NAVIGATION
+Fichier : localcms-v5.html
+Localisation : dans #sidebar-config, après la section "OUTILS"
+               (après la ligne avec panel="installer")
+Ligne de référence : ligne ~484
+════════════════════════════════════════════════════════════
+
+Chercher ce bloc existant :
+─────────────────────────────────────────────────────
+      <div class="c-nav" data-panel="installer"             onclick="BUS.emit('nav:goto','installer')">   <span class="c-nav__icon">⬇</span>  Installer</div>
+      <div class="c-nav" data-panel="connectors"            onclick="BUS.emit('nav:goto','connectors')">  <span class="c-nav__icon">⬡</span>  Connecteurs</div>
+─────────────────────────────────────────────────────
+
+Insérer AVANT la ligne "Installer" :
+
+      <div class="c-sidebar__label">Shared</div>
+      <div class="c-nav" data-panel="shared_explorer"       onclick="BUS.emit('nav:goto','shared_explorer')"><span class="c-nav__icon">📂</span> Shared Explorer</div>
+
+
+════════════════════════════════════════════════════════════
+PATCH 2/3 — PANEL HTML
+Fichier : localcms-v5.html
+Localisation : après la dernière ligne de panel (après panel-images_cfg)
+Ligne de référence : ligne ~604
+════════════════════════════════════════════════════════════
+
+Chercher ce bloc existant :
+─────────────────────────────────────────────────────
+<div class="c-panel" id="panel-images_cfg"><div class="c-section"><span class="c-section__title">🖼 Images — Stockage · Formats · CDN</span></div><div id="images-cfg-content"></div></div>
+─────────────────────────────────────────────────────
+
+Ajouter après cette ligne :
+
+<div class="c-panel" id="panel-shared_explorer">
+  <div class="c-section">
+    <span class="c-section__title">📂 Shared Explorer — /shared · Lecture seule · V1</span>
+    <span class="c-tag" style="border-color:var(--green);color:var(--green)">read-only</span>
+  </div>
+  <div id="shared-explorer-content">
+    <div style="padding:20px;font-family:var(--mono);font-size:11px;color:var(--text-2)">
+      Chargement…
+    </div>
+  </div>
+</div>
+
+
+════════════════════════════════════════════════════════════
+PATCH 3/3 — ENREGISTREMENT AU BOOT
+Fichier : localcms-v5.html
+Localisation : dans le bloc `const mods = [...]` du DOMContentLoaded
+Ligne de référence : ligne ~9884
+════════════════════════════════════════════════════════════
+
+Chercher ce bloc existant :
+─────────────────────────────────────────────────────
+    MOD_DATA_VIEW, MOD_IA_RUN, MOD_IMAGES_CFG,
+  ];
+─────────────────────────────────────────────────────
+
+Remplacer par :
+
+    MOD_DATA_VIEW, MOD_IA_RUN, MOD_IMAGES_CFG,
+    MOD_SHARED_EXPLORER,
+  ];
+
+
+════════════════════════════════════════════════════════════
+PATCH 4/4 — INCLUSION DU FICHIER MODULE
+Fichier : localcms-v5.html
+Localisation : juste avant la balise </script> finale des modules inline
+               (avant /* ═══ BOOT ═══ */)
+════════════════════════════════════════════════════════════
+
+Option A — fichier externe (recommandé si arborescence multi-fichiers):
+  Ajouter dans <head> ou avant </body> :
+
+  <script src="modules/shared-explorer.js"></script>
+
+Option B — inline (si localcms-v5.html reste monolithique):
+  Copier le contenu complet de modules/shared-explorer.js
+  avant le bloc /* ═══ BOOT ═══ */ dans le dernier <script>.
+
+
+════════════════════════════════════════════════════════════
+VÉRIFICATION POST-PATCH
+════════════════════════════════════════════════════════════
+
+Après application des patches :
+
+1. Ouvrir localcms-v5.html dans le navigateur
+2. Interface CONFIG → sidebar gauche → section "Shared" → cliquer "Shared Explorer"
+3. Vérifier que le panel s'affiche avec la mention "Chargement…" puis l'erreur
+   de connexion backend (normal si le backend n'est pas lancé)
+4. Vérifier que MOD_SHARED_EXPLORER apparaît dans la console JS sans erreur
+5. Lancer les tests : node tests/shared-explorer.test.js
+6. Lancer le smoke : node tests/shared-explorer.smoke.js
+
+
+════════════════════════════════════════════════════════════
+ROLLBACK
+════════════════════════════════════════════════════════════
+
+Réversible proprement :
+- Supprimer les 3 insertions ci-dessus
+- Supprimer MOD_SHARED_EXPLORER du tableau mods
+- Supprimer le <script src> si Option A
+Le reste du fichier est inchangé.
+Aucun module existant n'est modifié.

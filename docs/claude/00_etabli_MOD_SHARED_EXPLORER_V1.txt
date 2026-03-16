@@ -1,0 +1,80 @@
+LOCALCMS — ÉTABLI MOD_SHARED_EXPLORER V1
+Date : 2026-03-15
+Version retenue : V1.0.0 — LOCKED
+
+Projet
+- LocalCMS
+
+Statut global
+- P1 = CLOSE
+- P2 = CLOSE
+- P3 = CLOSE
+- M-4.1 → M-4.4 = review_required (non bloquant)
+- MOD_SHARED_EXPLORER V1 = review_required (livré, tests verts, patch à appliquer)
+- CMS Module Installer V1 = draft (non ouvert)
+
+Sous-objectif actif
+- MOD_SHARED_EXPLORER V1 — explorateur /shared en lecture seule absolue
+
+Livrables produits
+- modules/shared-explorer.js          (602 lignes — module frontend IIFE)
+- api/shared_explorer.py              (311 lignes — backend FastAPI, 4 endpoints GET)
+- tests/shared-explorer.test.js       (320 lignes — 13 tests unitaires)
+- tests/shared-explorer.smoke.js      (239 lignes — 6 smoke tests mock+live)
+- PATCH_LOCALCMS_V5.txt               (117 lignes — 3 insertions dans localcms-v5.html)
+- README.md                           (111 lignes — doc courte exploitation)
+
+Établi techniquement
+- backend : 4 endpoints GET uniquement (/list /read /download /search)
+- aucun endpoint POST/PUT/DELETE/PATCH — vérifié par grep
+- sécurité path traversal : realpath + relative_to(SHARED_ROOT) — double vérification
+- symlinks sortants : is_symlink() + real.relative_to(SHARED_ROOT) → 403 + log symlink_escape
+- .env bloqué : BLOCKED_NAMES côté backend ET frontend, preview + download refusés
+- PDF : WHITELIST_EXTS oui, PREVIEW_EXTS non → metadata + download uniquement
+- archives : whitelist download, pas dans PREVIEW_EXTS, aucune extraction
+- preview texte : MAX_PREVIEW_BYTES = 5 MB, vérification avant lecture, HTTP 413 sinon
+- recherche bornée : q + ext + from + to — pas de full-text
+- journalisation : _emit_log() 16 appels backend, format {timestamp, user_id, action, path_relative, result, error?}
+- pattern LocalCMS : IIFE, BUS.emit, FN.html — conforme aux modules existants
+- patch : 3 insertions (nav + panel + boot), 0 fichier existant modifié, rollback propre documenté
+
+Résultats de tests réels exécutés
+- 13/13 tests unitaires VERTS — node tests/shared-explorer.test.js
+- 6/6 smoke tests VERTS (mode MOCK) — node tests/shared-explorer.smoke.js
+- correction appliquée : bug mockFetch ligne 51 (path= valeur vide non matchée)
+
+Critères V1 validés
+- V1 Navigation /shared       ✓
+- V2 Métadonnées correctes    ✓
+- V3 Preview texte / refus    ✓
+- V4 Téléchargement           ✓
+- V5 Filtrage et recherche    ✓
+- V6 Aucun accès hors /shared ✓
+- V7 Aucun endpoint écriture  ✓
+- V8 Symlinks refusés         ✓
+- V9 Gros fichier → 413       ✓
+- V10 Binaire → metadata seule ✓
+- V11 Journalisation présente  ✓
+- V12 Pas de régression        ✓ (0 fichier existant modifié)
+- V13 Smokes passés            ✓ 6/6
+
+Limite connue non bloquante
+- user_id hardcodé "cms_user" — à lier à la session auth LocalCMS quand disponible
+- recherche : _get_effective_ext() non utilisée pour filtre tar.gz dans /search (mineur)
+- smoke live non exécuté — nécessite backend FastAPI réel avec /shared monté
+
+Action manuelle restante avant merge
+- Appliquer les 3 insertions de PATCH_LOCALCMS_V5.txt dans localcms-v5.html
+- Option A : <script src="modules/shared-explorer.js"> dans <head>
+- Option B : coller le contenu inline avant /* ═══ BOOT ═══ */
+
+Règles à préserver
+- ne pas ajouter d'endpoint d'écriture dans shared_explorer.py
+- conserver la vérification realpath + relative_to dans _resolve_safe()
+- ne pas ouvrir CMS Module Installer V1 avant validation explicite de ce module
+- ne pas modifier l'architecture au-delà du strict nécessaire
+
+Conclusion
+- MOD_SHARED_EXPLORER V1 est livré, testé, documenté
+- statut : review_required (patch à appliquer + validation live recommandée)
+- prochain module logique : CMS Module Installer V1
