@@ -43,12 +43,12 @@ et si oui, selon quelle modalité ?
          (état observé au moment de l'audit).
 
 ══════════════════════════════════════════════════════════════
-4. PROPOSITION DOCUMENTÉE
+4. DÉCISION VALIDÉE
 ══════════════════════════════════════════════════════════════
 
 Classe retenue : B — outillage durable séparé
 
-Forme proposée :
+Forme retenue :
   Versionner les fichiers host dans une branche dédiée distincte
   de la branche feature courante, afin de ne pas mélanger
   outillage de développement et évolutions du front-end SPA.
@@ -97,4 +97,5 @@ Fichiers à exclure (non concernés par cet arbitrage) :
 7. STATUT
 ══════════════════════════════════════════════════════════════
 
-PROPOSITION DOCUMENTÉE — en attente de GO_APPLY pour écriture sur disque.
+DÉCISION VALIDÉE par l'opérateur le 2026-03-18.
+Exécution (création branche tools/localcms-dev-host) reportée à décision opérateur.
