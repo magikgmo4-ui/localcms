@@ -1931,6 +1931,8 @@ const MOD_NAV = (() => {
     scripts    : { title: 'Scripts .sh',      path: '/ exécution'     },
     connectors : { title: 'Connecteurs',      path: '/ backend'       },
     settings   : { title: 'Paramètres',       path: '/ settings'      },
+    shared_explorer : { title: 'Shared Explorer',      path: '/ explorer'   },
+    cms_installer   : { title: 'CMS Module Installer', path: '/ installer'  },
   };
 
   const goto = (panelId) => {
@@ -6355,7 +6357,7 @@ jetstream {
       if (fmt==='sh') return FGEN.shHeader('Webhook test') + `curl -X ${v.wh_method||'POST'} \\
   -H "Content-Type: ${v.wh_content_type||'application/json'}" \\
   -d '{"event":"test","data":{}}' \\
-  "${v.wh_url||'http://localhost/webhook}"`;
+  "${v.wh_url||'http://localhost/webhook'}"`;
       return FGEN.toEnv(vars, 'Webhook config');
     },
   };
