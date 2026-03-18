@@ -5903,10 +5903,6 @@ done\necho "✓ rsync backup terminé"`;
     },
   };
 
-  const typeList  = Object.keys(FORMS);
-  const typeIcons = { nginx:'🌐', postgresql:'🗄', redis:'⚡', postfix:'📧', prometheus:'📊', backup:'💾' };
-  const typeLabels= { nginx:'nginx', postgresql:'PostgreSQL', redis:'Redis', postfix:'Postfix/SMTP', prometheus:'Prometheus', backup:'Backup/Restic' };
-
   const render = () => {
     const formDef = FORMS[activeType];
     FN.html('apps-cfg-content', `
@@ -6004,10 +6000,6 @@ const MOD_SEC_CFG = (() => {
 
     scan: (v) => `#!/usr/bin/env bash\n# Scan securite — genere par LocalCMS\nset -euo pipefail\n\n${v.scan_trivy?`# Trivy\ntrivy ${v.scan_trivy_target||'image'} --severity ${v.scan_trivy_severity||'HIGH,CRITICAL'} --format ${v.scan_output_format||'table'} .\n`:''}${v.scan_bandit?`\n# Bandit (Python)\nbandit -r . -ll\n`:''}${v.scan_semgrep?`\n# Semgrep\nsemgrep --config ${v.scan_semgrep_rules||'p/security-audit'} .\n`:''}${v.scan_npm_audit?`\n# npm audit\nnpm audit --audit-level=${(v.scan_fail_on||'high').toLowerCase()}\n`:''}${v.scan_pip_audit?`\n# pip-audit\npip-audit\n`:''}echo "OK scans termines"`,
   };
-
-  const typeList  = Object.keys(FORMS);
-  const typeIcons = { ssl:'🔒', fail2ban:'🛡', gpg:'🔑', secrets:'🗝', ssh_hardening:'🔐', scan:'🔍' };
-  const typeLabels= { ssl:'SSL/TLS', fail2ban:'Fail2ban', gpg:'GPG', secrets:'Secrets/sops', ssh_hardening:'SSH Hardening', scan:'Scan & Audit' };
 
   const render = () => {
     const formDef = FORMS[activeType];
@@ -6211,10 +6203,6 @@ ${v.ec_yaml_indent?`\n[*.{yml,yaml}]\nindent_size = ${v.ec_yaml_indent||2}`:''}`
       return `# .pre-commit-config.yaml\ndefault_stages: [commit]\nfail_fast: false\n\nrepos:\n${repos.join('\n\n')}\n`;
     },
   };
-
-  const typeList  = Object.keys(FORMS);
-  const typeIcons = { eslint:'🔍', prettier:'✨', typescript:'📘', vite:'⚡', jest:'🧪', python_tools:'🐍', editorconfig:'📝', precommit:'🪝' };
-  const typeLabels= { eslint:'ESLint', prettier:'Prettier', typescript:'TypeScript', vite:'Vite', jest:'Jest/Vitest', python_tools:'Python/pyproject', editorconfig:'.editorconfig', precommit:'pre-commit' };
 
   const render = () => {
     const formDef = FORMS[activeType];
