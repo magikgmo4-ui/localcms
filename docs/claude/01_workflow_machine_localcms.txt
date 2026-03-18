@@ -1,0 +1,37 @@
+LOCALCMS — WORKFLOW MACHINE
+Date : 2026-03-18
+
+=== DÉPÔT CANONIQUE ===
+Chemin        : C:\Users\ghost\localcms
+Branche       : feature/localcms-shared-explorer-cms-installer-v1
+HEAD local    : 67c0bab LocalCMS: remove duplicate const declarations
+Origin        : 28ac50a LocalCMS: fix nav paths (remove spurious space after /)
+Delta origin  : 1 commit local non poussé — GO_PUSH requis (proxy VM bloque)
+Working tree  : contenu == HEAD (prouvé par diff hors CRLF)
+Index         : artefact virtiofs — MM/M sur localcms-v5.html et 2 tests (CRLF)
+                impact contenu : aucun (prouvé)
+
+Commits appliqués cette session (ordre chronologique)
+  6bbe56a  reintroduce explorer/installer nav entries and fix webhook template string
+  28ac50a  fix nav paths (remove spurious space after /)
+  67c0bab  remove duplicate const declarations (typeList/typeIcons/typeLabels)
+
+=== DÉPÔT SANDBOX ===
+Chemin        : C:\Users\ghost\project-localcms\localcms
+Branche       : feature/localcms-shared-explorer-cms-installer-v1
+HEAD sandbox  : 826a67a Add Shared Explorer V1 and CMS Installer V1 branch-ready bundle
+Delta canon   : 3 commits canoniques absents du sandbox (6bbe56a, 28ac50a, 67c0bab)
+
+Fichiers présents localement, non versionnés (sandbox)
+  main.py / requirements.txt / run.bat / run.sh  : host FastAPI de validation
+  .env                                           : chemins locaux machine — non commitable
+  .env.example                                   : placeholders documentaires
+  → aucun commit observé n'inclut ces fichiers dans aucun des deux dépôts
+
+=== VALIDATION LIVE (sandbox) ===
+M1 shared_explorer  : ÉTABLI — endpoints répondent
+M2 cms_installer    : ÉTABLI — install hello-mod-v1.0.0.zip réussie
+
+=== DÉCISIONS PENDANTES ===
+PUSH-1  : pousser 67c0bab vers origin             GO_PUSH requis
+HOST-1  : statut host FastAPI — classement B      GO_APPLY requis après validation

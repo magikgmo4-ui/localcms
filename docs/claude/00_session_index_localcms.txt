@@ -1,0 +1,42 @@
+LOCALCMS — INDEX SESSION
+Date : 2026-03-18
+Statut pack : PROPOSITION DOCUMENTÉE — en attente de validation et GO_APPLY
+
+Projet
+- LocalCMS
+
+Pack documentaire minimal
+- 00_session_index_localcms.txt    : ce fichier — index et entrée de reprise
+- 01_workflow_machine_localcms.txt : état machine lisible — repos, SHAs, branches, statuts
+- 02_etabli_localcms.txt           : faits prouvés — modules, corrections, artefacts
+- 04_reprise_localcms.txt          : point de reprise — actions ouvertes, instructions
+
+Document associé (hors pack minimal)
+- 00_arbitrage_HOST_DEV_SANDBOX.txt : proposition classement host FastAPI — référencé par
+                                      ACTION-2 dans 04_reprise_localcms.txt
+
+Fichier manquant de la numérotation
+- 03_* : non produit dans cette session — aucun contenu identifié pour ce slot
+
+Dépôts concernés
+- Canonique : C:\Users\ghost\localcms
+- Sandbox   : C:\Users\ghost\project-localcms\localcms
+
+Branche active
+- feature/localcms-shared-explorer-cms-installer-v1
+
+Session couverte
+- reprise canonique vs sandbox
+- patch canonique minimal appliqué (3 commits)
+- arbitrage host FastAPI sandbox (proposition non validée)
+- production du pack documentaire (cette session)
+
+Protocole actif
+- AUDIT / VERDICT / APPLICATION séparés
+- GO_APPLY / GO_COMMIT / GO_PUSH requis pour toute exécution
+- ÉTABLI / À CONFIRMER / HYPOTHÈSE / CONTRADICTION obligatoires
+
+Ordre de priorité — source de vérité
+1. État Git canonique observé (source primaire — prime sur tout)
+2. Documentation canonique (décrit cet état — subordonnée, pas substituable)
+3. Mémoire implicite inter-session (non fiable — ignorée)

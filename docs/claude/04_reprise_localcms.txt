@@ -1,0 +1,88 @@
+LOCALCMS — POINT DE REPRISE
+Date : 2026-03-18
+
+Branche active
+- feature/localcms-shared-explorer-cms-installer-v1
+
+HEAD canonique
+- 67c0bab (local)
+- origin : 28ac50a — delta = 1 commit non poussé
+
+=== ACTIONS OUVERTES ===
+
+ACTION-1 — Push canonique
+  Prérequis : aucun (état propre prouvé)
+  Ordre requis : GO_PUSH
+  Commande (depuis Windows) :
+    cd C:\Users\ghost\localcms
+    git push origin feature/localcms-shared-explorer-cms-installer-v1
+  Résultat attendu : origin = 67c0bab
+  Bloquant pour la suite : non
+
+ACTION-2 — Validation de la proposition HOST FastAPI (classement B)
+  Prérequis : relire 00_arbitrage_HOST_DEV_SANDBOX.txt
+  Décision attendue : valider B / rejeter / reclasser
+  Ordre requis pour écriture doc : GO_APPLY
+  Ordre requis pour création branche : GO_APPLY + GO_COMMIT + GO_PUSH
+  Aucune application avant validation explicite
+
+ACTION-3 — Écriture du pack documentaire sur disque
+  Périmètre pack minimal (4 fichiers) :
+    docs/claude/00_session_index_localcms.txt
+    docs/claude/01_workflow_machine_localcms.txt
+    docs/claude/02_etabli_localcms.txt
+    docs/claude/04_reprise_localcms.txt
+  Document associé (à écrire séparément, hors pack minimal) :
+    docs/claude/00_arbitrage_HOST_DEV_SANDBOX.txt
+  Ordre requis : GO_APPLY par fichier ou GO_APPLY global
+  Commit associé : GO_COMMIT requis
+  Message proposé : "LocalCMS: add session reprise pack (docs/claude)"
+
+=== POINTS OUVERTS NON TRANCHÉS ===
+
+OUVERT-1  .gitignore absent du canonique
+  Constat : aucun .gitignore dans C:\Users\ghost\localcms
+  Impact  : .env et artefacts non exclus formellement
+  Action  : à traiter si intégration host (ACTION-2) validée
+  Statut  : À CONFIRMER si nécessaire hors contexte host
+
+OUVERT-2  Sandbox non synchronisé avec les 3 commits canoniques
+  Constat : sandbox HEAD = 826a67a, canonique HEAD = 67c0bab
+  Impact  : À CONFIRMER — à évaluer si une nouvelle validation live est prévue
+
+OUVERT-3  Smokes LIVE M1 non lancés sur environnement réel
+  Constat : smokes M1 vérifiés en mode MOCK uniquement (établi session précédente)
+  Action  : à lancer manuellement depuis un environnement réel disposant du backend
+            BACKEND_URL=http://localhost:8000 node tests/shared-explorer.smoke.js
+  Statut  : non bloquant pour l'état actuel
+
+=== PÉRIMÈTRE DOCUMENTAIRE ===
+
+Pack minimal principal (4 fichiers)
+  00_session_index_localcms.txt
+  01_workflow_machine_localcms.txt
+  02_etabli_localcms.txt
+  04_reprise_localcms.txt
+
+Document associé — hors pack minimal principal
+  00_arbitrage_HOST_DEV_SANDBOX.txt
+  → référencé par ACTION-2 uniquement
+  → à produire et valider indépendamment du pack principal
+
+=== FICHIERS DE CONTEXTE À FOURNIR EN REPRISE ===
+
+  02_etabli_localcms.txt                    (état prouvé — obligatoire)
+  04_reprise_localcms.txt                   (ce fichier — obligatoire)
+  00_arbitrage_HOST_DEV_SANDBOX.txt         (si ACTION-2 ouverte — conditionnel)
+
+=== PROTOCOLE ACTIF ===
+
+- AUDIT / VERDICT / APPLICATION strictement séparés
+- GO_APPLY / GO_COMMIT / GO_PUSH requis pour toute exécution
+- ÉTABLI / À CONFIRMER / HYPOTHÈSE / CONTRADICTION obligatoires
+- Bases de branche : uniques et explicites ou marquées "à confirmer avant GO_APPLY"
+- Terminologie : PROPOSITION DOCUMENTÉE tant que non validé
+
+=== POINT D'ARRÊT ===
+Pack écrit sur disque.
+En attente de GO_COMMIT.
