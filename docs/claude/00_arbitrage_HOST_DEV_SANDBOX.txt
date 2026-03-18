@@ -1,0 +1,100 @@
+ARBITRAGE : HOST FASTAPI SANDBOX — DÉCISION DE VERSIONNEMENT
+Fichier : docs/claude/00_arbitrage_HOST_DEV_SANDBOX.txt
+Branche canonique : feature/localcms-shared-explorer-cms-installer-v1
+Date de production : 2026-03-18
+Protocole : 3 phases (AUDIT / VERDICT / APPLICATION)
+
+══════════════════════════════════════════════════════════════
+1. PÉRIMÈTRE DE L'ARBITRAGE
+══════════════════════════════════════════════════════════════
+
+Fichiers concernés (non versionnés dans les deux dépôts) :
+  - main.py
+  - requirements.txt
+  - run.bat
+  - run.sh
+  - .env.example
+
+Statut Git observé dans les deux dépôts :
+  - Canonique (C:\Users\ghost\localcms) :
+    présents localement, non versionnés (aucun commit observé n'inclut ces fichiers)
+  - Sandbox (C:\Users\ghost\project-localcms\localcms) :
+    présents localement, non versionnés (aucun commit observé n'inclut ces fichiers)
+
+══════════════════════════════════════════════════════════════
+2. QUESTION POSÉE
+══════════════════════════════════════════════════════════════
+
+Ces fichiers doivent-ils être versionnés dans le dépôt canonique LocalCMS,
+et si oui, selon quelle modalité ?
+
+══════════════════════════════════════════════════════════════
+3. ÉLÉMENTS DE CONTEXTE — ÉTABLI
+══════════════════════════════════════════════════════════════
+
+[ÉTABLI] Le dépôt canonique versionne localcms-v5.html (front-end SPA).
+[ÉTABLI] Le host FastAPI (main.py + run.*) est un serveur de développement local
+         distinct du front-end : il expose des endpoints utilisés pendant le dev
+         (proxy, webhook, fichiers statiques).
+[ÉTABLI] Les fichiers host sont fonctionnels et utilisés en dev sandbox.
+[ÉTABLI] .env.example ne contient pas de secrets ; il documente les variables
+         d'environnement attendues.
+[ÉTABLI] Aucun .gitignore canonique n'exclut explicitement ces fichiers
+         (état observé au moment de l'audit).
+
+══════════════════════════════════════════════════════════════
+4. PROPOSITION DOCUMENTÉE
+══════════════════════════════════════════════════════════════
+
+Classe retenue : B — outillage durable séparé
+
+Forme proposée :
+  Versionner les fichiers host dans une branche dédiée distincte
+  de la branche feature courante, afin de ne pas mélanger
+  outillage de développement et évolutions du front-end SPA.
+
+Détail :
+  branche dédiée : tools/localcms-dev-host
+  base : à confirmer avant GO_APPLY
+
+Fichiers à inclure dans cette branche :
+  - main.py
+  - requirements.txt
+  - run.bat
+  - run.sh
+  - .env.example
+
+Fichiers à exclure (non concernés par cet arbitrage) :
+  - localcms-v5.html et tout fichier front-end
+  - tout fichier contenant des secrets réels
+
+══════════════════════════════════════════════════════════════
+5. POINTS À CONFIRMER AVANT GO_APPLY
+══════════════════════════════════════════════════════════════
+
+[À CONFIRMER] La base exacte de la branche tools/localcms-dev-host
+              (main, develop, ou autre) doit être précisée par l'opérateur
+              avant toute opération Git.
+
+[À CONFIRMER] La réutilisation de ces fichiers host dans d'autres contextes
+              (CI, staging, autre développeur) n'a pas été observée ;
+              la pertinence du versionnement dépend de cet usage futur.
+
+[HYPOTHÈSE]   Un README minimal dans la branche dédiée faciliterait
+              la prise en main, mais n'est pas requis pour l'arbitrage.
+
+══════════════════════════════════════════════════════════════
+6. CE QUE CET ARBITRAGE NE DÉCIDE PAS
+══════════════════════════════════════════════════════════════
+
+- Aucune modification de localcms-v5.html.
+- Aucune modification de la branche feature courante.
+- Aucune suppression de fichiers sandbox.
+- La décision de merge ou de maintien en branche séparée
+  est hors périmètre de cet arbitrage.
+
+══════════════════════════════════════════════════════════════
+7. STATUT
+══════════════════════════════════════════════════════════════
+
+PROPOSITION DOCUMENTÉE — en attente de GO_APPLY pour écriture sur disque.
