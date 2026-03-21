@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>LocalCMS — P0 Compatibility Contract</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg0:#090b0f; --bg1:#0f1219; --bg2:#161b24; --bg3:#1c222e; --bg4:#222a38;
+  --border:#242c3a; --border2:#2e3a4e;
+  --t0:#e6ecf5; --t1:#8fa3bc; --t2:#3e4f65; --t3:#2a3545;
+  --acc:#3b82f6; --grn:#22c55e; --ylw:#f59e0b; --red:#ef4444;
+  --pur:#a78bfa; --cyn:#06b6d4; --org:#f97316;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+  --r:5px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 13px; scroll-behavior: smooth; }
+body { background: var(--bg0); color: var(--t0); font-family: var(--mono); display: flex; min-height: 100vh; line-height: 1.6; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ══════════════════════════════
+   TOC SIDEBAR
+   ══════════════════════════════ */
+.toc {
+  width: 230px; min-width: 230px;
+  background: var(--bg1);
+  border-right: 1px solid var(--border);
+  height: 100vh; position: sticky; top: 0;
+  overflow-y: auto; flex-shrink: 0;
+  display: flex; flex-direction: column;
+}
+.toc-logo {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.toc-logo-title { font-size: 14px; font-weight: 700; color: var(--acc); }
+.toc-logo-badge {
+  display: inline-block; margin-left: 6px;
+  background: #1a0808; color: var(--red);
+  border: 1px solid #3a1010;
+  font-size: 9px; font-weight: 700;
+  padding: 1px 6px; border-radius: 3px; vertical-align: middle;
+}
+.toc-logo-sub { font-size: 10px; color: var(--t2); margin-top: 3px; }
+.toc-body { flex: 1; overflow-y: auto; padding: 8px 0 20px; }
+.toc-group {
+  padding: 12px 16px 4px;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--t2);
+}
+.toc-item {
+  display: block; padding: 4px 16px 4px 22px;
+  font-size: 11px; color: var(--t2);
+  cursor: pointer; border-left: 2px solid transparent;
+  transition: all .1s; text-decoration: none;
+}
+.toc-item:hover { color: var(--t0); background: var(--bg2); }
+.toc-item.active { color: var(--acc); border-left-color: var(--acc); background: rgba(59,130,246,.07); }
+.toc-item.sub { padding-left: 32px; font-size: 10px; }
+.toc-const { color: var(--pur) !important; font-size: 10px; }
+
+/* ══════════════════════════════
+   CONTENT
+   ══════════════════════════════ */
+.content {
+  flex: 1; overflow-y: auto;
+  padding: 32px 36px 80px;
+  max-width: 1120px;
+}
+
+/* ── Page header ── */
+.page-header {
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--border2);
+}
+.page-tag {
+  font-size: 10px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase;
+  color: var(--red); margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.page-tag::before { content: ''; width: 24px; height: 2px; background: var(--red); }
+h1 { font-size: 22px; font-weight: 700; line-height: 1.2; margin-bottom: 6px; }
+.page-sub { font-size: 11px; color: var(--t2); line-height: 1.7; }
+.badge-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+.badge {
+  display: inline-block; padding: 2px 8px;
+  border-radius: 3px; font-size: 9px; font-weight: 700;
+}
+.b-red { background: #1a0808; color: var(--red); border: 1px solid #3a1010; }
+.b-ylw { background: #1a1200; color: var(--ylw); border: 1px solid #3a2400; }
+.b-grn { background: #061408; color: var(--grn); border: 1px solid #0a2810; }
+.b-acc { background: #080f20; color: var(--acc); border: 1px solid #0a1840; }
+.b-pur { background: #150f28; color: var(--pur); border: 1px solid #251840; }
+.b-cyn { background: #051418; color: var(--cyn); border: 1px solid #082030; }
+.b-org { background: #180e00; color: var(--org); border: 1px solid #301800; }
+.b-dim { background: var(--bg3); color: var(--t1); border: 1px solid var(--border); }
+
+/* ── Sections ── */
+section { margin-bottom: 48px; }
+.section-anchor { display: block; height: 0; visibility: hidden; margin-top: -20px; }
+h2 {
+  font-size: 14px; font-weight: 700;
+  margin-bottom: 4px;
+  display: flex; align-items: center; gap: 10px;
+}
+.h2-ico { font-size: 16px; }
+.h2-num {
+  font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--t2); min-width: 28px;
+}
+.section-rule {
+  height: 1px; background: var(--border); margin-bottom: 20px; margin-top: 6px;
+}
+h3 {
+  font-size: 12px; font-weight: 700; color: var(--t1);
+  margin: 20px 0 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+h3::before { content: ''; width: 12px; height: 1px; background: var(--border2); }
+
+/* ── Alerts ── */
+.alert {
+  border-radius: 6px; padding: 12px 16px;
+  font-size: 11px; line-height: 1.8;
+  margin-bottom: 16px;
+}
+.alert strong { display: block; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+.a-red { background: #120606; border: 1px solid #2a0c0c; }
+.a-red strong { color: var(--red); }
+.a-ylw { background: #120e00; border: 1px solid #2a1800; }
+.a-ylw strong { color: var(--ylw); }
+.a-grn { background: #061408; border: 1px solid #0a2810; }
+.a-grn strong { color: var(--grn); }
+.a-acc { background: #06100a; border: 1px solid #0a1840; }
+.a-acc strong { color: var(--acc); }
+.a-cyn { background: #05090e; border: 1px solid #082030; }
+.a-cyn strong { color: var(--cyn); }
+.a-pur { background: #100c1c; border: 1px solid #201840; }
+.a-pur strong { color: var(--pur); }
+
+/* ── Tables ── */
+.tbl-wrap { overflow-x: auto; margin-bottom: 16px; }
+.tbl {
+  width: 100%; border-collapse: collapse;
+  font-size: 11px;
+}
+.tbl th {
+  text-align: left; padding: 6px 12px;
+  font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--t2); border-bottom: 1px solid var(--border);
+  background: var(--bg2); white-space: nowrap;
+}
+.tbl td {
+  padding: 7px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.03);
+  vertical-align: top; line-height: 1.6;
+}
+.tbl tr:hover td { background: rgba(255,255,255,.015); }
+.tbl td:first-child { font-family: var(--mono); }
+.tbl-section td { background: var(--bg2); font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--t2); padding: 5px 12px; }
+
+/* ── Contract blocks ── */
+.contract {
+  border: 1px solid var(--border2);
+  border-radius: 8px; overflow: hidden;
+  margin-bottom: 16px;
+}
+.contract-head {
+  background: var(--bg2);
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.contract-id {
+  font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--t2); width: 48px; flex-shrink: 0;
+}
+.contract-title { font-size: 12px; font-weight: 700; flex: 1; }
+.contract-body { padding: 14px 16px; font-size: 11px; color: var(--t1); line-height: 1.8; }
+.contract-body code { font-family: var(--mono); font-size: 10px; background: var(--bg3); padding: 1px 5px; border-radius: 3px; color: var(--cyn); }
+.contract-body strong { color: var(--t0); }
+
+/* ── Rule rows ── */
+.rule-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.rule {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 5px; padding: 9px 14px;
+  display: flex; gap: 10px; align-items: flex-start;
+  font-size: 11px;
+}
+.rule-ico { flex-shrink: 0; width: 16px; text-align: center; margin-top: 1px; }
+.rule-text { color: var(--t1); line-height: 1.6; }
+.rule-text strong { color: var(--t0); }
+.rule.r-must { border-left: 3px solid var(--grn); }
+.rule.r-must-not { border-left: 3px solid var(--red); }
+.rule.r-should { border-left: 3px solid var(--ylw); }
+
+/* ── Code / manifest blocks ── */
+.code-block {
+  background: var(--bg0);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 2;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+.cb-key { color: var(--cyn); }
+.cb-val { color: var(--ylw); }
+.cb-str { color: var(--grn); }
+.cb-cmt { color: var(--t2); font-style: italic; }
+.cb-type { color: var(--pur); }
+.cb-null { color: var(--red); }
+.cb-bool { color: var(--org); }
+.cb-num { color: var(--acc); }
+.cb-section { color: var(--t2); font-size: 10px; display: block; margin-top: 8px; }
+
+/* ── Two/three col ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+/* ── Mini card ── */
+.mini-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 12px 14px;
+}
+.mc-title { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
+.mc-sub { font-size: 10px; color: var(--t2); margin-bottom: 6px; }
+.mc-body { font-size: 11px; color: var(--t1); line-height: 1.6; }
+
+/* ── Tag chips ── */
+.chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.chip {
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 3px; font-size: 10px; padding: 2px 7px; color: var(--t1);
+}
+.chip.must { background: #061408; border-color: #0a2810; color: var(--grn); }
+.chip.must-not { background: #1a0808; border-color: #3a1010; color: var(--red); }
+.chip.const { background: #150f28; border-color: #251840; color: var(--pur); }
+
+/* ── Phase timeline ── */
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.tl-item {
+  display: flex; gap: 0; align-items: stretch;
+}
+.tl-left {
+  display: flex; flex-direction: column; align-items: center;
+  width: 48px; flex-shrink: 0;
+}
+.tl-dot {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; flex-shrink: 0;
+  border: 2px solid;
+}
+.tl-line { flex: 1; width: 2px; }
+.tl-body {
+  flex: 1; padding: 0 0 24px 14px;
+}
+.tl-phase-label {
+  font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.tl-phase-title { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+.tl-phase-desc { font-size: 11px; color: var(--t1); line-height: 1.7; }
+.tl-missions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.tl-m {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 3px; font-size: 10px; padding: 2px 7px; color: var(--t2);
+}
+
+/* ── OK/NOK list ── */
+.ok-nok { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.ok-col, .nok-col { border-radius: 6px; overflow: hidden; }
+.ok-head { background: #061408; border: 1px solid #0a2810; border-bottom: none; padding: 7px 12px; font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--grn); }
+.nok-head { background: #1a0808; border: 1px solid #3a1010; border-bottom: none; padding: 7px 12px; font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--red); }
+.ok-body, .nok-body { font-size: 11px; line-height: 1; border: 1px solid var(--border); border-radius: 0 0 5px 5px; }
+.ok-row, .nok-row { display: flex; gap: 8px; align-items: flex-start; padding: 7px 12px; border-bottom: 1px solid rgba(255,255,255,.03); font-size: 11px; }
+.ok-row:last-child, .nok-row:last-child { border-bottom: none; }
+.ok-row { color: var(--t1); }
+.nok-row { color: var(--t1); }
+.ok-ico { color: var(--grn); flex-shrink: 0; }
+.nok-ico { color: var(--red); flex-shrink: 0; }
+
+/* ── Separator ── */
+.sep { border: none; border-top: 1px solid var(--border); margin: 44px 0; }
+
+/* ── Inline code ── */
+code { font-family: var(--mono); font-size: 10px; background: var(--bg3); padding: 1px 5px; border-radius: 3px; color: var(--cyn); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ TOC ═══════════════════════════════ -->
+<nav class="toc">
+  <div class="toc-logo">
+    <div class="toc-logo-title">LocalCMS <span class="toc-logo-badge">P0</span></div>
+    <div class="toc-logo-sub">Compatibility Contract</div>
+  </div>
+  <div class="toc-body">
+    <div class="toc-group">Intro</div>
+    <a class="toc-item active" href="#exec">Résumé exécutif</a>
+    <a class="toc-item" href="#why-p0">Pourquoi P0 avant M-1.1</a>
+
+    <div class="toc-group">Contrats</div>
+    <a class="toc-item" href="#compat">01 · Compatibility Contract</a>
+    <a class="toc-item sub" href="#compat-os">OS & environnement</a>
+    <a class="toc-item sub" href="#compat-paths">Chemins & configs</a>
+    <a class="toc-item sub" href="#compat-multi">Multi-machine · Multi-usager</a>
+    <a class="toc-item sub" href="#compat-defaults">Valeurs par défaut sûres</a>
+    <a class="toc-item sub" href="#compat-fallbacks">Fallbacks & comportements</a>
+
+    <a class="toc-item" href="#module">02 · Module Contract</a>
+    <a class="toc-item sub" href="#module-anatomy">Anatomie V1</a>
+    <a class="toc-item sub" href="#module-manifest">Manifeste déclaratif</a>
+    <a class="toc-item sub" href="#module-musts">MUST / MUST NOT</a>
+
+    <a class="toc-item" href="#ui">03 · Contrat UI</a>
+    <a class="toc-item sub" href="#ui-projections">3 projections, 1 registre</a>
+    <a class="toc-item sub" href="#ui-routing">Routing & panels</a>
+
+    <a class="toc-item" href="#persistence">04 · Contrat de persistance</a>
+    <a class="toc-item sub" href="#persistence-layers">Couches</a>
+    <a class="toc-item sub toc-const" href="#persistence-store">$STORE · $USER</a>
+
+    <a class="toc-item" href="#security">05 · Contrat sécurité</a>
+    <a class="toc-item sub" href="#security-sanitize">Sanitation</a>
+    <a class="toc-item sub" href="#security-secrets">Secrets & exécution</a>
+
+    <a class="toc-item" href="#order">06 · Ordre de développement V1</a>
+    <a class="toc-item sub" href="#order-p0">P0 · Compatibility Contract</a>
+    <a class="toc-item sub" href="#order-p1">P1 · Core $FORMS $COND $VALID</a>
+    <a class="toc-item sub" href="#order-p2">P2 · $STORE $USER $PATH</a>
+    <a class="toc-item sub" href="#order-p3">P3 · Externalisation</a>
+    <a class="toc-item sub" href="#order-p4">P4 · Modules manquants</a>
+    <a class="toc-item sub" href="#order-p5">P5 · UX polish</a>
+
+    <a class="toc-item" href="#freeze">Ce qu'il faut figer avant de coder</a>
+    <a class="toc-item" href="#conclusion">Conclusion</a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════ CONTENT ═══════════════════════════════ -->
+<div class="content">
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-tag">Phase P0 — Architecture Reference</div>
+  <h1>LocalCMS — Compatibility Contract</h1>
+  <div class="page-sub">
+    Document de référence architectural · À figer avant toute implémentation Core<br>
+    Source : localcms-v5.html · localcms-architecture.html · workflow-claude.txt
+  </div>
+  <div class="badge-row">
+    <span class="badge b-red">P0 — Prérequis</span>
+    <span class="badge b-ylw">Avant M-1.1 $FORMS</span>
+    <span class="badge b-acc">Linux · Windows</span>
+    <span class="badge b-pur">Multi-machine · Multi-usager</span>
+    <span class="badge b-grn">Usage public</span>
+    <span class="badge b-cyn">5 contrats</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     RÉSUMÉ EXÉCUTIF
+     ══════════════════════════════════════════════════════════ -->
+<section id="exec">
+  <span class="section-anchor"></span>
+  <h2><span class="h2-num">00</span><span class="h2-ico">◈</span> Résumé exécutif</h2>
+  <div class="section-rule"></div>
+
+  <div class="alert a-ylw">
+    <strong>Ce document n'est pas une roadmap — c'est un contrat</strong>
+    Il fixe les invariants d'architecture que tout développement futur doit respecter. Il ne décrit pas comment implémenter : il dit ce qui <em>ne doit jamais être violé</em>, quelles que soient les évolutions du projet.
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="mini-card">
+        <div class="mc-title" style="color:var(--acc)">Ce qu'est LocalCMS</div>
+        <div class="mc-sub">Position du projet</div>
+        <div class="mc-body">
+          Un cockpit local de configuration, génération de fichiers, visualisation et pilotage. Prévu pour un usage public. Compatible avec des profils d'utilisateurs différents, sur des machines différentes, dans des contextes d'exécution différents.
+        </div>
+        <div class="chips">
+          <span class="chip">Usage public</span>
+          <span class="chip">Multi-machine</span>
+          <span class="chip">Multi-usager</span>
+          <span class="chip">Linux + Windows</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="mini-card">
+        <div class="mc-title" style="color:var(--red)">Ce que P0 interdit définitivement</div>
+        <div class="mc-sub">Invariants négatifs</div>
+        <div class="mc-body">
+          Tout code du Core ou des modules qui suppose un username particulier, un hostname particulier, un chemin absolu local, un OS unique, une configuration personnelle hardcodée, ou un setup personnel comme condition d'exécution.
+        </div>
+        <div class="chips">
+          <span class="chip must-not">pas de /home/ghost</span>
+          <span class="chip must-not">pas de C:\Users\ghost</span>
+          <span class="chip must-not">pas de localhost hardcodé</span>
+          <span class="chip must-not">pas d'OS implicite</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-top:12px">
+    <div>
+      <div class="mini-card">
+        <div class="mc-title" style="color:var(--grn)">Ce que P0 garantit</div>
+        <div class="mc-sub">Invariants positifs</div>
+        <div class="mc-body">
+          Toute valeur locale est un profil utilisateur, pas une constante du Core. Tout comportement dépendant de l'environnement passe par <code>$OS</code>. Tout chemin passe par <code>$PATH</code>. Toute donnée utilisateur passe par <code>$USER</code>. Fallbacks propres dans tous les cas non configurés.
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="mini-card">
+        <div class="mc-title" style="color:var(--pur)">Ce que P0 ne fait pas</div>
+        <div class="mc-sub">Périmètre explicite</div>
+        <div class="mc-body">
+          P0 ne produit pas de code. Il ne liste pas d'implémentations. Il ne fixe pas de dates. Il définit les règles auxquelles tout code futur devra répondre — y compris $FORMS (M-1.1), premier livrable de P1.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- ══════════════════════════════════════════════════════════
+     POURQUOI P0 AVANT M-1.1
+     ══════════════════════════════════════════════════════════ -->
+<section id="why-p0">
+  <span class="section-anchor"></span>
+  <h2><span class="h2-num">—</span><span class="h2-ico">⚡</span> Pourquoi P0 avant M-1.1 ($FORMS)</h2>
+  <div class="section-rule"></div>
+
+  <div class="alert a-red">
+    <strong>Sans P0, $FORMS sera une dette dès sa première ligne</strong>
+    Si $FORMS est écrit sans contrat de compatibilité, il risque d'hériter des hypothèses actuelles de <code>localcms-v5.html</code> : OS implicite, chemins relatifs supposés, valeurs hardcodées. Une fois $FORMS commité et utilisé par 20 modules, corriger ces hypothèses coûte un refactor global.
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Sans P0</th>
+          <th>Avec P0</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--red)">$FORMS génère <code>path.join('/home/user', ...)</code></td>
+          <td style="color:var(--grn)">$FORMS délègue à <code>$PATH.resolve('@data', ...)</code></td>
+        </tr>
+        <tr>
+          <td style="color:var(--red)">$VALID valide "<code>localhost</code>" comme hostname valide par défaut</td>
+          <td style="color:var(--grn)">$VALID valide la forme, pas la valeur — l'usager fournit son hostname</td>
+        </tr>
+        <tr>
+          <td style="color:var(--red)">Les modules assument <code>bash</code> disponible</td>
+          <td style="color:var(--grn)">Les modules déclarent leur shell via <code>runtime.shell</code>, $OS résout</td>
+        </tr>
+        <tr>
+          <td style="color:var(--red)">Les profils machines sont des constantes dans ENV</td>
+          <td style="color:var(--grn)">Les profils machines sont dans <code>$USER</code>, 0 dans le Core</td>
+        </tr>
+        <tr>
+          <td style="color:var(--red)">CONFIG/USE/DEV sont 3 sidebars séparées avec état propre</td>
+          <td style="color:var(--grn)">CONFIG/USE/DEV sont 3 projections du même registre <code>$REG</code></td>
+        </tr>
+        <tr>
+          <td style="color:var(--red)">Pas de séparation sécurisée entre config et exécution</td>
+          <td style="color:var(--grn)">Config ≠ exécution. Une config générée n'est jamais exécutée sans action explicite</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- ══════════════════════════════════════════════════════════
+     01 · COMPATIBILITY CONTRACT
+     ══════════════════════════════════════════════════════════ -->
+<section id="compat">
+  <span class="section-anchor"></span>
+  <h2><span class="h2-num">01</span><span class="h2-ico">🔲</span> Compatibility Contract</h2>
+  <div class="section-rule"></div>
+
+  <p style="font-size:11px;color:var(--t1);margin-bottom:20px;line-height:1.8">
+    Ce contrat définit les règles d'architecture que <strong>tous les composants Core et tous les modules</strong> doivent respecter sans exception. Il est non-négociable. Une règle MUST NOT n'a pas de cas particulier.
+  </p>
+
+  <!-- 1.1 OS & ENVIRONNEMENT -->
+  <h3 id="compat-os">OS &amp; Environnement d'exécution</h3>
+
+  <div class="alert a-acc">
+    <strong>Principe</strong>
+    Le Core ne suppose aucun OS. Toute divergence Linux / Windows est encapsulée dans <code>$OS</code> et nulle part ailleurs. Les modules déclarent leurs besoins d'exécution comme métadonnées — ils n'implémentent pas la logique OS.
+  </div>
+
+  <div class="rule-list">
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> Toute commande shell produite par un module est préfixée du shell cible. Le shell est résolu par <code>$OS.shell()</code> au moment de l'exécution, pas au moment de la génération.</div>
+    </div>
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> $OS est la seule source d'information sur l'OS courant. Il expose : <code>$OS.type()</code> → <code>'linux'|'windows'|'macos'</code>, <code>$OS.sep()</code> → séparateur de chemin, <code>$OS.shell()</code> → shell par défaut.</div>
+    </div>
+    <div class="rule r-must-not">
+      <span class="rule-ico">⛔</span>
+      <div class="rule-text"><strong>MUST NOT :</strong> Aucun module ne contient de branche <code>if (windows)</code> ou <code>if (linux)</code> dans sa logique métier. Les adaptateurs OS sont dans des adaptateurs dédiés, appelés par le Core.</div>
+    </div>
+    <div class="rule r-must-not">
+      <span class="rule-ico">⛔</span>
+      <div class="rule-text"><strong>MUST NOT :</strong> Aucune commande shell dans un module ne contient un chemin absolu (<code>/usr/bin/</code>, <code>C:\Program Files\</code>…). Les binaires sont résolus via des alias ou des adaptateurs.</div>
+    </div>
+    <div class="rule r-should">
+      <span class="rule-ico">◎</span>
+      <div class="rule-text"><strong>SHOULD :</strong> Les modules exposent un champ <code>os_compat: ['linux','windows','macos','all']</code> dans leur manifeste. Le Core peut filtrer les modules selon l'OS détecté.</div>
+    </div>
+  </div>
+
+  <!-- 1.2 CHEMINS -->
+  <h3 id="compat-paths">Chemins &amp; fichiers de configuration</h3>
+
+  <div class="rule-list">
+    <div class="rule r-must-not">
+      <span class="rule-ico">⛔</span>
+      <div class="rule-text"><strong>MUST NOT :</strong> Aucun chemin absolu dans aucun fichier Core ou module. Jamais de <code>/home/ghost/</code>, <code>C:\Users\ghost\</code>, <code>./opt-trading/</code> comme constante.</div>
+    </div>
+    <div class="rule r-must-not">
+      <span class="rule-ico">⛔</span>
+      <div class="rule-text"><strong>MUST NOT :</strong> Aucun username, hostname, domaine ou adresse IP dans le code source des modules. Ces valeurs appartiennent à <code>$USER</code>.</div>
+    </div>
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> Tous les chemins passent par <code>$PATH</code> avec des alias. Exemples : <code>$PATH.resolve('@data')</code>, <code>$PATH.resolve('@scripts')</code>, <code>$PATH.resolve('@logs')</code>. Les alias sont définis par l'usager dans <code>data/$paths.json</code>.</div>
+    </div>
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> Les chemins relatifs dans les templates de config générés (nginx.conf, .service, .env…) utilisent des variables <code>{{var}}</code> substituées à la génération par <code>$TPL</code>.</div>
+    </div>
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> Les fichiers de configuration LocalCMS (modules.json, $user.json…) ont tous un emplacement défini dans <code>data/</code>, jamais dans le répertoire de travail courant ou dans un chemin OS supposé.</div>
+    </div>
+  </div>
+
+  <!-- 1.3 MULTI-MACHINE MULTI-USAGER -->
+  <h3 id="compat-multi">Multi-machine &amp; multi-usager</h3>
+
+  <div class="alert a-pur">
+    <strong>Modèle de profil</strong>
+    Un "usager" n'est pas un utilisateur système. C'est un profil LocalCMS. Plusieurs profils peuvent coexister sur la même machine. Un profil contient : machines cibles, credentials, préférences UI, variables d'environnement personnelles. Le Core ne connaît aucun profil — il lit <code>$USER.current()</code>.
+  </div>
+
+  <div class="rule-list">
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> Le Core ne connaît aucune machine en dur. Les machines cibles sont dans <code>$USER.machines[]</code>. Les modules font référence à une machine par son <code>id</code> de profil, pas par son IP ou son hostname.</div>
+    </div>
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> Tout formulaire qui cible une machine expose un sélecteur de profil machine. La valeur par défaut est <code>localhost</code> (profil auto-créé, jamais hardcodé).</div>
+    </div>
+    <div class="rule r-must-not">
+      <span class="rule-ico">⛔</span>
+      <div class="rule-text"><strong>MUST NOT :</strong> Les champs <code>user</code>, <code>host</code>, <code>port</code>, <code>password</code>, <code>ssh_key</code> ne doivent avoir aucune valeur non vide dans le code source des modules. La valeur initiale est vide ou issue de <code>$USER.defaults()</code>.</div>
+    </div>
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> L'interface supporte plusieurs instances simultanées de LocalCMS (via profils) sans conflit de <code>$STORE</code>. Chaque profil a un namespace de stockage isolé : <code>lcms__{profileId}__*</code>.</div>
+    </div>
+  </div>
+
+  <!-- 1.4 VALEURS PAR DÉFAUT SÛRES -->
+  <h3 id="compat-defaults">Valeurs par défaut sûres</h3>
+
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead>
+        <tr><th>Contexte</th><th>Valeur par défaut sûre</th><th>Valeur interdite</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Host serveur</td><td><code>""</code> (vide, usager saisit)</td><td><code>"localhost"</code> ou <code>"127.0.0.1"</code> hardcodé dans le module</td></tr>
+        <tr><td>Port</td><td><code>""</code> ou <code>0</code> (non configuré)</td><td>Port spécifique hardcodé comme constante permanente</td></tr>
+        <tr><td>Utilisateur SSH</td><td><code>""</code> (vide)</td><td><code>"root"</code>, <code>"ghost"</code>, <code>"admin"</code> en valeur par défaut</td></tr>
+        <tr><td>Chemin de données</td><td><code>"@data"</code> (alias $PATH)</td><td><code>"./data/"</code>, <code>"/var/localcms/"</code> hardcodé</td></tr>
+        <tr><td>Shell</td><td><code>$OS.shell()</code> à l'exécution</td><td><code>"/bin/bash"</code>, <code>"powershell"</code> hardcodé</td></tr>
+        <tr><td>Secrets / tokens</td><td><code>""</code> (vide, jamais de placeholder)</td><td><code>"changeme"</code>, <code>"secret123"</code>, toute valeur non vide</td></tr>
+        <tr><td>Profil machine</td><td><code>"localhost"</code> (profil auto, vide et configurable)</td><td>IP ou hostname réel dans le code source</td></tr>
+        <tr><td>Debug mode</td><td><code>false</code> en production, <code>true</code> uniquement si explicitement activé</td><td><code>true</code> comme valeur initiale dans ENV</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 1.5 FALLBACKS -->
+  <h3 id="compat-fallbacks">Fallbacks &amp; comportements explicites</h3>
+
+  <div class="rule-list">
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> Tout module dont la machine cible n'est pas configurée affiche un état <code>not_configured</code> visible, pas une erreur silencieuse. Le BUS émet <code>module:not_configured</code>.</div>
+    </div>
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> $STORE dispose d'un fallback vers <code>sessionStorage</code>, puis vers un store in-memory, puis vers un état non persistant signalé visuellement. L'ordre de fallback est documenté et testé.</div>
+    </div>
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> Si $OS ne peut pas détecter l'OS, il expose <code>$OS.type() === 'unknown'</code>. Les modules en mode <code>unknown</code> proposent uniquement des sorties génériques (templates de texte), jamais de commandes OS-spécifiques.</div>
+    </div>
+    <div class="rule r-must-not">
+      <span class="rule-ico">⛔</span>
+      <div class="rule-text"><strong>MUST NOT :</strong> Aucun comportement silencieux. Toute valeur manquante, tout fallback activé, toute dégradation de fonctionnalité est émis sur le BUS (<code>log:add</code>) avec niveau approprié (WARN ou INFO).</div>
+    </div>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- ══════════════════════════════════════════════════════════
+     02 · MODULE CONTRACT
+     ══════════════════════════════════════════════════════════ -->
+<section id="module">
+  <span class="section-anchor"></span>
+  <h2><span class="h2-num">02</span><span class="h2-ico">⬡</span> Module Contract — Cible V1</h2>
+  <div class="section-rule"></div>
+
+  <div class="alert a-cyn">
+    <strong>Principe fondateur</strong>
+    Un module LocalCMS V1 est un <em>manifeste déclaratif</em>. Il ne contient que des définitions de données. Il ne rend pas de HTML. Il ne valide pas lui-même. Il ne persiste pas lui-même. Il ne détecte pas l'OS. Il dit <em>quoi</em> — le Core dit <em>comment</em>.
+  </div>
+
+  <!-- 2.1 ANATOMIE -->
+  <h3 id="module-anatomy">Anatomie d'un module V1</h3>
+
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead>
+        <tr><th>Propriété</th><th>Type</th><th>Description</th><th>Requis</th></tr>
+      </thead>
+      <tbody>
+        <tr class="tbl-section"><td colspan="4">Identité</td></tr>
+        <tr>
+          <td>id</td>
+          <td style="color:var(--pur)">string</td>
+          <td>Identifiant unique. Snake_case. Ex : <code>backend_config</code></td>
+          <td><span class="badge b-red">MUST</span></td>
+        </tr>
+        <tr>
+          <td>label</td>
+          <td style="color:var(--pur)">string</td>
+          <td>Nom affiché. Traduit via <code>$I18N.t()</code> si i18n activé</td>
+          <td><span class="badge b-red">MUST</span></td>
+        </tr>
+        <tr>
+          <td>icon</td>
+          <td style="color:var(--pur)">string</td>
+          <td>Émoji ou caractère. Jamais d'image inline, jamais de SVG hardcodé</td>
+          <td><span class="badge b-red">MUST</span></td>
+        </tr>
+        <tr>
+          <td>version</td>
+          <td style="color:var(--pur)">semver</td>
+          <td>Version du module. Ex : <code>"1.0.0"</code></td>
+          <td><span class="badge b-red">MUST</span></td>
+        </tr>
+        <tr>
+          <td>group</td>
+          <td style="color:var(--pur)">string</td>
+          <td>Groupe d'appartenance. Ex : <code>backend</code>, <code>network</code>, <code>git</code>, <code>system</code></td>
+          <td><span class="badge b-red">MUST</span></td>
+        </tr>
+
+        <tr class="tbl-section"><td colspan="4">Type &amp; capacités</td></tr>
+        <tr>
+          <td>type</td>
+          <td style="color:var(--pur)">enum</td>
+          <td><code>config</code> · <code>use</code> · <code>dev</code> · <code>core</code> · <code>tool</code></td>
+          <td><span class="badge b-red">MUST</span></td>
+        </tr>
+        <tr>
+          <td>capabilities</td>
+          <td style="color:var(--pur)">string[]</td>
+          <td><code>render</code> · <code>exec</code> · <code>generate</code> · <code>persist</code> · <code>fetch</code></td>
+          <td><span class="badge b-red">MUST</span></td>
+        </tr>
+        <tr>
+          <td>os_compat</td>
+          <td style="color:var(--pur)">string[]</td>
+          <td><code>'linux'</code> · <code>'windows'</code> · <code>'macos'</code> · <code>'all'</code></td>
+          <td><span class="badge b-red">MUST</span></td>
+        </tr>
+        <tr>
+          <td>interfaces</td>
+          <td style="color:var(--pur)">string[]</td>
+          <td>Dans quelle(s) interface(s) ce module est visible : <code>['config']</code>, <code>['use','dev']</code>…</td>
+          <td><span class="badge b-red">MUST</span></td>
+        </tr>
+
+        <tr class="tbl-section"><td colspan="4">Données de formulaire</td></tr>
+        <tr>
+          <td>sections</td>
+          <td style="color:var(--pur)">Section[]</td>
+          <td>Liste de sections, chacune contenant des champs. Rendu par <code>$FORMS</code></td>
+          <td><span class="badge b-ylw">si type=config</span></td>
+        </tr>
+        <tr>
+          <td>conditions</td>
+          <td style="color:var(--pur)">Condition[]</td>
+          <td>Règles <code>{if: fieldId, op, value, then: action, target}</code>. Exécutées par <code>$COND</code></td>
+          <td><span class="badge b-dim">optionnel</span></td>
+        </tr>
+        <tr>
+          <td>validators</td>
+          <td style="color:var(--pur)">Validator[]</td>
+          <td>Règles <code>{field, rule, message}</code>. Exécutées par <code>$VALID</code></td>
+          <td><span class="badge b-dim">optionnel</span></td>
+        </tr>
+
+        <tr class="tbl-section"><td colspan="4">Actions &amp; sorties</td></tr>
+        <tr>
+          <td>actions</td>
+          <td style="color:var(--pur)">Action[]</td>
+          <td>Chaque action : <code>{id, label, type: 'generate'|'exec'|'fetch', target}</code></td>
+          <td><span class="badge b-dim">optionnel</span></td>
+        </tr>
+        <tr>
+          <td>outputs</td>
+          <td style="color:var(--pur)">Output[]</td>
+          <td>Fichiers générables : <code>{id, filename, format, template?}</code>. Rendu par <code>$FGEN</code></td>
+          <td><span class="badge b-dim">optionnel</span></td>
+        </tr>
+
+        <tr class="tbl-section"><td colspan="4">Bindings &amp; runtime</td></tr>
+        <tr>
+          <td>profile_bindings</td>
+          <td style="color:var(--pur)">Binding[]</td>
+          <td>Champs liés à <code>$USER</code>. Ex : <code>{field:'host', source:'$USER.machines[active].host'}</code></td>
+          <td><span class="badge b-dim">optionnel</span></td>
+        </tr>
+        <tr>
+          <td>runtime</td>
+          <td style="color:var(--pur)">RuntimeDef</td>
+          <td><code>{shell: 'bash'|'powershell'|'auto', requires: string[]}</code>. Résolu par <code>$OS</code></td>
+          <td><span class="badge b-dim">si exec</span></td>
+        </tr>
+        <tr>
+          <td>adapters</td>
+          <td style="color:var(--pur)">AdapterRef[]</td>
+          <td>Références à des adaptateurs OS ou protocole. Ex : <code>{type:'ssh', profile:'$USER.machines[active]'}</code></td>
+          <td><span class="badge b-dim">optionnel</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 2.2 MANIFESTE -->
+  <h3 id="module-manifest">Exemple de manifeste déclaratif</h3>
+
+  <div class="code-block">
+<span class="cb-cmt">/* modules/backend-config.js — Exemple manifeste V1 cible */</span>
+
+<span class="cb-cmt">/* Ce module NE CONTIENT PAS : HTML inline, logique OS, chemins hardcodés */</span>
+<span class="cb-cmt">/* Il DÉCLARE uniquement : identité, champs, conditions, validateurs, sorties */</span>
+
+<span class="cb-key">const</span> <span class="cb-val">MOD_BACKEND_CFG</span> = {
+
+  <span class="cb-section">/* ── Identité ── */</span>
+  <span class="cb-key">id</span>:           <span class="cb-str">'backend_config'</span>,
+  <span class="cb-key">label</span>:        <span class="cb-str">'Backend Config'</span>,
+  <span class="cb-key">icon</span>:         <span class="cb-str">'🔧'</span>,
+  <span class="cb-key">version</span>:      <span class="cb-str">'1.0.0'</span>,
+  <span class="cb-key">group</span>:        <span class="cb-str">'backend'</span>,
+  <span class="cb-key">path</span>:         <span class="cb-str">'modules/backend-config.js'</span>,
+
+  <span class="cb-section">/* ── Capacités ── */</span>
+  <span class="cb-key">type</span>:         <span class="cb-str">'config'</span>,
+  <span class="cb-key">capabilities</span>: [<span class="cb-str">'render'</span>, <span class="cb-str">'generate'</span>],
+  <span class="cb-key">os_compat</span>:    [<span class="cb-str">'all'</span>],
+  <span class="cb-key">interfaces</span>:   [<span class="cb-str">'config'</span>],
+  <span class="cb-key">toggle</span>: { <span class="cb-key">sidebar</span>: <span class="cb-bool">true</span>, <span class="cb-key">boot</span>: <span class="cb-bool">true</span>, <span class="cb-key">exec</span>: <span class="cb-bool">false</span>, <span class="cb-key">config</span>: <span class="cb-bool">true</span> },
+
+  <span class="cb-section">/* ── Sections & champs — données pures, sans HTML ── */</span>
+  <span class="cb-key">sections</span>: [
+    {
+      <span class="cb-key">id</span>: <span class="cb-str">'rest'</span>, <span class="cb-key">label</span>: <span class="cb-str">'REST / HTTP'</span>, <span class="cb-key">icon</span>: <span class="cb-str">'🔗'</span>,
+      <span class="cb-key">fields</span>: [
+        { <span class="cb-key">id</span>: <span class="cb-str">'be_name'</span>,    <span class="cb-key">type</span>: <span class="cb-str">'text'</span>,     <span class="cb-key">label</span>: <span class="cb-str">'Nom'</span>,        <span class="cb-key">value</span>: <span class="cb-str">''</span> },
+        { <span class="cb-key">id</span>: <span class="cb-str">'be_url'</span>,     <span class="cb-key">type</span>: <span class="cb-str">'url'</span>,      <span class="cb-key">label</span>: <span class="cb-str">'Base URL'</span>,   <span class="cb-key">value</span>: <span class="cb-str">''</span>, <span class="cb-key">placeholder</span>: <span class="cb-str">'http://…'</span> },
+        { <span class="cb-key">id</span>: <span class="cb-str">'be_auth'</span>,    <span class="cb-key">type</span>: <span class="cb-str">'select'</span>,   <span class="cb-key">label</span>: <span class="cb-str">'Auth'</span>,       <span class="cb-key">value</span>: <span class="cb-str">'none'</span>,
+          <span class="cb-key">options</span>: [<span class="cb-str">'none'</span>, <span class="cb-str">'Bearer'</span>, <span class="cb-str">'Basic'</span>, <span class="cb-str">'API Key'</span>] },
+        { <span class="cb-key">id</span>: <span class="cb-str">'be_token'</span>,   <span class="cb-key">type</span>: <span class="cb-str">'password'</span>, <span class="cb-key">label</span>: <span class="cb-str">'Token'</span>,      <span class="cb-key">value</span>: <span class="cb-str">''</span> },
+        <span class="cb-cmt">/* be_token visible UNIQUEMENT si be_auth ≠ 'none' — défini dans conditions */</span>
+      ]
+    }
+  ],
+
+  <span class="cb-section">/* ── Conditions — délégué à $COND ── */</span>
+  <span class="cb-key">conditions</span>: [
+    { <span class="cb-key">if</span>: <span class="cb-str">'be_auth'</span>, <span class="cb-key">op</span>: <span class="cb-str">'eq'</span>, <span class="cb-key">value</span>: <span class="cb-str">'none'</span>, <span class="cb-key">then</span>: <span class="cb-str">'hide'</span>, <span class="cb-key">target</span>: <span class="cb-str">'be_token'</span> }
+  ],
+
+  <span class="cb-section">/* ── Validateurs — délégué à $VALID ── */</span>
+  <span class="cb-key">validators</span>: [
+    { <span class="cb-key">field</span>: <span class="cb-str">'be_url'</span>,  <span class="cb-key">rule</span>: <span class="cb-str">'url'</span>,      <span class="cb-key">message</span>: <span class="cb-str">'URL invalide'</span> },
+    { <span class="cb-key">field</span>: <span class="cb-str">'be_name'</span>, <span class="cb-key">rule</span>: <span class="cb-str">'required'</span>, <span class="cb-key">message</span>: <span class="cb-str">'Nom requis'</span> }
+  ],
+
+  <span class="cb-section">/* ── Sorties — délégué à $FGEN ── */</span>
+  <span class="cb-key">outputs</span>: [
+    { <span class="cb-key">id</span>: <span class="cb-str">'env'</span>,  <span class="cb-key">filename</span>: <span class="cb-str">'backend.env'</span>, <span class="cb-key">format</span>: <span class="cb-str">'env'</span>  },
+    { <span class="cb-key">id</span>: <span class="cb-str">'json'</span>, <span class="cb-key">filename</span>: <span class="cb-str">'backend.json'</span>, <span class="cb-key">format</span>: <span class="cb-str">'json'</span> }
+  ],
+
+  <span class="cb-section">/* ── Bindings profil — $USER ── */</span>
+  <span class="cb-key">profile_bindings</span>: [
+    { <span class="cb-key">field</span>: <span class="cb-str">'be_url'</span>, <span class="cb-key">source</span>: <span class="cb-str">'$USER.backends[active].url'</span>, <span class="cb-key">mode</span>: <span class="cb-str">'prefill'</span> }
+  ],
+
+};
+
+<span class="cb-cmt">/* Le Core enregistre ce manifeste. $FORMS le rend. $COND y réagit. $VALID le contrôle. */</span>
+  </div>
+
+  <!-- 2.3 MUST / MUST NOT -->
+  <h3 id="module-musts">Ce qu'un module MUST / MUST NOT contenir</h3>
+
+  <div class="ok-nok">
+    <div class="ok-col">
+      <div class="ok-head">✓ MUST contenir</div>
+      <div class="ok-body">
+        <div class="ok-row"><span class="ok-ico">✓</span> Son identité (id, label, icon, version, group)</div>
+        <div class="ok-row"><span class="ok-ico">✓</span> Ses champs comme données <code>{id, type, label, value, options}</code></div>
+        <div class="ok-row"><span class="ok-ico">✓</span> Ses conditions comme règles déclaratives</div>
+        <div class="ok-row"><span class="ok-ico">✓</span> Ses validateurs comme règles déclaratives</div>
+        <div class="ok-row"><span class="ok-ico">✓</span> Sa liste de sorties (formats, noms de fichiers)</div>
+        <div class="ok-row"><span class="ok-ico">✓</span> Ses bindings vers <code>$USER</code></div>
+        <div class="ok-row"><span class="ok-ico">✓</span> Sa déclaration <code>os_compat</code></div>
+        <div class="ok-row"><span class="ok-ico">✓</span> Sa déclaration <code>runtime.shell</code> si exec</div>
+        <div class="ok-row"><span class="ok-ico">✓</span> Ses <code>capabilities[]</code></div>
+        <div class="ok-row"><span class="ok-ico">✓</span> Ses interfaces de visibilité (config/use/dev)</div>
+      </div>
+    </div>
+    <div class="nok-col">
+      <div class="nok-head">⛔ MUST NOT contenir</div>
+      <div class="nok-body">
+        <div class="nok-row"><span class="nok-ico">⛔</span> HTML inline généré manuellement (ni template string complexe)</div>
+        <div class="nok-row"><span class="nok-ico">⛔</span> Logique de branche <code>if (os === 'windows')</code></div>
+        <div class="nok-row"><span class="nok-ico">⛔</span> Chemins absolus ou relatifs hardcodés</div>
+        <div class="nok-row"><span class="nok-ico">⛔</span> Usernames, hostnames, IPs, tokens, passwords</div>
+        <div class="nok-row"><span class="nok-ico">⛔</span> Appels directs à <code>localStorage</code>, <code>sessionStorage</code>, <code>fetch()</code></div>
+        <div class="nok-row"><span class="nok-ico">⛔</span> Validation de champ en dehors du tableau <code>validators</code></div>
+        <div class="nok-row"><span class="nok-ico">⛔</span> Références à d'autres modules par constante directe (<code>MOD_X.foo()</code>)</div>
+        <div class="nok-row"><span class="nok-ico">⛔</span> Données de configuration personnelle d'un setup particulier</div>
+        <div class="nok-row"><span class="nok-ico">⛔</span> Imports de bibliothèques externes non déclarées dans le manifeste</div>
+        <div class="nok-row"><span class="nok-ico">⛔</span> État interne mutable non déclaré (variables globales cachées)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- ══════════════════════════════════════════════════════════
+     03 · CONTRAT UI
+     ══════════════════════════════════════════════════════════ -->
+<section id="ui">
+  <span class="section-anchor"></span>
+  <h2><span class="h2-num">03</span><span class="h2-ico">▤</span> Contrat UI</h2>
+  <div class="section-rule"></div>
+
+  <!-- 3.1 3 PROJECTIONS -->
+  <h3 id="ui-projections">CONFIG · USE · DEV — 3 projections d'un seul registre</h3>
+
+  <div class="alert a-acc">
+    <strong>Invariant fondamental</strong>
+    CONFIG, USE et DEV ne sont pas trois systèmes séparés avec des modules différents. Ce sont trois <em>projections</em> du même registre de capacités <code>$REG</code>. Un module peut être visible dans plusieurs interfaces. Ce qui change entre les interfaces, c'est le <em>filtre de projection</em>, pas les données.
+  </div>
+
+  <div class="three-col" style="margin-bottom:16px">
+    <div class="mini-card" style="border-top:2px solid var(--acc)">
+      <div class="mc-title" style="color:var(--acc)">⚙ CONFIG</div>
+      <div class="mc-sub">Filtre : <code>capability = 'generate'</code></div>
+      <div class="mc-body">Projection des modules qui produisent des fichiers de configuration. Affiche les formulaires, les générateurs, les validateurs. L'usager configure — rien n'est exécuté sans action explicite.</div>
+      <div class="chips">
+        <span class="chip">render</span>
+        <span class="chip">generate</span>
+      </div>
+    </div>
+    <div class="mini-card" style="border-top:2px solid var(--grn)">
+      <div class="mc-title" style="color:var(--grn)">▶ USE</div>
+      <div class="mc-sub">Filtre : <code>capability = 'exec'</code></div>
+      <div class="mc-body">Projection des modules qui exécutent des actions sur des systèmes cibles. Exécution de scripts, commandes réseau, déploiements, monitoring en direct. Chaque action est une opération consciente.</div>
+      <div class="chips">
+        <span class="chip">exec</span>
+        <span class="chip">fetch</span>
+      </div>
+    </div>
+    <div class="mini-card" style="border-top:2px solid var(--pur)">
+      <div class="mc-title" style="color:var(--pur)">🛠 DEV</div>
+      <div class="mc-sub">Filtre : <code>interface includes 'dev'</code></div>
+      <div class="mc-body">Projection des modules d'outillage développeur. Éditeur, diff, terminal, scaffold, registre, debugger, ENV inspector. Accessible uniquement en mode dev activé.</div>
+      <div class="chips">
+        <span class="chip">render</span>
+        <span class="chip">exec</span>
+        <span class="chip">dev-only</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.2 ROUTING -->
+  <h3 id="ui-routing">Routing &amp; panels</h3>
+
+  <div class="rule-list">
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> Chaque panel correspond à un module registré. Le routing passe par <code>BUS.emit('nav:goto', moduleId)</code>. Le routeur lit <code>$REG</code> pour valider que le moduleId existe et est actif.</div>
+    </div>
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> L'état du panel actif est dans <code>$ENV.state.currentPanel</code>. Il est lisible depuis n'importe quel module via le BUS. Il est persisté par <code>$STORE</code> entre sessions.</div>
+    </div>
+    <div class="rule r-must-not">
+      <span class="rule-ico">⛔</span>
+      <div class="rule-text"><strong>MUST NOT :</strong> Aucun module ne navigue vers un autre module directement. La navigation est toujours un événement BUS. Jamais d'appel direct <code>MOD_X.render()</code> depuis un autre module.</div>
+    </div>
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> Un module désactivé (<code>toggle.sidebar = false</code> ou status <code>offline</code>) n'est jamais rendu dans la sidebar. Il peut toujours être atteint programmatiquement via le BUS si nécessaire.</div>
+    </div>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- ══════════════════════════════════════════════════════════
+     04 · CONTRAT DE PERSISTANCE
+     ══════════════════════════════════════════════════════════ -->
+<section id="persistence">
+  <span class="section-anchor"></span>
+  <h2><span class="h2-num">04</span><span class="h2-ico">💾</span> Contrat de persistance</h2>
+  <div class="section-rule"></div>
+
+  <div class="alert a-pur">
+    <strong>Règle d'or</strong>
+    Aucun module ne persiste directement. Toute persistance passe par <code>$STORE</code>. <code>$STORE</code> n'est pas accessible depuis les templates de fichiers générés. La persistance des préférences n'est pas la même chose que la persistance de la configuration système.
+  </div>
+
+  <!-- 4.1 COUCHES -->
+  <h3 id="persistence-layers">Les 4 couches de données</h3>
+
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead>
+        <tr><th>Couche</th><th>Constante</th><th>Durée de vie</th><th>Contenu</th><th>Export/Import</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--cyn)">Runtime</td>
+          <td><code>$ENV.state</code></td>
+          <td>Session courante uniquement</td>
+          <td>Panel actif, onglet actif, filtres log, état UI transitoire</td>
+          <td><span class="badge b-dim">Non</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--ylw)">Store</td>
+          <td><code>$STORE</code></td>
+          <td>Persistant (localStorage)</td>
+          <td>Derniers formulaires saisis, préférences UI, état panels, historique commandes</td>
+          <td><span class="badge b-dim">Partiel</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--pur)">Profil utilisateur</td>
+          <td><code>$USER</code></td>
+          <td>Persistant (data/$user.json)</td>
+          <td>Machines SSH, endpoints IA configurés, sources de données, credentials (jamais de secrets en clair)</td>
+          <td><span class="badge b-grn">Oui — profil complet</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--grn)">Artefacts générés</td>
+          <td><code>$FGEN</code></td>
+          <td>Éphémère (download) ou explicite (API)</td>
+          <td>Fichiers de configuration produits (.env, nginx.conf, .service…). Ne sont jamais stockés dans LocalCMS automatiquement.</td>
+          <td><span class="badge b-acc">Téléchargement direct</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 4.2 RULES -->
+  <h3 id="persistence-store">Règles $STORE · $USER</h3>
+
+  <div class="rule-list">
+    <div class="rule r-must-not">
+      <span class="rule-ico">⛔</span>
+      <div class="rule-text"><strong>MUST NOT :</strong> Stocker des secrets (tokens, passwords, clés SSH privées) dans <code>$STORE</code>. $STORE est en localStorage, non chiffré. Les secrets vont dans <code>$USER.credentials</code> avec marquage explicite de sensibilité.</div>
+    </div>
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> Chaque clé $STORE est préfixée : <code>lcms__{profileId}__{moduleId}__{key}</code>. Aucune collision entre profils ou modules.</div>
+    </div>
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> <code>$USER</code> est exportable via "Exporter profil" → JSON. L'import restaure les machines, endpoints et préférences, mais jamais les secrets en clair. Les champs <code>sensitive: true</code> sont exportés vides ou masqués.</div>
+    </div>
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> <code>$ENV.state</code> (runtime) n'est jamais sérialisé dans $STORE ni dans $USER. L'état runtime est toujours recalculé au démarrage.</div>
+    </div>
+    <div class="rule r-must-not">
+      <span class="rule-ico">⛔</span>
+      <div class="rule-text"><strong>MUST NOT :</strong> Les artefacts générés (fichiers .env, nginx.conf…) ne sont jamais stockés automatiquement dans LocalCMS. Seul l'usager décide où ils vont (download, API, clipboard).</div>
+    </div>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- ══════════════════════════════════════════════════════════
+     05 · CONTRAT SÉCURITÉ
+     ══════════════════════════════════════════════════════════ -->
+<section id="security">
+  <span class="section-anchor"></span>
+  <h2><span class="h2-num">05</span><span class="h2-ico">🔒</span> Contrat sécurité &amp; sanitation</h2>
+  <div class="section-rule"></div>
+
+  <!-- 5.1 SANITATION -->
+  <h3 id="security-sanitize">Sanitation des entrées</h3>
+
+  <div class="rule-list">
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> Toute valeur saisie par l'usager dans un champ de formulaire est sanitisée avant d'être insérée dans un template de génération. La sanitation est faite par <code>$VALID.sanitize(value, type)</code>, jamais inline dans le module.</div>
+    </div>
+    <div class="rule r-must-not">
+      <span class="rule-ico">⛔</span>
+      <div class="rule-text"><strong>MUST NOT :</strong> Aucune valeur de champ n'est insérée directement dans une commande shell via concaténation de chaîne. Les valeurs sont passées comme arguments nommés à un constructeur de commande, jamais interpolées librement.</div>
+    </div>
+    <div class="rule r-must-not">
+      <span class="rule-ico">⛔</span>
+      <div class="rule-text"><strong>MUST NOT :</strong> Aucun template de fichier généré n'est exécuté par LocalCMS automatiquement. La séparation <em>générer</em> ≠ <em>exécuter</em> est absolue. Un fichier .sh généré est un artefact texte, pas un script exécutable dans LocalCMS.</div>
+    </div>
+    <div class="rule r-must">
+      <span class="rule-ico">✓</span>
+      <div class="rule-text"><strong>MUST :</strong> Les champs de type <code>url</code> sont validés par une regex d'URL et ne peuvent pas contenir de caractères de contrôle. Les champs de type <code>path</code> ne peuvent pas contenir de traversal (<code>../</code>).</div>
+    </div>
+  </div>
+
+  <!-- 5.2 SECRETS & EXÉCUTION -->
+  <h3 id="security-secrets">Secrets, chemins &amp; exécution</h3>
+
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead>
+        <tr><th>Type de donnée</th><th>Règle</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--red)">Passwords &amp; tokens</td>
+          <td>Jamais affichés en clair dans les logs. Jamais dans les URLs. Champs <code>type:password</code> sont masqués par défaut. Marqués <code>sensitive:true</code> dans le manifeste.</td>
+        </tr>
+        <tr>
+          <td style="color:var(--red)">Clés SSH privées</td>
+          <td>Jamais stockées dans $STORE ou $USER en clair. Référencées par chemin (ex: <code>@home/.ssh/id_rsa</code> via $PATH), jamais par contenu.</td>
+        </tr>
+        <tr>
+          <td style="color:var(--ylw)">Chemins utilisateur</td>
+          <td>Jamais traversés au-delà du contexte de travail déclaré. Les chemins sont validés par <code>$PATH.validate()</code> avant usage dans un template.</td>
+        </tr>
+        <tr>
+          <td style="color:var(--ylw)">URLs externes</td>
+          <td>Pas de redirection silencieuse. Les URLs sont validées (format) avant d'être insérées dans une config générée. Pas de résolution DNS dans LocalCMS côté Core.</td>
+        </tr>
+        <tr>
+          <td style="color:var(--acc)">Commandes exécutées</td>
+          <td>Uniquement sur action explicite de l'usager. Aucune exécution automatique au chargement d'un module. Le résultat est dans un terminal sandbox, jamais évalué par LocalCMS.</td>
+        </tr>
+        <tr>
+          <td style="color:var(--acc)">Appels API</td>
+          <td>Uniquement sur action explicite. Le résultat est affiché, jamais ré-exécuté. Les headers d'auth ne sont pas loggués.</td>
+        </tr>
+        <tr>
+          <td style="color:var(--pur)">Variables d'environnement</td>
+          <td>Les variables dans les templates générés (<code>{{DB_PASSWORD}}</code>) sont des placeholders. La valeur réelle est saisie par l'usager à la génération et n'est pas conservée par LocalCMS.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- ══════════════════════════════════════════════════════════
+     06 · ORDRE DE DÉVELOPPEMENT V1
+     ══════════════════════════════════════════════════════════ -->
+<section id="order">
+  <span class="section-anchor"></span>
+  <h2><span class="h2-num">06</span><span class="h2-ico">🗺</span> Ordre de développement V1 recommandé</h2>
+  <div class="section-rule"></div>
+
+  <div class="alert a-grn">
+    <strong>Lecture de ce tableau</strong>
+    Chaque phase a un <em>invariant de sortie</em> : la condition qui doit être vraie pour passer à la suivante. Une phase ne valide que si son invariant est vérifié par le WORKER VERIFIER, pas simplement "semble fonctionner".
+  </div>
+
+  <div class="timeline">
+
+    <!-- P0 -->
+    <div class="tl-item" id="order-p0">
+      <div class="tl-left">
+        <div class="tl-dot" style="border-color:var(--red);background:#1a0808;color:var(--red)">P0</div>
+        <div class="tl-line" style="background:var(--border)"></div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase-label" style="color:var(--red)">Phase 0 — Ce document</div>
+        <div class="tl-phase-title">Compatibility Contract</div>
+        <div class="tl-phase-desc">Figer les 5 contrats de ce document. Aucun commit de code avant que P0 soit <code>validated</code> par ChatGPT Orchestrateur. P0 est lui-même archivé dans Git (<code>docs/p0-compatibility-contract.html</code>).</div>
+        <div class="tl-missions">
+          <span class="tl-m">Compatibility Contract</span>
+          <span class="tl-m">Module Contract</span>
+          <span class="tl-m">Contrat UI</span>
+          <span class="tl-m">Contrat Persistance</span>
+          <span class="tl-m">Contrat Sécurité</span>
+        </div>
+        <div style="margin-top:8px;font-size:10px;padding:6px 10px;background:var(--bg2);border:1px solid #2a1010;border-radius:4px;color:var(--red)">
+          <strong>Invariant de sortie :</strong> Ce document est archivé dans Git. L'équipe a lu et validé les 5 contrats.
+        </div>
+      </div>
+    </div>
+
+    <!-- P1 -->
+    <div class="tl-item" id="order-p1">
+      <div class="tl-left">
+        <div class="tl-dot" style="border-color:var(--red);background:#1a0808;color:var(--red)">P1</div>
+        <div class="tl-line" style="background:var(--border)"></div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase-label" style="color:var(--red)">Phase 1 — BLOQUANT</div>
+        <div class="tl-phase-title">Core : <code class="tl-const">$FORMS</code> · <code class="tl-const">$COND</code> · <code class="tl-const">$VALID</code></div>
+        <div class="tl-phase-desc">Moteur formulaire unifié, conditions réactives, validateurs. Ces 3 fichiers Core respectent strictement P0 : aucune hypothèse locale, aucun OS implicite. Validation : au moins 1 module existant (backend-config) fonctionne via $FORMS sans HTML inline résiduel.</div>
+        <div class="tl-missions">
+          <span class="tl-m">M-1.1 · core/forms.js</span>
+          <span class="tl-m">M-1.2 · core/conditions.js</span>
+          <span class="tl-m">M-1.3 · core/validator.js</span>
+        </div>
+        <div style="margin-top:8px;font-size:10px;padding:6px 10px;background:var(--bg2);border:1px solid #2a1010;border-radius:4px;color:var(--red)">
+          <strong>Invariant de sortie :</strong> MOD_BACKEND_CFG utilise $FORMS + $COND + $VALID. Zéro HTML inline dans ce module. Conditions auth/token testées et vérifiées.
+        </div>
+      </div>
+    </div>
+
+    <!-- P2 -->
+    <div class="tl-item" id="order-p2">
+      <div class="tl-left">
+        <div class="tl-dot" style="border-color:var(--ylw);background:#1a1200;color:var(--ylw)">P2</div>
+        <div class="tl-line" style="background:var(--border)"></div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase-label" style="color:var(--ylw)">Phase 2</div>
+        <div class="tl-phase-title">Persistance : <code class="tl-const">$STORE</code> · <code class="tl-const">$USER</code> · <code class="tl-const">$PATH</code></div>
+        <div class="tl-phase-desc">Persistance localStorage avec fallback. Profil utilisateur centralisé (machines SSH, endpoints IA, sources, préférences). Gestionnaire de chemins avec alias. La mémoire de l'usager entre deux sessions.</div>
+        <div class="tl-missions">
+          <span class="tl-m">M-2.1 · core/store.js</span>
+          <span class="tl-m">M-2.2 · core/user.js</span>
+          <span class="tl-m">M-2.3 · core/path-manager.js</span>
+        </div>
+        <div style="margin-top:8px;font-size:10px;padding:6px 10px;background:var(--bg2);border:1px solid #3a2400;border-radius:4px;color:var(--ylw)">
+          <strong>Invariant de sortie :</strong> Reload page → formulaire restauré. $USER.machines vide par défaut (aucune machine hardcodée). $PATH.resolve('@data') fonctionne sur Linux et Windows.
+        </div>
+      </div>
+    </div>
+
+    <!-- P3 -->
+    <div class="tl-item" id="order-p3">
+      <div class="tl-left">
+        <div class="tl-dot" style="border-color:var(--org);background:#180e00;color:var(--org)">P3</div>
+        <div class="tl-line" style="background:var(--border)"></div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase-label" style="color:var(--org)">Phase 3</div>
+        <div class="tl-phase-title">Externalisation des modules inline critiques</div>
+        <div class="tl-phase-desc">Déplacer les 4 modules actuellement inline dans localcms-v5.html vers des fichiers .js séparés. Un module à la fois, avec migration vers le manifeste déclaratif V1. Test de régression entre chaque.</div>
+        <div class="tl-missions">
+          <span class="tl-m">modules/ia-config.js</span>
+          <span class="tl-m">modules/machines-config.js</span>
+          <span class="tl-m">modules/data-sources.js</span>
+          <span class="tl-m">modules/env-global.js</span>
+        </div>
+        <div style="margin-top:8px;font-size:10px;padding:6px 10px;background:var(--bg2);border:1px solid #301800;border-radius:4px;color:var(--org)">
+          <strong>Invariant de sortie :</strong> Les 4 modules sont en fichiers séparés. Chacun suit le Module Contract V1. Aucun inline résiduel dans localcms-v5.html pour ces 4 modules.
+        </div>
+      </div>
+    </div>
+
+    <!-- P4 -->
+    <div class="tl-item" id="order-p4">
+      <div class="tl-left">
+        <div class="tl-dot" style="border-color:var(--acc);background:#08102a;color:var(--acc)">P4</div>
+        <div class="tl-line" style="background:var(--border)"></div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase-label" style="color:var(--acc)">Phase 4</div>
+        <div class="tl-phase-title">Modules manquants critiques</div>
+        <div class="tl-phase-desc">Création des modules absents du registre actuel, selon le Module Contract V1. Priorité : env-switcher, api-tester, monitoring-config, deploy-use, container-config, auth-config, db-use, docker-use.</div>
+        <div class="tl-missions">
+          <span class="tl-m">env-switcher</span>
+          <span class="tl-m">api-tester</span>
+          <span class="tl-m">monitoring-config</span>
+          <span class="tl-m">deploy-use</span>
+          <span class="tl-m">container-config</span>
+          <span class="tl-m">auth-config</span>
+          <span class="tl-m">db-use</span>
+          <span class="tl-m">docker-use</span>
+        </div>
+        <div style="margin-top:8px;font-size:10px;padding:6px 10px;background:var(--bg2);border:1px solid #0a1840;border-radius:4px;color:var(--acc)">
+          <strong>Invariant de sortie :</strong> Chaque module livré respecte P0 + Module Contract V1. WORKER CRITIC valide chaque livraison.
+        </div>
+      </div>
+    </div>
+
+    <!-- P5 -->
+    <div class="tl-item" id="order-p5">
+      <div class="tl-left">
+        <div class="tl-dot" style="border-color:var(--pur);background:#150f28;color:var(--pur)">P5</div>
+        <div class="tl-line" style="background:transparent"></div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase-label" style="color:var(--pur)">Phase 5</div>
+        <div class="tl-phase-title">UX polish · i18n · Multi-fichiers</div>
+        <div class="tl-phase-desc">Cmd+K recherche globale, breadcrumb navigation, import/export profil complet ($USER), internationalisation fr/en ($I18N). Puis passage de l'architecture monolithique (localcms-v5.html) à l'arborescence multi-fichiers stable.</div>
+        <div class="tl-missions">
+          <span class="tl-m">Cmd+K</span>
+          <span class="tl-m">Breadcrumb</span>
+          <span class="tl-m">Export profil</span>
+          <span class="tl-m">$I18N fr/en</span>
+          <span class="tl-m">index.html + core/*.js + modules/*.js</span>
+        </div>
+        <div style="margin-top:8px;font-size:10px;padding:6px 10px;background:var(--bg2);border:1px solid #251840;border-radius:4px;color:var(--pur)">
+          <strong>Invariant de sortie :</strong> Arborescence multi-fichiers opérationnelle. LocalCMS peut être cloné, configuré et lancé sans aucune modification de code.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- ══════════════════════════════════════════════════════════
+     CE QU'IL FAUT FIGER
+     ══════════════════════════════════════════════════════════ -->
+<section id="freeze">
+  <span class="section-anchor"></span>
+  <h2><span class="h2-num">—</span><span class="h2-ico">📌</span> Ce qu'il faut figer avant de coder M-1.1</h2>
+  <div class="section-rule"></div>
+
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead>
+        <tr><th>#</th><th>Élément à figer</th><th>Décision</th><th>Statut</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>F-01</td>
+          <td>Structure du manifeste module V1</td>
+          <td>Voir section 02 de ce document. Les propriétés obligatoires sont : id, label, icon, version, group, type, capabilities, os_compat, interfaces.</td>
+          <td><span class="badge b-acc">Défini ici</span></td>
+        </tr>
+        <tr>
+          <td>F-02</td>
+          <td>Format d'un champ de formulaire</td>
+          <td><code>{id, type, label, value, options?, placeholder?, hint?, rows?, wide?, sensitive?}</code>. Aucune propriété de rendu HTML dans le champ.</td>
+          <td><span class="badge b-acc">Défini ici</span></td>
+        </tr>
+        <tr>
+          <td>F-03</td>
+          <td>Format d'une condition déclarative</td>
+          <td><code>{if: fieldId, op: 'eq'|'neq'|'gt'|'lt'|'in'|'empty', value, then: 'show'|'hide'|'enable'|'disable'|'require', target: fieldId|fieldId[]}</code></td>
+          <td><span class="badge b-acc">Défini ici</span></td>
+        </tr>
+        <tr>
+          <td>F-04</td>
+          <td>Format d'un validateur déclaratif</td>
+          <td><code>{field: fieldId, rule: 'required'|'url'|'port'|'email'|'ip'|'hostname'|'min'|'max'|'pattern', message: string, arg?: any}</code></td>
+          <td><span class="badge b-acc">Défini ici</span></td>
+        </tr>
+        <tr>
+          <td>F-05</td>
+          <td>Convention de nommage des clés $STORE</td>
+          <td><code>lcms__{profileId}__{moduleId}__{key}</code>. Séparateur : double underscore. Pas d'espaces, pas de caractères spéciaux.</td>
+          <td><span class="badge b-acc">Défini ici</span></td>
+        </tr>
+        <tr>
+          <td>F-06</td>
+          <td>Alias $PATH minimum V1</td>
+          <td><code>@root</code> (dossier LocalCMS), <code>@data</code> (data/), <code>@scripts</code> (scripts/), <code>@logs</code> (logs/), <code>@modules</code> (modules/), <code>@core</code> (core/). Tous configurables par l'usager.</td>
+          <td><span class="badge b-acc">Défini ici</span></td>
+        </tr>
+        <tr>
+          <td>F-07</td>
+          <td>Interface de $OS minimum V1</td>
+          <td><code>$OS.type()</code> → <code>'linux'|'windows'|'macos'|'unknown'</code>. <code>$OS.sep()</code> → <code>'/'|'\\'</code>. <code>$OS.shell()</code> → <code>'bash'|'sh'|'powershell'|'cmd'</code>. <code>$OS.newline()</code> → <code>'\n'|'\r\n'</code>.</td>
+          <td><span class="badge b-acc">Défini ici</span></td>
+        </tr>
+        <tr>
+          <td>F-08</td>
+          <td>Séparation CONFIG ≠ EXÉCUTION</td>
+          <td>Un artefact généré (fichier .env, .conf, .sh…) n'est jamais exécuté par LocalCMS. L'action "Générer" produit un artefact. L'action "Exécuter" est une action distincte, explicite, sur un module USE, jamais sur un module CONFIG.</td>
+          <td><span class="badge b-acc">Défini ici</span></td>
+        </tr>
+        <tr>
+          <td>F-09</td>
+          <td>Profil machine par défaut</td>
+          <td>Un profil <code>localhost</code> est auto-créé à l'init. Il est vide par défaut (host: "", user: ""). L'usager le configure. Jamais de valeurs réelles dans le code source.</td>
+          <td><span class="badge b-acc">Défini ici</span></td>
+        </tr>
+        <tr>
+          <td>F-10</td>
+          <td>Stratégie de fallback $STORE</td>
+          <td>1. <code>localStorage</code> · 2. <code>sessionStorage</code> · 3. Store in-memory · 4. Non persistant (notification WARN visible). Chaque fallback déclenche <code>BUS.emit('store:degraded', level)</code>.</td>
+          <td><span class="badge b-acc">Défini ici</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- ══════════════════════════════════════════════════════════
+     CONCLUSION
+     ══════════════════════════════════════════════════════════ -->
+<section id="conclusion">
+  <span class="section-anchor"></span>
+  <h2><span class="h2-num">—</span><span class="h2-ico">✓</span> Conclusion</h2>
+  <div class="section-rule"></div>
+
+  <div class="alert a-grn">
+    <strong>Ce que P0 accomplit</strong>
+    P0 transforme LocalCMS d'un outil fait pour un setup personnel en un CMS local générique à compatibilité maximale. Pas en ajoutant de la complexité — en retirant les hypothèses implicites qui rendent le code fragile.
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="mini-card" style="border-top:2px solid var(--grn)">
+        <div class="mc-title" style="color:var(--grn)">Ce qui est garanti après P0</div>
+        <div class="mc-body" style="line-height:2">
+          · Aucune donnée personnelle dans le code source<br>
+          · Aucun OS hardcodé dans la logique métier<br>
+          · Aucun chemin absolu dans aucun module<br>
+          · Les modules sont des manifestes, pas des mini-apps<br>
+          · CONFIG, USE, DEV partagent un registre unique<br>
+          · La persistance est courtes, propres, et namespaced<br>
+          · Les secrets ne transitent jamais dans les logs<br>
+          · L'exécution est toujours consciente et explicite
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="mini-card" style="border-top:2px solid var(--acc)">
+        <div class="mc-title" style="color:var(--acc)">Prochaine action concrète</div>
+        <div class="mc-body" style="line-height:2">
+          1. Archiver ce document dans <code>docs/</code> du repo Git<br>
+          2. Valider P0 avec ChatGPT Orchestrateur (WORKER CRITIC)<br>
+          3. Ouvrir la mission M-1.1 avec WORKER BUILDER<br>
+          4. $FORMS doit satisfaire les contraintes F-02 de ce document<br>
+          5. Valider M-1.1 avec WORKER VERIFIER avant tout commit<br>
+          6. Committer dans une branche <code>feature/core-forms</code>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:12px 16px;font-size:11px;color:var(--t2);text-align:center;font-family:var(--mono)">
+    LocalCMS P0 Compatibility Contract · Version 1.0 · 2026-03-09<br>
+    <span style="color:var(--border2)">Ce document est la référence jusqu'à remplacement explicite par une version supérieure</span>
+  </div>
+</section>
+
+</div><!-- /content -->
+
+<script>
+/* Highlight active TOC item on scroll */
+const items = document.querySelectorAll('.toc-item');
+const sections = [...items].map(i => {
+  const href = i.getAttribute('href');
+  return href ? document.querySelector(href) : null;
+});
+
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const idx = sections.indexOf(e.target);
+      if (idx >= 0) {
+        items.forEach(i => i.classList.remove('active'));
+        items[idx].classList.add('active');
+      }
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+sections.forEach(s => s && obs.observe(s));
+</script>
+</body>
+</html>

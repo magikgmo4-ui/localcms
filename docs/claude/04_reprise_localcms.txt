@@ -1,71 +1,146 @@
 LOCALCMS — POINT DE REPRISE
-Date : 2026-03-18
+Date : 2026-03-21
+Mis à jour : 2026-03-21 (GO_LOCALCMS_REPRISE_SYNC_01 — sync post-audit 2026-03-20)
+Référence précédente : version 2026-03-18 (d26f07f)
 
-Branche active
+=== ÉTAT RÉEL DES BRANCHES (2026-03-21) ===
+
+Branche produit (base)
 - feature/localcms-shared-explorer-cms-installer-v1
+- HEAD local  : d26f07f — record validated host sandbox decision and reprise update
+- HEAD origin : d26f07f — aligné (poussé 2026-03-18)
 
-HEAD canonique
-- ef94833
-- origin : ef94833 — delta = 0
+Branche dev host (surcouche)
+- tools/localcms-dev-host
+- HEAD local  : 54da71f — add executable dev host branch files
+- HEAD origin : 54da71f — aligné (poussé 2026-03-18)
 
-=== ACTIONS OUVERTES ===
+Sandbox de travail
+- C:\Users\ghost\project-localcms\localcms\
+- HEAD sandbox : 826a67a (en retard sur feature de plusieurs commits)
+- Les CORR-1/2/3 (6bbe56a, 28ac50a, 67c0bab) sont absents du sandbox
+- Impact : localcms-v5.html dans le sandbox ne contient pas les 3 corrections
+
+=== ACTIONS (MIS À JOUR) ===
 
 ACTION-1 — Push canonique
   Statut : CLÔTURÉE — push effectué le 2026-03-18
-  HEAD origin = ef94833
+  HEAD origin/feature = d26f07f
 
 ACTION-2 — Versionnement host FastAPI (classement B)
-  Statut : B VALIDÉ — branche tools/localcms-dev-host à créer, reportée à décision opérateur
-  Aucune exécution maintenant
-  Prérequis pour GO_APPLY futur : confirmer base de branche (main ou autre)
-  Fichiers à inclure : main.py / requirements.txt / run.bat / run.sh / .env.example
+  Statut : CLÔTURÉE — branche tools/localcms-dev-host créée et poussée (54da71f)
+  Fichiers versionnés : main.py / requirements.txt / run.bat / run.sh
+  Décision B figée dans : docs/claude/00_arbitrage_HOST_DEV_SANDBOX.txt (commit ef94833)
 
-=== POINTS OUVERTS NON TRANCHÉS ===
+=== MODULES LIVRÉS — ÉTAT FIGÉ ===
+
+M1 — MOD_SHARED_EXPLORER V1
+  Statut : ÉTABLI — validé live sandbox + tests canoniques
+  Source : docs/claude/00_etabli_MOD_SHARED_EXPLORER_V1.txt
+  Critères V1 : 13/13 VERTS
+  Règle : ne pas ajouter d'endpoint écriture dans shared_explorer.py
+
+M2 — MOD_CMS_INSTALLER V1
+  Statut : ÉTABLI — install live hello-mod-v1.0.0.zip réussie
+  Source : docs/claude/02_etabli_localcms.txt
+  Règle : ne pas casser l'architecture M1/M2 existante
+
+Corrections appliquées dans feature/... (absentes du sandbox)
+  CORR-1 (6bbe56a) : ajout entrées nav + fix bug template string webhook
+  CORR-2 (28ac50a) : correction paths nav ('/ explorer' → '/explorer', etc.)
+  CORR-3 (67c0bab) : suppression 12 lignes doublons const dans 3 IIFEs
+
+=== POINTS OUVERTS ===
 
 OUVERT-1  .gitignore absent du canonique
   Constat : aucun .gitignore dans C:\Users\ghost\localcms
   Impact  : .env et artefacts non exclus formellement
-  Action  : à traiter lors de la création de tools/localcms-dev-host
-  Statut  : À CONFIRMER
+  Statut  : À CONFIRMER — à traiter lors d'une prochaine session dédiée
 
 OUVERT-2  Sandbox non synchronisé avec les commits canoniques
-  Constat : sandbox HEAD = 826a67a, canonique HEAD = ef94833
-  Impact  : À CONFIRMER — à évaluer si une nouvelle validation live est prévue
+  Constat : sandbox HEAD = 826a67a, feature HEAD = d26f07f (delta = 4 commits)
+  Impact  : localcms-v5.html du sandbox ne contient pas CORR-1/2/3
+  Action  : git pull ou git checkout depuis Windows pour aligner
+  Statut  : À CONFIRMER — non bloquant pour travail documentaire
 
-OUVERT-3  Smokes LIVE M1 non lancés sur environnement réel
-  Constat : smokes M1 vérifiés en mode MOCK uniquement (établi session précédente)
-  Action  : à lancer manuellement depuis un environnement réel disposant du backend
-            BACKEND_URL=http://localhost:8000 node tests/shared-explorer.smoke.js
-  Statut  : non bloquant pour l'état actuel
+OUVERT-3  Smokes LIVE M1 non exécutés sur environnement réel
+  Constat : smokes M1 vérifiés en mode MOCK uniquement
+  Action  : BACKEND_URL=http://localhost:8000 node tests/shared-explorer.smoke.js
+  Statut  : non bloquant pour état actuel
 
-=== PÉRIMÈTRE DOCUMENTAIRE ===
+OUVERT-4  Artefact virtiofs sur localcms-v5.html et 2 tests
+  Constat : index .git présente MM/M sur ces fichiers (restriction virtiofs/NTFS)
+  Impact contenu : nul — working tree == HEAD prouvé par diff (hors CRLF)
+  Résolution : se résorbe au prochain git pull/checkout depuis Windows
 
-Pack minimal principal (4 fichiers) — versionnés en 023a636
-  00_session_index_localcms.txt
-  01_workflow_machine_localcms.txt
-  02_etabli_localcms.txt
-  04_reprise_localcms.txt
+=== GATE P0 — STATUT ===
 
-Document associé — versionné en ef94833
-  00_arbitrage_HOST_DEV_SANDBOX.txt
-  → décision B validée, exécution reportée
+P0 Compatibility Contract
+  Statut  : ARCHIVÉ dans le repo (2026-03-21 — GO_P0_ARCHIVE_01)
+  Chemin  : docs/p0-compatibility-contract.html
+  Source  : Downloads/claude/claude-response-html/2026-03-09_localcms_p0_compatibility_contract.html
+  MD5     : f67b8c9ee8f95fec1f11fa01e9553023 (identique source/cible — copie propre)
+  Git     : non commité — untracked (en attente GO_COMMIT)
+  Contenu : 5 contrats (Compat / Module / UI / Persistance / Sécurité) + ordre P0→P5 + F-01→F-10
+  K02     : 4 critères vérifiés — validation PM (ChatGPT Orchestrateur) non encore documentée
+  Bloquant levé pour : K01 (localisé et archivé), K02 (contenu vérifié)
+  Condition restante pour K03 : validation PM explicite + GO_COMMIT de l'archivage
 
-=== FICHIERS DE CONTEXTE À FOURNIR EN REPRISE ===
+ALERTE GIT — artefact virtiofs pré-existant dans le staging area :
+  Staged pour suppression (virtiofs/NTFS artifact) :
+    docs/claude/00_arbitrage_HOST_DEV_SANDBOX.txt
+    docs/claude/00_session_index_localcms.txt
+    docs/claude/01_workflow_machine_localcms.txt
+    docs/claude/02_etabli_localcms.txt
+    docs/claude/04_reprise_localcms.txt
+    localcms-v5.html (aussi modifié dans working tree)
+  Ces fichiers EXISTENT dans le working tree — l'index est incohérent.
+  Action requise avant tout GO_COMMIT :
+    git restore --staged <fichiers> pour dé-stager les suppressions virtiofs
+    ou git reset HEAD -- docs/claude/ localcms-v5.html
+    puis git add docs/p0-compatibility-contract.html uniquement
 
-  02_etabli_localcms.txt                    (état prouvé — obligatoire)
-  04_reprise_localcms.txt                   (ce fichier — obligatoire)
-  00_arbitrage_HOST_DEV_SANDBOX.txt         (si création branche host — conditionnel)
+=== KANBAN PLANNING — ÉTAT MIS À JOUR ===
+
+K17 — Cadrer Shared Explorer V1     → DONE (M1 livré, validé, documenté)
+K18 — Cadrer CMS Module Installer V1 → DONE (M2 livré, validé, documenté)
+K01 — Récupérer le document P0 réel → DONE (localisé + archivé dans docs/)
+K02 — Valider P0 selon 4 critères   → VÉRIFIÉ par Claude / validation PM requise
+K03 — Lancer M-1.1 $FORMS           → CONDITIONNÉ à validation PM + GO_COMMIT P0
 
 === PROTOCOLE ACTIF ===
 
 - AUDIT / VERDICT / APPLICATION strictement séparés
 - GO_APPLY / GO_COMMIT / GO_PUSH requis pour toute exécution
 - ÉTABLI / À CONFIRMER / HYPOTHÈSE / CONTRADICTION obligatoires
-- Bases de branche : uniques et explicites ou marquées "à confirmer avant GO_APPLY"
-- Terminologie : PROPOSITION DOCUMENTÉE tant que non validé / DÉCISION VALIDÉE après validation opérateur
+- Pas de git push / commit depuis Claude Cowork sans GO_PUSH explicite
+- Règles de non-régression : cf. docs/ot/trae/OT_TRAE_DOC_CONVERGENCE_PROTOCOL_V1.md (R01–R14)
+
+=== PÉRIMÈTRE DOCUMENTAIRE ===
+
+Pack minimal principal (4 fichiers)
+  00_session_index_localcms.txt
+  01_workflow_machine_localcms.txt
+  02_etabli_localcms.txt
+  04_reprise_localcms.txt (ce fichier)
+
+Fichiers associés
+  00_arbitrage_HOST_DEV_SANDBOX.txt  (décision B figée)
+  00_etabli_MOD_SHARED_EXPLORER_V1.txt  (M1 établi, critères V1)
+  00_etat_courant_MOD_SHARED_EXPLORER_V1.txt
+  00_rapport_execution_MOD_SHARED_EXPLORER_V1.txt
+  00_next_CMS_INSTALLER_V1.txt
+  00_prompt_reprise_CMS_INSTALLER_V1.txt
+  00_index_fichiers_reprise_M1.txt
 
 === POINT D'ARRÊT ===
 
-HEAD canonique = ef94833, origin aligné.
-Décision B validée et documentée.
-Prochaine action : création de tools/localcms-dev-host sur ordre opérateur.
+feature/... HEAD = d26f07f, origin aligné.
+tools/... HEAD = 54da71f, origin aligné.
+M1 + M2 : ÉTABLI.
+Branche dev host : créée et versionnée (ACTION-2 CLÔTURÉE).
+
+Prochaine action selon priorité kanban :
+  1. Localiser le document P0 Compatibility Contract (bloquant pour M-1.1)
+  2. Sur décision PM : ouvrir GO_LOCALCMS_NEXT_01 (M3+ ou suite roadmap)
+  3. Hors périmètre Claude Cowork local : validation live smoke M1 sur backend réel
