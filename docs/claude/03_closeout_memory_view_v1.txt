@@ -3,7 +3,7 @@ Mission : GO_LOCALCMS_MEMORY_VIEW_CLOSEOUT_02
 Date    : 2026-03-27
 Repo    : C:\Users\ghost\localcms
 Branche : feature/localcms-memory-view-v1
-HEAD    : ac74037
+HEAD    : 82cfe54
 Statut  : CLOSE
 
 1. Etat final retenu
@@ -44,5 +44,6 @@ Statut  : CLOSE
 
 5. Point de reprise
 
-- Prochain trigger recommande : `GO_LOCALCMS_MEMORY_VIEW_CANONICAL_SYNC_01`.
-- Objet : aligner la cloture locale avec la documentation canonique OT, sans rouvrir le viewer ni elargir son perimetre.
+- `GO_LOCALCMS_MEMORY_VIEW_CANONICAL_SYNC_01` : PASS.
+- Prochain trigger recommande : `GO_LOCALCMS_NEXT_MISSION_SELECTION_01`.
+- Objet : selectionner le prochain chantier LocalCMS utile, sans rouvrir Memory View V1 par defaut.

@@ -1,6 +1,6 @@
 LOCALCMS — POINT DE REPRISE
 Date : 2026-03-21
-Mis à jour : 2026-03-27 (GO_LOCALCMS_MEMORY_VIEW_CLOSEOUT_02 — clôture viewer Memory Bricks V1)
+Mis à jour : 2026-03-27 (GO_LOCALCMS_MEMORY_VIEW_CANONICAL_SYNC_01 — sync documentaire viewer Memory Bricks V1)
 Référence précédente : version 2026-03-18 (d26f07f)
 
 === ÉTAT RÉEL DES BRANCHES (2026-03-21) ===
@@ -137,7 +137,7 @@ Fichiers associés
 
 Branche active de cette passe
 - feature/localcms-memory-view-v1
-- HEAD local : ac74037 — localcms: add read-only memory bricks view
+- HEAD local : 82cfe54 — localcms: close memory bricks viewer v1
 
 Etat local retenu
 - `GO_LOCALCMS_MEMORY_VIEW` : CLOSE sur source synthetique.
@@ -166,5 +166,5 @@ Point de cloture
 - viewer Memory Bricks V1 LocalCMS : CLOSE dans son perimetre minimal read-only utile
 
 Point de reprise suivant
-- `GO_LOCALCMS_MEMORY_VIEW_CANONICAL_SYNC_01`
-- objet : aligner cette cloture locale avec la couche canonique OT, sans rouvrir le viewer par defaut
+- `GO_LOCALCMS_NEXT_MISSION_SELECTION_01`
+- objet : selectionner le prochain chantier LocalCMS utile, sans rouvrir Memory View V1 par defaut

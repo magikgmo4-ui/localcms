@@ -1,6 +1,34 @@
 LOCALCMS — WORKFLOW MACHINE
 Date : 2026-03-18
 
+=== ADDENDUM 2026-03-27 — MEMORY VIEW CANONICAL SYNC ===
+Chemin        : C:\Users\ghost\localcms
+Branche       : feature/localcms-memory-view-v1
+HEAD local    : 82cfe54 localcms: close memory bricks viewer v1
+Working tree  : propre
+
+Etat viewer Memory Bricks V1
+- `GO_LOCALCMS_MEMORY_VIEW` : CLOSE
+- `GO_LOCALCMS_VIEWER_UI_ENTRYPOINT_REALIGN_01` : PASS
+- `GO_LOCALCMS_VIEWER_REAL_SOURCE_VALIDATE_01` : PASS
+- `GO_LOCALCMS_MEMORY_VIEW_CLOSEOUT_02` : CLOSE
+- `GO_LOCALCMS_MEMORY_VIEW_CANONICAL_SYNC_01` : cette passe
+
+Source reelle validee
+- `C:\Users\ghost\Downloads\memory_bricks_localcms_source`
+- index : `index\index_full.json`
+- details : `bricks\MB-*.md`
+
+Regles a conserver
+- read-only strict
+- aucun write-back vers `memory_bricks`
+- aucun backend / runtime supplementaire
+- aucun melange avec shared explorer / cms installer / forms
+
+Point de reprise recommande
+- `GO_LOCALCMS_NEXT_MISSION_SELECTION_01`
+- objet : selectionner le prochain chantier LocalCMS utile sans rouvrir Memory View V1 par defaut
+
 === DÉPÔT CANONIQUE ===
 Chemin        : C:\Users\ghost\localcms
 Branche       : feature/localcms-shared-explorer-cms-installer-v1
