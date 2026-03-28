@@ -1,88 +1,36 @@
 LOCALCMS — WORKFLOW MACHINE
-Date : 2026-03-18
+Date : 2026-03-27
 
-=== ADDENDUM 2026-03-27 — GITIGNORE CANONICAL SYNC ===
-Chemin        : C:\Users\ghost\localcms
-Branche       : feature/localcms-memory-view-v1
-HEAD local    : 90a52e9 localcms: sync canonical memory viewer v1 closeout
-Etat de depart: worktree non propre avec un seul ecart visible `?? .gitignore`
+Depot courant
+- Chemin : `C:\Users\ghost\localcms`
+- Branche : `feature/localcms-memory-view-v1`
+- HEAD local : `2bb1a58` — `localcms: commit gitignore harden and canonical sync`
+- Worktree : propre
+- Remote branche feature : non visible ; raisonner localement uniquement
 
-Etat hygiene/versioning
-- `.gitignore` present a la racine du repo.
-- `GO_LOCALCMS_GITIGNORE_HARDEN_01` : PASS.
-- `GO_LOCALCMS_GITIGNORE_CANONICAL_SYNC_01` : PASS.
-
-Couverture read-only / hygiene retenue
-- `.env` / `.env.*`
-- caches Python
-- environnements virtuels locaux
-- `node_modules/`
-- logs / `tmp/` / `temp/`
-- bruit OS / editeur minimal
-
-Point de reprise recommande
-- `GO_LOCALCMS_NEXT_MISSION_SELECTION_02`
-- objet : selectionner le prochain chantier LocalCMS utile apres sync canonique du `.gitignore`, sans rouvrir Memory View V1
-
-=== ADDENDUM 2026-03-27 — MEMORY VIEW CANONICAL SYNC ===
-Chemin        : C:\Users\ghost\localcms
-Branche       : feature/localcms-memory-view-v1
-HEAD local    : 82cfe54 localcms: close memory bricks viewer v1
-Working tree  : propre
-
-Etat viewer Memory Bricks V1
+Etat etabli sur cette branche
 - `GO_LOCALCMS_MEMORY_VIEW` : CLOSE
 - `GO_LOCALCMS_VIEWER_UI_ENTRYPOINT_REALIGN_01` : PASS
 - `GO_LOCALCMS_VIEWER_REAL_SOURCE_VALIDATE_01` : PASS
 - `GO_LOCALCMS_MEMORY_VIEW_CLOSEOUT_02` : CLOSE
-- `GO_LOCALCMS_MEMORY_VIEW_CANONICAL_SYNC_01` : cette passe
+- `GO_LOCALCMS_MEMORY_VIEW_CANONICAL_SYNC_01` : PASS
+- `GO_LOCALCMS_GITIGNORE_HARDEN_01` : PASS
+- `GO_LOCALCMS_GITIGNORE_CANONICAL_SYNC_01` : PASS
+- `GO_LOCALCMS_GITIGNORE_LOCAL_COMMIT_01` : PASS
 
 Source reelle validee
 - `C:\Users\ghost\Downloads\memory_bricks_localcms_source`
-- index : `index\index_full.json`
-- details : `bricks\MB-*.md`
+- Contrat retenu : `index\index_full.json` + `bricks\MB-*.md`
 
-Regles a conserver
-- read-only strict
-- aucun write-back vers `memory_bricks`
-- aucun backend / runtime supplementaire
-- aucun melange avec shared explorer / cms installer / forms
+Hygiene/versioning retenus
+- `.gitignore` present et commite
+- Couverture minimale : `.env`, caches locaux, environnements virtuels, `node_modules/`, logs, temporaires, bruit OS/editeur minimal
+
+Historique utile conserve
+- M1 Shared Explorer V1 et M2 CMS Installer V1 restent etablis ; voir `02_etabli_localcms.txt` si necessaire
+- Le closeout viewer V1 reste dans `03_closeout_memory_view_v1.txt`
+- Les anciennes notes sandbox/host/P0 ne pilotent plus la reprise actuelle
 
 Point de reprise recommande
-- `GO_LOCALCMS_NEXT_MISSION_SELECTION_01`
-- objet : selectionner le prochain chantier LocalCMS utile sans rouvrir Memory View V1 par defaut
-
-=== DÉPÔT CANONIQUE ===
-Chemin        : C:\Users\ghost\localcms
-Branche       : feature/localcms-shared-explorer-cms-installer-v1
-HEAD local    : 67c0bab LocalCMS: remove duplicate const declarations
-Origin        : 28ac50a LocalCMS: fix nav paths (remove spurious space after /)
-Delta origin  : 1 commit local non poussé — GO_PUSH requis (proxy VM bloque)
-Working tree  : contenu == HEAD (prouvé par diff hors CRLF)
-Index         : artefact virtiofs — MM/M sur localcms-v5.html et 2 tests (CRLF)
-                impact contenu : aucun (prouvé)
-
-Commits appliqués cette session (ordre chronologique)
-  6bbe56a  reintroduce explorer/installer nav entries and fix webhook template string
-  28ac50a  fix nav paths (remove spurious space after /)
-  67c0bab  remove duplicate const declarations (typeList/typeIcons/typeLabels)
-
-=== DÉPÔT SANDBOX ===
-Chemin        : C:\Users\ghost\project-localcms\localcms
-Branche       : feature/localcms-shared-explorer-cms-installer-v1
-HEAD sandbox  : 826a67a Add Shared Explorer V1 and CMS Installer V1 branch-ready bundle
-Delta canon   : 3 commits canoniques absents du sandbox (6bbe56a, 28ac50a, 67c0bab)
-
-Fichiers présents localement, non versionnés (sandbox)
-  main.py / requirements.txt / run.bat / run.sh  : host FastAPI de validation
-  .env                                           : chemins locaux machine — non commitable
-  .env.example                                   : placeholders documentaires
-  → aucun commit observé n'inclut ces fichiers dans aucun des deux dépôts
-
-=== VALIDATION LIVE (sandbox) ===
-M1 shared_explorer  : ÉTABLI — endpoints répondent
-M2 cms_installer    : ÉTABLI — install hello-mod-v1.0.0.zip réussie
-
-=== DÉCISIONS PENDANTES ===
-PUSH-1  : pousser 67c0bab vers origin             GO_PUSH requis
-HOST-1  : statut host FastAPI — classement B      GO_APPLY requis après validation
+- `GO_LOCALCMS_NEXT_MISSION_SELECTION_02`
+- Objet : selectionner le prochain chantier LocalCMS utile sans rouvrir Memory View V1 ni les lignes closes
