@@ -1,6 +1,6 @@
 LOCALCMS — POINT DE REPRISE
 Date : 2026-03-21
-Mis à jour : 2026-03-21 (GO_LOCALCMS_REPRISE_SYNC_01 — sync post-audit 2026-03-20)
+Mis à jour : 2026-03-27 (GO_LOCALCMS_MEMORY_VIEW_CLOSEOUT_02 — clôture viewer Memory Bricks V1)
 Référence précédente : version 2026-03-18 (d26f07f)
 
 === ÉTAT RÉEL DES BRANCHES (2026-03-21) ===
@@ -133,14 +133,38 @@ Fichiers associés
   00_prompt_reprise_CMS_INSTALLER_V1.txt
   00_index_fichiers_reprise_M1.txt
 
-=== POINT D'ARRÊT ===
+=== ADDENDUM 2026-03-27 — MEMORY VIEW V1 ===
 
-feature/... HEAD = d26f07f, origin aligné.
-tools/... HEAD = 54da71f, origin aligné.
-M1 + M2 : ÉTABLI.
-Branche dev host : créée et versionnée (ACTION-2 CLÔTURÉE).
+Branche active de cette passe
+- feature/localcms-memory-view-v1
+- HEAD local : ac74037 — localcms: add read-only memory bricks view
 
-Prochaine action selon priorité kanban :
-  1. Localiser le document P0 Compatibility Contract (bloquant pour M-1.1)
-  2. Sur décision PM : ouvrir GO_LOCALCMS_NEXT_01 (M3+ ou suite roadmap)
-  3. Hors périmètre Claude Cowork local : validation live smoke M1 sur backend réel
+Etat local retenu
+- `GO_LOCALCMS_MEMORY_VIEW` : CLOSE sur source synthetique.
+- `GO_LOCALCMS_VIEWER_UI_ENTRYPOINT_REALIGN_01` : PASS.
+- `GO_LOCALCMS_VIEWER_REAL_SOURCE_VALIDATE_01` : PASS.
+
+Source reelle validee
+- `C:\Users\ghost\Downloads\memory_bricks_localcms_source`
+- index present : `index\index_full.json`
+- bricks presentes : `MB-00001`, `MB-00002`, `MB-00003`
+
+Perimetre reellement couvert
+- entree UI `Memory Bricks`
+- route `memory_view`
+- panel `panel-memory_view`
+- lecture read-only via `index\index_full.json` + `bricks\MB-*.md`
+- liste, filtre simple, detail lisible, garde-fou read-only
+
+Limites a conserver
+- aucun write-back vers `memory_bricks`
+- aucun backend / runtime / host / FastAPI / port 8000 ajoute
+- aucun patch noyau `memory_bricks`
+- aucun melange avec shared explorer / cms installer / forms
+
+Point de cloture
+- viewer Memory Bricks V1 LocalCMS : CLOSE dans son perimetre minimal read-only utile
+
+Point de reprise suivant
+- `GO_LOCALCMS_MEMORY_VIEW_CANONICAL_SYNC_01`
+- objet : aligner cette cloture locale avec la couche canonique OT, sans rouvrir le viewer par defaut
