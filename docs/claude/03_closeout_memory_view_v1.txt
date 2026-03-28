@@ -3,7 +3,7 @@ Mission : GO_LOCALCMS_MEMORY_VIEW_CLOSEOUT_02
 Date    : 2026-03-27
 Repo    : C:\Users\ghost\localcms
 Branche : feature/localcms-memory-view-v1
-HEAD    : 82cfe54
+HEAD    : 90a52e9
 Statut  : CLOSE
 
 1. Etat final retenu
@@ -45,5 +45,7 @@ Statut  : CLOSE
 5. Point de reprise
 
 - `GO_LOCALCMS_MEMORY_VIEW_CANONICAL_SYNC_01` : PASS.
-- Prochain trigger recommande : `GO_LOCALCMS_NEXT_MISSION_SELECTION_01`.
-- Objet : selectionner le prochain chantier LocalCMS utile, sans rouvrir Memory View V1 par defaut.
+- `GO_LOCALCMS_GITIGNORE_HARDEN_01` : PASS.
+- `GO_LOCALCMS_GITIGNORE_CANONICAL_SYNC_01` : PASS.
+- Prochain trigger recommande : `GO_LOCALCMS_NEXT_MISSION_SELECTION_02`.
+- Objet : selectionner le prochain chantier LocalCMS utile apres sync hygiene/versioning, sans rouvrir Memory View V1 par defaut.

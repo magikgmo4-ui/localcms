@@ -1,6 +1,6 @@
 LOCALCMS — INDEX SESSION
 Date : 2026-03-27
-Statut pack : DOCUMENTE — memory view V1 clos et synchronise canoniquement
+Statut pack : DOCUMENTE — memory view V1 clos + gitignore synchronise canoniquement
 
 Projet
 - LocalCMS
@@ -29,6 +29,8 @@ Session couverte
 - validation viewer sur source réelle `C:\Users\ghost\Downloads\memory_bricks_localcms_source`
 - clôture documentaire locale compacte du lot
 - synchronisation canonique locale post-closeout
+- `GO_LOCALCMS_GITIGNORE_HARDEN_01` = PASS
+- `GO_LOCALCMS_GITIGNORE_CANONICAL_SYNC_01` = PASS
 
 Protocole actif
 - AUDIT / VERDICT / APPLICATION séparés

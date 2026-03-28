@@ -1,6 +1,6 @@
 LOCALCMS — POINT DE REPRISE
 Date : 2026-03-21
-Mis à jour : 2026-03-27 (GO_LOCALCMS_MEMORY_VIEW_CANONICAL_SYNC_01 — sync documentaire viewer Memory Bricks V1)
+Mis à jour : 2026-03-27 (GO_LOCALCMS_GITIGNORE_CANONICAL_SYNC_01 — sync canonique minimale autour de .gitignore)
 Référence précédente : version 2026-03-18 (d26f07f)
 
 === ÉTAT RÉEL DES BRANCHES (2026-03-21) ===
@@ -56,6 +56,7 @@ OUVERT-1  .gitignore absent du canonique
   Constat : aucun .gitignore dans C:\Users\ghost\localcms
   Impact  : .env et artefacts non exclus formellement
   Statut  : À CONFIRMER — à traiter lors d'une prochaine session dédiée
+  Mise à jour 2026-03-27 : point levé par `GO_LOCALCMS_GITIGNORE_HARDEN_01` — `.gitignore` présent à la racine
 
 OUVERT-2  Sandbox non synchronisé avec les commits canoniques
   Constat : sandbox HEAD = 826a67a, feature HEAD = d26f07f (delta = 4 commits)
@@ -168,3 +169,23 @@ Point de cloture
 Point de reprise suivant
 - `GO_LOCALCMS_NEXT_MISSION_SELECTION_01`
 - objet : selectionner le prochain chantier LocalCMS utile, sans rouvrir Memory View V1 par defaut
+
+=== ADDENDUM 2026-03-27 — GITIGNORE CANONICAL SYNC ===
+
+Branche active de cette passe
+- feature/localcms-memory-view-v1
+- HEAD local : 90a52e9 — localcms: sync canonical memory viewer v1 closeout
+
+Etat retenu
+- `.gitignore` present a la racine du repo
+- `GO_LOCALCMS_GITIGNORE_HARDEN_01` : PASS
+- `GO_LOCALCMS_GITIGNORE_CANONICAL_SYNC_01` : PASS
+
+Portee retenue
+- hygiene/versioning locale uniquement
+- aucune modification du viewer Memory Bricks V1
+- aucun backend / runtime / host / FastAPI / port 8000
+
+Point de reprise suivant
+- `GO_LOCALCMS_NEXT_MISSION_SELECTION_02`
+- objet : selectionner le prochain chantier LocalCMS utile apres sync canonique du `.gitignore`

@@ -1,6 +1,29 @@
 LOCALCMS — WORKFLOW MACHINE
 Date : 2026-03-18
 
+=== ADDENDUM 2026-03-27 — GITIGNORE CANONICAL SYNC ===
+Chemin        : C:\Users\ghost\localcms
+Branche       : feature/localcms-memory-view-v1
+HEAD local    : 90a52e9 localcms: sync canonical memory viewer v1 closeout
+Etat de depart: worktree non propre avec un seul ecart visible `?? .gitignore`
+
+Etat hygiene/versioning
+- `.gitignore` present a la racine du repo.
+- `GO_LOCALCMS_GITIGNORE_HARDEN_01` : PASS.
+- `GO_LOCALCMS_GITIGNORE_CANONICAL_SYNC_01` : PASS.
+
+Couverture read-only / hygiene retenue
+- `.env` / `.env.*`
+- caches Python
+- environnements virtuels locaux
+- `node_modules/`
+- logs / `tmp/` / `temp/`
+- bruit OS / editeur minimal
+
+Point de reprise recommande
+- `GO_LOCALCMS_NEXT_MISSION_SELECTION_02`
+- objet : selectionner le prochain chantier LocalCMS utile apres sync canonique du `.gitignore`, sans rouvrir Memory View V1
+
 === ADDENDUM 2026-03-27 — MEMORY VIEW CANONICAL SYNC ===
 Chemin        : C:\Users\ghost\localcms
 Branche       : feature/localcms-memory-view-v1

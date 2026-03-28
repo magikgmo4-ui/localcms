@@ -12,6 +12,15 @@ M3 — MEMORY BRICKS VIEWER V1
   Validation: UI entrypoint realignee + validation sur source reelle Windows
   Limites   : aucun backend/runtime supplementaire ; aucun melange shared explorer / cms installer / forms
 
+=== ADDENDUM 2026-03-27 — GITIGNORE HARDEN ===
+
+M3.1 — GITIGNORE CANONIQUE MINIMAL
+  Statut    : PASS — hygiene/versioning locale synchronisee
+  Fichier   : `.gitignore`
+  Portee    : `.env`, caches locaux, environnements virtuels, `node_modules/`, logs, temporaires, bruit OS/editeur minimal
+  Garantie  : aucun code produit touche
+  Limites   : aucune extension fonctionnelle ; aucun impact viewer/backend/runtime
+
 Projet
 - LocalCMS — gestionnaire de configuration local, architecture modulaire IIFE
 
