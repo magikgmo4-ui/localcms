@@ -8,7 +8,7 @@ Projet
 Etat de branche retenu
 - Repo canonique local : `C:\Users\ghost\localcms`
 - Branche active : `feature/localcms-memory-view-v1`
-- HEAD retenu : `2bb1a58`
+- HEAD retenu : `089efe3`
 - Hypothese de travail : branche locale uniquement
 
 Pack documentaire de reprise

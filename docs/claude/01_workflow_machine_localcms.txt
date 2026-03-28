@@ -4,7 +4,7 @@ Date : 2026-03-27
 Depot courant
 - Chemin : `C:\Users\ghost\localcms`
 - Branche : `feature/localcms-memory-view-v1`
-- HEAD local : `2bb1a58` — `localcms: commit gitignore harden and canonical sync`
+- HEAD local : `089efe3` — `localcms: consolidate reprise pack`
 - Worktree : propre
 - Remote branche feature : non visible ; raisonner localement uniquement
 

@@ -1,12 +1,12 @@
 LOCALCMS — POINT DE REPRISE
 Date : 2026-03-27
-Mis a jour : 2026-03-27 (`GO_LOCALCMS_REPRISE_PACK_CONSOLIDATION_01`)
-Reference precedente utile : `GO_LOCALCMS_GITIGNORE_CANONICAL_SYNC_01`
+Mis a jour : 2026-03-27 (`GO_LOCALCMS_REPRISE_PACK_HEAD_SYNC_01`)
+Reference precedente utile : `GO_LOCALCMS_REPRISE_PACK_LOCAL_COMMIT_01`
 
 Etat de branche retenu
 - Repo : `C:\Users\ghost\localcms`
 - Branche : `feature/localcms-memory-view-v1`
-- HEAD local : `2bb1a58` — `localcms: commit gitignore harden and canonical sync`
+- HEAD local : `089efe3` — `localcms: consolidate reprise pack`
 - Worktree : propre
 - Hypothese de travail : local uniquement ; branche feature non visible sur le remote GitHub
 
