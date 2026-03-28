@@ -509,6 +509,7 @@ body[data-iface=dev] .c-sidebar__icon{background:var(--purple)}
     <div class="c-sidebar__section">
       <div class="c-sidebar__label">Données</div>
       <div class="c-nav" data-panel="data_view"          onclick="BUS.emit('nav:goto','data_view')">      <span class="c-nav__icon">📊</span> Données & Résultats</div>
+      <div class="c-nav" data-panel="memory_view"        onclick="BUS.emit('nav:goto','memory_view')">    <span class="c-nav__icon">🧠</span> Memory Bricks</div>
     </div>
     <div class="c-sidebar__section">
       <div class="c-sidebar__label">IA / Prompts</div>
@@ -601,6 +602,7 @@ body[data-iface=dev] .c-sidebar__icon{background:var(--purple)}
 <div class="c-panel" id="panel-use_main"><div class="c-section"><span class="c-section__title">▶ USE — Opérations</span></div><div id="use-iface-content"></div></div>
 <div class="c-panel" id="panel-dev_main"><div class="c-section"><span class="c-section__title">🛠 DEV — Éditeur · Arborescence · Multi-machine</span></div><div id="dev-iface-content"></div></div>
 <div class="c-panel" id="panel-data_view"><div class="c-section"><span class="c-section__title">📊 Données — Collecte · Affichage · Probabilités</span></div><div id="data-view-content"></div></div>
+<div class="c-panel" id="panel-memory_view"><div class="c-section"><span class="c-section__title">🧠 Memory Bricks — Lecture seule</span><span class="c-tag">read-only</span></div><div id="memory-view-content"></div></div>
 <div class="c-panel" id="panel-ia_run"><div class="c-section"><span class="c-section__title">🤖 IA Runner — Prompts · Modèles · Résultats</span></div><div id="ia-run-content"></div></div>
 <div class="c-panel" id="panel-menu_cfg"><div class="c-section"><span class="c-section__title">☰ Menu Builder</span></div><div id="menu-cfg-content"></div></div>
 <div class="c-panel" id="panel-menu_display"><div class="c-section"><span class="c-section__title">▤ Menu Display</span></div><div id="menu-display-content"></div></div>
@@ -1931,6 +1933,7 @@ const MOD_NAV = (() => {
     scripts    : { title: 'Scripts .sh',      path: '/ exécution'     },
     connectors : { title: 'Connecteurs',      path: '/ backend'       },
     settings   : { title: 'Paramètres',       path: '/ settings'      },
+    memory_view: { title: 'Memory Bricks',    path: '/ memory_bricks' },
     shared_explorer : { title: 'Shared Explorer',      path: '/explorer'   },
     cms_installer   : { title: 'CMS Module Installer', path: '/installer'  },
   };
@@ -8744,6 +8747,285 @@ const MOD_DATA_SOURCES = (() => {
 })();
 
 /* ══ MOD_DATA_VIEW — Affichage données + probabilités ══ */
+const MOD_MEMORY_VIEW = (() => {
+  const state = {
+    sourceLabel: 'Aucune source memory_bricks chargée',
+    status: 'Sélectionner un dossier read-only contenant index/index_full.json',
+    indexPath: 'non prouvé',
+    entries: [],
+    filtered: [],
+    activeId: null,
+    detail: '',
+    search: '',
+    typeFilter: 'all',
+    statusFilter: 'all',
+    filesByPath: new Map(),
+    markdownById: new Map(),
+  };
+
+  const escapeHtml = (value = '') => String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+  const normalizePath = (value = '') => String(value).replace(/\\/g, '/').replace(/^\.\//, '');
+  const getActiveEntry = () => state.entries.find((entry) => entry.id === state.activeId) || null;
+  const unique = (values) => [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
+
+  const normalizeEntry = (entry = {}) => ({
+    id: entry.id || entry.brick_id || '',
+    title: entry.title || entry.summary_short || entry.id || '(sans titre)',
+    type: entry.type || 'unknown',
+    status: entry.status || 'unknown',
+    date: entry.date || '',
+    project: entry.project || '',
+    module: entry.module || '',
+    summary_short: entry.summary_short || '',
+    resume_point: entry.resume_point || '',
+    tags: Array.isArray(entry.tags) ? entry.tags : [],
+    path: entry.path || entry.file || entry.relative_path || entry.markdown_path || '',
+  });
+
+  const resolveEntries = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload.entries)) return payload.entries;
+    if (Array.isArray(payload.items)) return payload.items;
+    if (Array.isArray(payload.bricks)) return payload.bricks;
+    return [];
+  };
+
+  const rebuildFilters = () => {
+    const query = state.search.trim().toLowerCase();
+    state.filtered = state.entries.filter((entry) => {
+      if (state.typeFilter !== 'all' && entry.type !== state.typeFilter) return false;
+      if (state.statusFilter !== 'all' && entry.status !== state.statusFilter) return false;
+      if (!query) return true;
+      const haystack = [entry.id, entry.title, entry.summary_short, entry.resume_point, entry.project, entry.module, ...(entry.tags || [])]
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  };
+
+  const findPathMatch = (rawPath) => {
+    if (!rawPath) return null;
+    const target = normalizePath(rawPath);
+    if (state.filesByPath.has(target)) return state.filesByPath.get(target);
+    for (const [path, file] of state.filesByPath.entries()) {
+      if (path.endsWith(target)) return file;
+    }
+    return null;
+  };
+
+  const findMarkdownFile = (entry) => {
+    const direct = findPathMatch(entry.path);
+    if (direct) return direct;
+    if (state.markdownById.has(entry.id)) return state.markdownById.get(entry.id);
+    return null;
+  };
+
+  const ensureSelection = async () => {
+    if (!state.filtered.length) {
+      state.activeId = null;
+      state.detail = '';
+      render();
+      return;
+    }
+    if (state.filtered.some((entry) => entry.id === state.activeId)) {
+      render();
+      return;
+    }
+    await selectBrick(state.filtered[0].id);
+  };
+
+  const selectBrick = async (id) => {
+    state.activeId = id;
+    const entry = getActiveEntry();
+    if (!entry) {
+      state.detail = '';
+      render();
+      return;
+    }
+    const file = findMarkdownFile(entry);
+    state.detail = file ? await file.text() : 'Détail markdown non trouvé dans la source sélectionnée.';
+    render();
+  };
+
+  const loadFiles = async (files, sourceLabel = 'source externe sélectionnée') => {
+    const list = Array.from(files || []);
+    state.filesByPath = new Map();
+    state.markdownById = new Map();
+
+    if (!list.length) {
+      state.entries = [];
+      state.filtered = [];
+      state.activeId = null;
+      state.detail = '';
+      state.sourceLabel = sourceLabel;
+      state.status = 'Aucun fichier fourni.';
+      state.indexPath = 'non prouvé';
+      render();
+      return false;
+    }
+
+    list.forEach((file) => {
+      const path = normalizePath(file.webkitRelativePath || file.name);
+      state.filesByPath.set(path, file);
+      const idMatch = path.match(/(MB-[0-9]{5})/i);
+      if (idMatch && path.toLowerCase().endsWith('.md') && !state.markdownById.has(idMatch[1])) {
+        state.markdownById.set(idMatch[1], file);
+      }
+    });
+
+    const indexFile = findPathMatch('index/index_full.json') || findPathMatch('index_full.json');
+    state.sourceLabel = sourceLabel;
+    state.indexPath = indexFile ? normalizePath(indexFile.webkitRelativePath || indexFile.name) : 'non prouvé';
+
+    if (!indexFile) {
+      state.entries = [];
+      state.filtered = [];
+      state.activeId = null;
+      state.detail = '';
+      state.status = 'index/index_full.json introuvable dans la source sélectionnée.';
+      render();
+      BUS.emit('log:add', 'WARN', 'memory_bricks: index/index_full.json introuvable');
+      return false;
+    }
+
+    try {
+      const payload = JSON.parse(await indexFile.text());
+      state.entries = resolveEntries(payload).map(normalizeEntry).filter((entry) => entry.id);
+      rebuildFilters();
+      state.status = `${state.entries.length} bricks chargées en lecture seule.`;
+      BUS.emit('log:add', 'OK', `memory_bricks: ${state.entries.length} bricks chargées (read-only)`);
+      await ensureSelection();
+      return true;
+    } catch (error) {
+      state.entries = [];
+      state.filtered = [];
+      state.activeId = null;
+      state.detail = '';
+      state.status = `Lecture index impossible : ${error.message}`;
+      render();
+      BUS.emit('log:add', 'ERR', `memory_bricks: lecture index impossible (${error.message})`);
+      return false;
+    }
+  };
+
+  const loadFromInput = async (inputEl) => {
+    await loadFiles(inputEl && inputEl.files ? Array.from(inputEl.files) : [], 'dossier memory_bricks sélectionné');
+    if (inputEl) inputEl.value = '';
+  };
+
+  const openPicker = () => {
+    const input = FN.el('memory-view-folder');
+    if (input) input.click();
+  };
+
+  const setSearch = (value) => {
+    state.search = value || '';
+    rebuildFilters();
+    ensureSelection();
+  };
+
+  const setTypeFilter = (value) => {
+    state.typeFilter = value || 'all';
+    rebuildFilters();
+    ensureSelection();
+  };
+
+  const setStatusFilter = (value) => {
+    state.statusFilter = value || 'all';
+    rebuildFilters();
+    ensureSelection();
+  };
+
+  const render = () => {
+    const active = getActiveEntry();
+    const typeOptions = unique(state.entries.map((entry) => entry.type));
+    const statusOptions = unique(state.entries.map((entry) => entry.status));
+
+    FN.html('memory-view-content', `
+      <div class="c-card" style="margin-bottom:12px">
+        <div class="c-card__header">
+          <span class="c-card__title">Bridge memory_bricks read-only</span>
+          <div class="c-card__icon c-card__icon--green">RO</div>
+        </div>
+        <div class="c-card__sub">Source de vérité externe ; LocalCMS reste une surface de lecture/navigation humaine.</div>
+        <div style="margin-top:10px;font-size:12px;color:var(--text-2)">
+          Source active : <span class="u-mono">${escapeHtml(state.sourceLabel)}</span><br>
+          Index attendu : <span class="u-mono">index/index_full.json</span><br>
+          Index chargé : <span class="u-mono">${escapeHtml(state.indexPath)}</span><br>
+          Statut : <span class="u-mono">${escapeHtml(state.status)}</span>
+        </div>
+        <div class="l-row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+          <button class="c-btn c-btn--primary" onclick="MOD_MEMORY_VIEW.openPicker()">📂 Charger dossier memory_bricks</button>
+          <span style="font-size:11px;color:var(--text-2)">Lecture seule uniquement · aucun write-back</span>
+        </div>
+        <input id="memory-view-folder" type="file" webkitdirectory directory multiple style="display:none" onchange="MOD_MEMORY_VIEW.loadFromInput(this)">
+      </div>
+
+      <div class="l-grid-2" style="gap:12px;align-items:start">
+        <div>
+          <div class="c-card" style="margin-bottom:12px">
+            <div class="l-row" style="gap:8px;flex-wrap:wrap">
+              <input class="c-input" placeholder="Filtrer id / titre / tag" value="${escapeHtml(state.search)}" style="flex:1;min-width:220px" oninput="MOD_MEMORY_VIEW.setSearch(this.value)">
+              <select class="c-select" style="width:170px" onchange="MOD_MEMORY_VIEW.setTypeFilter(this.value)">
+                <option value="all" ${state.typeFilter==='all'?'selected':''}>Tous les types</option>
+                ${typeOptions.map((value) => `<option value="${escapeHtml(value)}" ${state.typeFilter===value?'selected':''}>${escapeHtml(value)}</option>`).join('')}
+              </select>
+              <select class="c-select" style="width:170px" onchange="MOD_MEMORY_VIEW.setStatusFilter(this.value)">
+                <option value="all" ${state.statusFilter==='all'?'selected':''}>Tous les statuts</option>
+                ${statusOptions.map((value) => `<option value="${escapeHtml(value)}" ${state.statusFilter===value?'selected':''}>${escapeHtml(value)}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+
+          <div class="c-card">
+            <div class="c-section"><span class="c-section__title">Liste des bricks</span><span class="c-tag">${state.filtered.length}</span></div>
+            ${state.filtered.length ? `
+              <div class="c-table-wrap">
+                <table class="c-table">
+                  <thead><tr><th>ID</th><th>Titre</th><th>Type</th><th>Statut</th><th>Action</th></tr></thead>
+                  <tbody>
+                    ${state.filtered.map((entry) => `
+                      <tr ${state.activeId===entry.id ? 'style="background:rgba(255,255,255,.03)"' : ''}>
+                        <td><span class="u-mono">${escapeHtml(entry.id)}</span></td>
+                        <td>${escapeHtml(entry.title)}</td>
+                        <td><span class="c-tag">${escapeHtml(entry.type)}</span></td>
+                        <td><span class="c-badge c-badge--info">${escapeHtml(entry.status)}</span></td>
+                        <td><button class="c-btn c-btn--icon" onclick="MOD_MEMORY_VIEW.selectBrick('${escapeHtml(entry.id)}')">→</button></td>
+                      </tr>`).join('')}
+                  </tbody>
+                </table>
+              </div>` : `<div style="font-size:12px;color:var(--text-2)">Aucune brick lisible dans la source courante.</div>`}
+          </div>
+        </div>
+
+        <div class="c-card">
+          <div class="c-section"><span class="c-section__title">Détail lisible</span>${active ? `<span class="c-tag">${escapeHtml(active.id)}</span>` : ''}</div>
+          ${active ? `
+            <div class="l-grid-2" style="gap:8px;margin-bottom:10px">
+              <div><span class="u-muted">Titre</span><br>${escapeHtml(active.title)}</div>
+              <div><span class="u-muted">Date</span><br><span class="u-mono">${escapeHtml(active.date || 'non prouvé')}</span></div>
+              <div><span class="u-muted">Projet</span><br>${escapeHtml(active.project || 'non prouvé')}</div>
+              <div><span class="u-muted">Module</span><br>${escapeHtml(active.module || 'non prouvé')}</div>
+            </div>
+            <div style="font-size:12px;color:var(--text-2);margin-bottom:10px">${escapeHtml(active.summary_short || active.resume_point || 'Résumé court non prouvé')}</div>
+            <pre class="c-terminal" style="white-space:pre-wrap;word-break:break-word;min-height:280px">${escapeHtml(state.detail || 'Détail non disponible.')}</pre>`
+            : `<div style="font-size:12px;color:var(--text-2)">Sélectionner une brick après chargement d'une source read-only.</div>`}
+        </div>
+      </div>
+    `);
+  };
+
+  const init = () => render();
+  return { init, render, openPicker, loadFromInput, loadFiles, setSearch, setTypeFilter, setStatusFilter, selectBrick };
+})();
+
+/* ══ MOD_DATA_VIEW — Affichage données + probabilités ══ */
 const MOD_DATA_VIEW = (() => {
   const render = () => {
     FN.html('data-view-content', `
@@ -8895,6 +9177,7 @@ window.addEventListener('DOMContentLoaded', () => {
     MOD_SYS_CFG, MOD_APPS_CFG, MOD_SEC_CFG, MOD_DEVTOOLS_CFG, MOD_QUEUE_CFG,
     MOD_PLUGIN_CFG, MOD_USE_IFACE, MOD_DEV_IFACE, MOD_DEV_TOOLS, MOD_DEV_CFG,
     MOD_ENV_GLOBAL, MOD_MACHINES_CFG, MOD_IA_CFG, MOD_DATA_SOURCES,
+    MOD_MEMORY_VIEW,
     MOD_DATA_VIEW, MOD_IA_RUN, MOD_IMAGES_CFG,
     MOD_SHARED_EXPLORER, MOD_CMS_INSTALLER,
   ];
