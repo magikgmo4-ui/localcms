@@ -1590,6 +1590,104 @@ const CFG = (() => {
 
 })();
 
+/* -- $COND — moteur de conditions déclaratif V1 ─────────────────────────
+   Syntaxe supportée : { when:{ field, eq }, show:[fieldId, ...] }
+   Sémantique : un champ listé dans show[] est visible si au moins une
+   condition le cible ET que la valeur courante du champ source === eq.
+   Les champs hors de tout show[] ne sont jamais masqués par $COND.
+   ─────────────────────────────────────────────────────────────────────── */
+const $COND = (() => {
+
+  /**
+   * Appliquer les conditions au DOM courant.
+   * @param {Array} conditions — tableau conditions[] d'un manifeste
+   */
+  const apply = (conditions) => {
+    if (!conditions || !conditions.length) return;
+
+    /* 1. Identifier tous les champs sous contrôle d'une condition */
+    const controlled = new Set();
+    conditions.forEach(c => (c.show || []).forEach(f => controlled.add(f)));
+
+    /* 2. Calculer lesquels doivent être visibles */
+    const visible = new Set();
+    conditions.forEach(cond => {
+      const wh = cond.when;
+      if (!wh) return;
+      const el = document.getElementById(`cfg-${wh.field}`);
+      if (!el) return;
+      const val = el.type === 'checkbox' ? String(el.checked) : el.value;
+      if (val === wh.eq) (cond.show || []).forEach(f => visible.add(f));
+    });
+
+    /* 3. Appliquer display sur le wrapper .c-field de chaque champ contrôlé */
+    controlled.forEach(fieldId => {
+      const el = document.getElementById(`cfg-${fieldId}`);
+      const wrapper = el ? el.closest('.c-field') : null;
+      if (wrapper) wrapper.style.display = visible.has(fieldId) ? '' : 'none';
+    });
+  };
+
+  return { apply };
+
+})();
+
+/* -- $VALID — moteur de validation déclaratif V1 ────────────────────────
+   Règles supportées : { field, required } et { field, url }
+   Retourne { valid:bool, errors:[{field, message}] }
+   ─────────────────────────────────────────────────────────────────────── */
+const $VALID = (() => {
+
+  const URL_RE = /^https?:\/\/.+/;
+
+  /**
+   * Exécuter les validators contre un objet de valeurs.
+   * @param {Array}  validators — tableau validators[] d'un manifeste
+   * @param {Object} values     — { fieldId: valeur } issu de CFG.readValues
+   * @returns {{ valid:boolean, errors:Array<{field:string, message:string}> }}
+   */
+  const run = (validators, values) => {
+    const errors = [];
+    (validators || []).forEach(v => {
+      const raw = values[v.field];
+      const val = (raw === null || raw === undefined) ? '' : String(raw).trim();
+      if (v.required && !val) {
+        errors.push({ field: v.field, message: 'Champ requis' });
+      }
+      if (v.url && val && !URL_RE.test(val)) {
+        errors.push({ field: v.field, message: 'URL invalide' });
+      }
+    });
+    return { valid: errors.length === 0, errors };
+  };
+
+  /**
+   * Afficher les erreurs sous les champs concernés.
+   * @param {Array} errors — tableau { field, message }
+   */
+  const showErrors = (errors) => {
+    clearErrors();
+    errors.forEach(err => {
+      const el = document.getElementById(`cfg-${err.field}`);
+      const wrapper = el ? el.closest('.c-field') : null;
+      if (!wrapper) return;
+      const msg = document.createElement('div');
+      msg.className = 'cval-error';
+      msg.style.cssText = 'font-size:10px;color:var(--red);font-family:var(--mono);margin-top:3px';
+      msg.textContent = err.message;
+      wrapper.appendChild(msg);
+    });
+  };
+
+  /** Effacer tous les messages d'erreur affichés. */
+  const clearErrors = () => {
+    document.querySelectorAll('.cval-error').forEach(e => e.remove());
+  };
+
+  return { run, showErrors, clearErrors };
+
+})();
+
 /* -- file-engine.js -- */
 /* ═══════════════════════════════════════════════
    core/file-engine.js — Moteur génération fichiers
@@ -8666,10 +8764,12 @@ const MOD_ENV_GLOBAL = (() => {
 
 /* ══ MOD_MACHINES_CFG — bridge transitoire (lit MOD_MACHINES_CFG_DATA depuis modules/machines-config.js) ══ */
 const MOD_MACHINES_CFG = (() => {
-  let activeType = MOD_MACHINES_CFG_DATA.meta.activeDefault;
+  let activeType   = MOD_MACHINES_CFG_DATA.meta.activeDefault;
   const FORMS      = MOD_MACHINES_CFG_DATA.forms;
   const typeIcons  = MOD_MACHINES_CFG_DATA.meta.typeIcons;
   const typeLabels = MOD_MACHINES_CFG_DATA.meta.typeLabels;
+  const _conds     = MOD_MACHINES_CFG_DATA.conditions;  /* $COND */
+  const _vals      = MOD_MACHINES_CFG_DATA.validators;  /* $VALID */
   const render = () => {
     const formDef = FORMS[activeType];
     FN.html('machines-cfg-content', `
@@ -8683,21 +8783,38 @@ const MOD_MACHINES_CFG = (() => {
         <button class="c-btn" onclick="MOD_MACHINES_CFG.test()">✓ Tester connexion</button>
       </div>
     `);
+    $COND.apply(_conds);
   };
   const switchType = (t) => { activeType=t; render(); };
-  const save     = () => BUS.emit('log:add','OK','Machine sauvegardée');
-  const generate = () => BUS.emit('log:add','OK','Config SSH générée');
-  const test     = () => BUS.emit('log:add','INFO','Test connexion…');
-  const init = () => render();
+  const _getVals = () => {
+    const def = FORMS[activeType];
+    return def ? CFG.readValues(def.sections ?? [def]) : {};
+  };
+  const save = () => {
+    $VALID.clearErrors();
+    const result = $VALID.run(_vals, _getVals());
+    if (!result.valid) { $VALID.showErrors(result.errors); BUS.emit('log:add','WARN','Machines CFG : validation échouée'); return; }
+    BUS.emit('log:add','OK','Machine sauvegardée');
+  };
+  const generate = () => {
+    $VALID.clearErrors();
+    const result = $VALID.run(_vals, _getVals());
+    if (!result.valid) { $VALID.showErrors(result.errors); BUS.emit('log:add','WARN','Machines CFG : champs requis manquants'); return; }
+    BUS.emit('log:add','OK','Config SSH générée');
+  };
+  const test = () => BUS.emit('log:add','INFO','Test connexion…');
+  const init = () => { render(); BUS.on('cfg:changed', () => $COND.apply(_conds)); };
   return { init, render, switchType, save, generate, test };
 })();
 
 /* ══ MOD_IA_CFG — bridge transitoire (lit MOD_IA_CFG_DATA depuis modules/ia-config.js) ══ */
 const MOD_IA_CFG = (() => {
-  let activeType = MOD_IA_CFG_DATA.meta.activeDefault;
+  let activeType   = MOD_IA_CFG_DATA.meta.activeDefault;
   const FORMS      = MOD_IA_CFG_DATA.forms;
   const typeIcons  = MOD_IA_CFG_DATA.meta.typeIcons;
   const typeLabels = MOD_IA_CFG_DATA.meta.typeLabels;
+  const _conds     = MOD_IA_CFG_DATA.conditions;  /* $COND */
+  const _vals      = MOD_IA_CFG_DATA.validators;  /* $VALID */
   const render = () => {
     FN.html('ia-cfg-content', `
       <div class="c-editor-toolbar" style="margin-bottom:12px;border-radius:var(--radius);border:1px solid var(--border);flex-wrap:wrap">
@@ -8710,12 +8827,27 @@ const MOD_IA_CFG = (() => {
         <button class="c-btn" onclick="MOD_IA_CFG.generate()">⬇ Générer config</button>
       </div>
     `);
+    $COND.apply(_conds);
   };
   const switchType   = (t) => { activeType=t; render(); };
-  const save         = () => BUS.emit('log:add','OK','Config IA sauvegardée');
+  const _getVals = () => {
+    const def = FORMS[activeType];
+    return def ? CFG.readValues(def.sections ?? [def]) : {};
+  };
+  const save = () => {
+    $VALID.clearErrors();
+    const result = $VALID.run(_vals, _getVals());
+    if (!result.valid) { $VALID.showErrors(result.errors); BUS.emit('log:add','WARN','IA CFG : validation échouée'); return; }
+    BUS.emit('log:add','OK','Config IA sauvegardée');
+  };
   const testEndpoint = () => BUS.emit('log:add','INFO','Test endpoint IA...');
-  const generate     = () => BUS.emit('log:add','OK','Config IA générée');
-  const init = () => render();
+  const generate = () => {
+    $VALID.clearErrors();
+    const result = $VALID.run(_vals, _getVals());
+    if (!result.valid) { $VALID.showErrors(result.errors); BUS.emit('log:add','WARN','IA CFG : champs requis manquants'); return; }
+    BUS.emit('log:add','OK','Config IA générée');
+  };
+  const init = () => { render(); BUS.on('cfg:changed', () => $COND.apply(_conds)); };
   return { init, render, switchType, save, testEndpoint, generate };
 })();
 
