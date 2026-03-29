@@ -1,14 +1,14 @@
 LOCALCMS — POINT DE REPRISE
 Date : 2026-03-27
-Mis a jour : 2026-03-27 (`GO_LOCALCMS_REPRISE_PACK_HEAD_SYNC_01`)
-Reference precedente utile : `GO_LOCALCMS_REPRISE_PACK_LOCAL_COMMIT_01`
+Mis a jour : 2026-03-28 (`GO_LOCALCMS_POST_MERGE_FINAL_STATE_SYNC_01`)
+Reference precedente utile : `GO_LOCALCMS_POST_MERGE_LOCAL_BRANCH_DELETE_01`
 
 Etat de branche retenu
 - Repo : `C:\Users\ghost\localcms`
-- Branche : `feature/localcms-memory-view-v1`
-- HEAD local : `089efe3` — `localcms: consolidate reprise pack`
+- Branche : `feature/localcms-shared-explorer-cms-installer-v1`
+- HEAD local : `65caff4` — `Merge pull request #1 from magikgmo4-ui/feature/localcms-memory-view-v1`
 - Worktree : propre
-- Hypothese de travail : local uniquement ; branche feature non visible sur le remote GitHub
+- Hypothese de travail : branche de base mergee, locale et distante alignees
 
 Etat etabli a conserver
 - `GO_LOCALCMS_MEMORY_VIEW` : CLOSE
@@ -19,6 +19,11 @@ Etat etabli a conserver
 - `GO_LOCALCMS_GITIGNORE_HARDEN_01` : PASS
 - `GO_LOCALCMS_GITIGNORE_CANONICAL_SYNC_01` : PASS
 - `GO_LOCALCMS_GITIGNORE_LOCAL_COMMIT_01` : PASS
+- `GO_LOCALCMS_BRANCH_PUBLICATION_PUSH_01` : PASS
+- `GO_LOCALCMS_PR_MERGE_EXECUTE_01` : PASS
+- `GO_LOCALCMS_POST_MERGE_REMOTE_BRANCH_DELETE_01` : PASS
+- `GO_LOCALCMS_POST_MERGE_SWITCH_BASE_LOCAL_SYNC_01` : PASS
+- `GO_LOCALCMS_POST_MERGE_LOCAL_BRANCH_DELETE_01` : PASS
 
 Source reelle validee
 - `C:\Users\ghost\Downloads\memory_bricks_localcms_source`
@@ -38,8 +43,9 @@ Historique utile compact
 - M1 Shared Explorer V1 et M2 CMS Installer V1 restent etablis ; voir `02_etabli_localcms.txt` si necessaire
 - Le closeout Memory Bricks V1 reste dans `03_closeout_memory_view_v1.txt`
 - Le point hygiene/versioning est ferme ; `.gitignore` est present et commit
+- PR `#1` est mergee ; branche source locale et distante sont supprimees
 - Les details historiques sandbox/host/P0 restent hors priorite sur cette branche
 
 Point de reprise canonique unique
-- `GO_LOCALCMS_NEXT_MISSION_SELECTION_02`
-- Objet : selectionner le prochain chantier LocalCMS utile sur cette branche, sans rouvrir les perimetres clos
+- `GO_LOCALCMS_NEXT_MISSION_SELECTION_04`
+- Objet : selectionner le prochain chantier LocalCMS utile sur la branche de base mergee, sans rouvrir les perimetres clos

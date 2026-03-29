@@ -3,10 +3,10 @@ Date : 2026-03-27
 
 Depot courant
 - Chemin : `C:\Users\ghost\localcms`
-- Branche : `feature/localcms-memory-view-v1`
-- HEAD local : `089efe3` — `localcms: consolidate reprise pack`
+- Branche : `feature/localcms-shared-explorer-cms-installer-v1`
+- HEAD local : `65caff4` — `Merge pull request #1 from magikgmo4-ui/feature/localcms-memory-view-v1`
 - Worktree : propre
-- Remote branche feature : non visible ; raisonner localement uniquement
+- Remote utile : `origin/feature/localcms-shared-explorer-cms-installer-v1`
 
 Etat etabli sur cette branche
 - `GO_LOCALCMS_MEMORY_VIEW` : CLOSE
@@ -17,6 +17,12 @@ Etat etabli sur cette branche
 - `GO_LOCALCMS_GITIGNORE_HARDEN_01` : PASS
 - `GO_LOCALCMS_GITIGNORE_CANONICAL_SYNC_01` : PASS
 - `GO_LOCALCMS_GITIGNORE_LOCAL_COMMIT_01` : PASS
+
+Etat post-merge prouve
+- PR `#1` : MERGED
+- Merge commit : `65caff47c9432e7efc1df6733cb3ee7503e0a382`
+- Branche source distante : supprimee
+- Branche source locale : supprimee
 
 Source reelle validee
 - `C:\Users\ghost\Downloads\memory_bricks_localcms_source`
@@ -32,5 +38,5 @@ Historique utile conserve
 - Les anciennes notes sandbox/host/P0 ne pilotent plus la reprise actuelle
 
 Point de reprise recommande
-- `GO_LOCALCMS_NEXT_MISSION_SELECTION_02`
-- Objet : selectionner le prochain chantier LocalCMS utile sans rouvrir Memory View V1 ni les lignes closes
+- `GO_LOCALCMS_NEXT_MISSION_SELECTION_04`
+- Objet : selectionner le prochain chantier LocalCMS utile depuis la branche de base mergee, sans rouvrir Memory View V1 ni les lignes closes
