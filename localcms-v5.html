@@ -5817,6 +5817,7 @@ const MOD_APPS_CFG = (() => {
   const typeLabels = MOD_APPS_CFG_DATA.meta.typeLabels;
   const typeList   = Object.keys(FORMS);
   let   activeType = MOD_APPS_CFG_DATA.meta.activeDefault;
+  const _vals      = MOD_APPS_CFG_DATA.validators;  /* $VALID */
 
   const generators = {
     nginx: (v) => `# nginx vhost — généré par LocalCMS
@@ -6023,6 +6024,11 @@ done\necho "✓ rsync backup terminé"`;
     if (!formDef) return;
     const allFields = (formDef.sections||[]).flatMap(s=>s.fields||[]);
     const values = CFG.readValues(allFields.map(f=>({fields:[f]})));
+    /* $VALID guard — filtre par champs du form actif */
+    $VALID.clearErrors();
+    const activeIds = new Set(allFields.map(f => f.id));
+    const valResult = $VALID.run(_vals.filter(v => activeIds.has(v.field)), values);
+    if (!valResult.valid) { $VALID.showErrors(valResult.errors); BUS.emit('log:add','WARN','Apps CFG : validation échouée'); return; }
     const fmtEl = document.getElementById(`cfg-${activeType}_file_ext`);
     const fmt = fmtEl?.value || 'conf';
     const gen = generators[activeType];
@@ -6053,6 +6059,7 @@ const MOD_SEC_CFG = (() => {
   const typeLabels = MOD_SEC_CFG_DATA.meta.typeLabels;
   const typeList   = Object.keys(FORMS);
   let   activeType = MOD_SEC_CFG_DATA.meta.activeDefault;
+  const _vals      = MOD_SEC_CFG_DATA.validators;  /* $VALID */
 
   const generators = {
     ssl: (v, fmt) => {
@@ -6121,6 +6128,11 @@ const MOD_SEC_CFG = (() => {
     if (!formDef) return;
     const allFields = (formDef.sections||[]).flatMap(s=>s.fields||[]);
     const values = CFG.readValues(allFields.map(f=>({fields:[f]})));
+    /* $VALID guard — filtre par champs du form actif */
+    $VALID.clearErrors();
+    const activeIds = new Set(allFields.map(f => f.id));
+    const valResult = $VALID.run(_vals.filter(v => activeIds.has(v.field)), values);
+    if (!valResult.valid) { $VALID.showErrors(valResult.errors); BUS.emit('log:add','WARN','Sec CFG : validation échouée'); return; }
     const fmtEl = document.getElementById('cfg-'+activeType+'_file_ext');
     const fmt = fmtEl?.value || 'sh';
     const gen = generators[activeType];
