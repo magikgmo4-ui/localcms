@@ -9166,7 +9166,8 @@ const MOD_MEMORY_VIEW = (() => {
   };
 
   const init = () => render();
-  return { init, render, openPicker, loadFromInput, loadFiles, setSearch, setTypeFilter, setStatusFilter, selectBrick };
+  return { init, render, openPicker, loadFromInput, loadFiles, setSearch, setTypeFilter, setStatusFilter, selectBrick,
+    __test_helpers:{ normalizeEntry, resolveEntries, escapeHtml, normalizePath, unique, rebuildFilters, findPathMatch, _state: state } };
 })();
 
 /* ══ MOD_DATA_VIEW — Affichage données + probabilités ══ */

@@ -1,0 +1,253 @@
+══════════════════════════════════════════════════════════════════════
+CADRAGE — GO_MEMORY_BRICKS_LOCALCMS_CONSUMER_01
+Branche  : feature/localcms-shared-explorer-cms-installer-v1
+Date     : 2026-04-01
+══════════════════════════════════════════════════════════════════════
+
+
+1. CONTEXTE ET OBJECTIF
+─────────────────────────
+
+  Mission : Évaluer l'état de la surface consommatrice de memory_bricks
+  dans LocalCMS et définir le prochain GO réaliste.
+
+  Déclencheur : Fin du paradigme M-1.x (CAT A + CAT B épuisées, 631/631 PASS,
+  15 modules externalisés). Sélection du prochain chantier utile.
+
+
+2. ÉTAT RÉEL DU REPO
+──────────────────────
+
+  Branche courante  : feature/localcms-shared-explorer-cms-installer-v1
+  HEAD              : c41b24a
+  localcms-v5.html  : 7858 lignes (post M-1.6)
+  Suite complète    : 631/631 PASS (21 fichiers de test)
+
+  Fichiers de test présents (27) :
+    apps-cfg-adopt / backend-cfg-adopt / cfg-files-adopt / cms-installer /
+    conditions / data-sources-adopt / dev-iface-adopt / devtools-cfg-adopt /
+    env-global-adopt / forms / ia-cfg-adopt / machines-cfg-adopt /
+    net-cfg-adopt / net-cmds-adopt / queue-cfg-adopt / sec-cfg-adopt /
+    shared-explorer-v2 / shared-explorer / sys-cfg-adopt /
+    use-iface-adopt / validator
+
+  Fichiers de test memory_bricks : AUCUN (0 dans tests/)
+
+
+3. SURFACE MOD_MEMORY_VIEW — INVENTAIRE COMPLET
+─────────────────────────────────────────────────
+
+  Localisation  : localcms-v5.html L7372–L7648 (277 lignes)
+  Pattern       : IIFE → objet retourné {init, render, openPicker,
+                  loadFromInput, loadFiles, setSearch, setTypeFilter,
+                  setStatusFilter, selectBrick}
+  Enregistrement: L7802 dans le registre des modules
+
+  Entrées UI :
+    L512  : nav entry  → data-panel="memory_view"  (🧠 Memory Bricks)
+    L605  : panel      → id="panel-memory_view"
+    L1897 : route      → memory_view: { title:'Memory Bricks', path:'/ memory_bricks' }
+
+  Fonctions internes :
+
+    PURES (testables en Node.js sans mock) :
+      normalizeEntry(entry)    — normalise id/brick_id, title/summary_short,
+                                 path polymorphe, tags array — L7399–L7411
+      resolveEntries(payload)  — gère Array / .entries / .items / .bricks
+                                 — L7413–L7419
+      rebuildFilters()         — filtre state.entries par typeFilter,
+                                 statusFilter, query haystack — L7421–L7432
+      escapeHtml(value)        — 5 substitutions string — L7388–L7393
+      normalizePath(value)     — backslash→slash, retire ./ — L7395
+      unique(values)           — Set + sort localeCompare — L7397
+
+    BROWSER-ONLY (non testables sans mock File API) :
+      loadFiles(files, label)  — lit webkitRelativePath, file.text(),
+                                 findPathMatch('index/index_full.json')
+      loadFromInput(inputEl)   — wraps loadFiles sur inputEl.files
+      openPicker()             — FN.el('memory-view-folder').click()
+      selectBrick(id)          — file.text() async pour markdown
+      render()                 — FN.html('memory-view-content', ...)
+      BUS.emit(...)            — 3 appels (WARN/OK/ERR)
+
+    MIXTES (logique pure + accès state) :
+      findPathMatch(rawPath)   — itère state.filesByPath (Map) — L7434–L7442
+      findMarkdownFile(entry)  — findPathMatch + state.markdownById — L7444–L7449
+      ensureSelection()        — logique pure + appel selectBrick (async) — L7451–L7463
+
+  Contrat V1 retenu (CLOSEOUT_MEMORY_VIEW_V1.txt, 2026-03-27) :
+    index\index_full.json  → liste + filtres
+    bricks\MB-*.md         → détail lisible
+    Source réelle prouvée  : C:\Users\ghost\Downloads\memory_bricks_localcms_source
+    Bricks prouvées        : MB-00001, MB-00002, MB-00003
+
+  Extractibilité M-1.x :
+    CAT C — ENTIER. Toutes les fonctions clés dépendent du File API browser
+    (webkitRelativePath, file.text()), de FN.html, de BUS.emit.
+    Aucune donnée statique extractible. Non extractible par le paradigme M-1.x.
+
+
+4. GAPS RÉELS IDENTIFIÉS
+──────────────────────────
+
+  G-01 — Zéro test de couverture pour MOD_MEMORY_VIEW
+    Les 6 fonctions pures (normalizeEntry, resolveEntries, rebuildFilters,
+    escapeHtml, normalizePath, unique) sont entièrement testables en Node.js.
+    Aucun test n'existe. Surface non couverte = ~40 assertions possibles.
+
+  G-02 — Branche de référence différente
+    V1 fermée sur feature/localcms-memory-view-v1 (HEAD 90a52e9).
+    La branche courante reprend le code intégré mais sans closeout propre
+    sur cette branche. Pas de CLOSEOUT_MEMORY_VIEW_V1 sur la branche courante.
+
+  G-03 — Index_short.md : non consommé
+    index/index_full.json est le seul index consommé.
+    index_short.md (résumé lisible humain) n'est pas lu ou affiché.
+    Aucun contrat index_short n'est défini dans LocalCMS.
+
+  G-04 — findPathMatch retour null non couvert par test
+    La logique endsWith() de fallback n'est pas prouvée par test.
+    Même constat pour resolveEntries payload vide ({} sans clé reconnue).
+
+
+5. STRATÉGIES
+───────────────
+
+  S-1 — CONSUMER_TESTS  [RECOMMANDÉE]
+  ─────────────────────────────────────
+  Créer tests/memory-view-adopt.test.js couvrant les 6 fonctions pures
+  de MOD_MEMORY_VIEW. Aucun patch HTML. Suite passe de 631 à ~661 PASS.
+
+  Périmètre exact :
+    N  (~8 tests) : normalizeEntry — champs manquants, variantes id/brick_id,
+                    path polymorphe, tags normalisés
+    RE (~6 tests) : resolveEntries — Array direct, .entries, .items, .bricks,
+                    payload vide, payload non reconnu
+    F  (~8 tests) : rebuildFilters (via copie de state) — query haystack,
+                    typeFilter, statusFilter, combinaisons
+    U  (~5 tests) : escapeHtml, normalizePath, unique
+    P  (~3 tests) : findPathMatch (Map mock), findMarkdownFile
+    TOTAL         : ~30 tests
+
+  Fichier : tests/memory-view-adopt.test.js
+  Pattern : eval(src.replace) + globalThis — identique aux autres adopt.test.js
+  ATTENTION : les fonctions pures sont dans l'IIFE. L'extraction devra
+              exposer les helpers via un objet MOD_MEMORY_VIEW_HELPERS
+              accessible depuis Node.js OU le test doit extraire le code
+              brut par regex et le re-évaluer en contexte mock.
+  Approche retenue : eval du corps de l'IIFE avec mocks FN/BUS minimaux,
+                     puis appel direct des fonctions pures.
+
+  Bilan :  HTML inchangé (7858L) / Suite 631→~661 PASS / 0 régression
+
+  S-2 — CONSUMER_TESTS + INDEX_SHORT_CONSUMER
+  ─────────────────────────────────────────────
+  S-1 + ajouter lecture de index/index_short.md comme surface secondaire.
+  index_short.md serait un markdown tabulaire (une ligne par brick).
+  Nouveau parser parseMdIndex(text) → Array<entry> à créer dans MOD_MEMORY_VIEW.
+
+  Bilan : +20-30L HTML / +10 tests / Contrat V1 élargi (non prouvé sur source réelle)
+  Risque : index_short.md n'est pas prouvé dans la source réelle. Contrat
+           non validé. Ne pas ouvrir sans preuve de fichier réel.
+
+  S-3 — CLOSE_AS_IS
+  ───────────────────
+  Déclarer MOD_MEMORY_VIEW suffisant en l'état. Produire un closeout de
+  synchronisation sur la branche courante. Aucun test créé. Aucun patch HTML.
+  Avancer vers le prochain chantier (shared-explorer, cms-installer, ou autre).
+
+  Bilan : Aucun fichier créé / Dette test acceptée / Risque régression non couvert
+
+
+6. RECOMMANDATION
+───────────────────
+
+  S-1 — CONSUMER_TESTS
+
+  Justification :
+    — La discipline du projet impose une couverture test pour tout code actif.
+      21 fichiers couvrent 631 assertions. MOD_MEMORY_VIEW est le seul module
+      actif sans aucun test.
+    — Les 6 fonctions pures représentent ~40% de la logique de MOD_MEMORY_VIEW
+      et sont entièrement testables sans browser API.
+    — Le pattern d'extraction (eval + mock FN/BUS) est une extension naturelle
+      du pattern existant dans les 21 autres adopt.test.js.
+    — Aucun patch HTML requis. Risque zéro de régression sur la suite existante.
+    — S-2 est prématurée (index_short.md non prouvé sur source réelle).
+    — S-3 crée une dette technique explicite sans bénéfice.
+
+
+7. PÉRIMÈTRE DU PROCHAIN GO
+──────────────────────────────
+
+  GO : GO_MEMORY_VIEW_ADOPT_TESTS_01
+
+  Fichier créé      : tests/memory-view-adopt.test.js (~30 tests)
+  Fichiers touchés  : AUCUN (ni HTML ni modules/)
+  Suite cible       : 631 + ~30 PASS, 0 régression
+  Durée estimée     : 1 GO
+
+  Blocs de test :
+    N  — normalizeEntry (8 tests)
+    RE — resolveEntries (6 tests)
+    F  — rebuildFilters simulé (8 tests)
+    U  — utilitaires pures (5 tests)
+    P  — findPathMatch + findMarkdownFile (3 tests)
+
+  Stratégie mock :
+    /* Fournir des mocks FN/BUS minimaux pour évaluer l'IIFE sans erreur */
+    const FN = { el:()=>null, html:()=>{} };
+    const BUS = { emit:()=>{} };
+    eval(src);  /* src = contenu de la section IIFE dans localcms-v5.html */
+    /* Puis appeler les fonctions internes exposées via le module retourné */
+
+    ATTENTION : MOD_MEMORY_VIEW ne retourne PAS les fonctions pures
+    (normalizeEntry etc.) dans son API publique. Il faudra soit :
+      (a) Re-extraire les fonctions pures par regex + eval partiel, OU
+      (b) Ajouter __test_helpers au retour de l'IIFE (patch HTML minimal +1L)
+
+    Choix canonique : option (b) — patch minimal +1L dans l'IIFE return,
+    exposant __test_helpers:{normalizeEntry,resolveEntries,escapeHtml,
+    normalizePath,unique} uniquement en mode test. Ce pattern évite
+    tout re-parsing fragile du corps de l'IIFE.
+
+
+8. PROMPT PRÊT-À-COLLER
+──────────────────────────
+
+  GO_MEMORY_VIEW_ADOPT_TESTS_01
+
+  Contexte : LocalCMS — branche feature/localcms-shared-explorer-cms-installer-v1
+  HEAD c41b24a. localcms-v5.html = 7858 lignes. Suite 631/631 PASS.
+
+  MOD_MEMORY_VIEW (L7372–L7648, 277L) est le seul module actif sans couverture
+  test. Ses fonctions pures (normalizeEntry, resolveEntries, rebuildFilters,
+  escapeHtml, normalizePath, unique) sont testables en Node.js avec des mocks
+  FN/BUS minimaux.
+
+  Travail demandé :
+
+  1. Patch HTML minimal (+1L) dans le return de l'IIFE MOD_MEMORY_VIEW :
+     Avant : return { init, render, openPicker, loadFromInput, loadFiles,
+                      setSearch, setTypeFilter, setStatusFilter, selectBrick };
+     Après : return { init, render, openPicker, loadFromInput, loadFiles,
+                      setSearch, setTypeFilter, setStatusFilter, selectBrick,
+                      __test_helpers:{ normalizeEntry, resolveEntries,
+                        escapeHtml, normalizePath, unique } };
+     Bilan HTML : 7858 + 1 = 7859 lignes.
+
+  2. Créer tests/memory-view-adopt.test.js (~30 tests) avec :
+     — Mocks FN = {el:()=>null,html:()=>{}} et BUS = {emit:()=>{}}
+     — eval du contenu de localcms-v5.html extrait par regex (section IIFE)
+     — Blocs N(8)/RE(6)/F(8)/U(5)/P(3) — voir section 7 du cadrage
+     — Zéro dépendance browser dans le fichier de test lui-même
+
+  3. Exécuter la suite complète et prouver 0 régression.
+
+  4. Produire CLOSEOUT_MEMORY_VIEW_ADOPT_TESTS_01.txt.
+
+  Règles : patch last-to-first, assertions Python 0-based avant tout patch,
+  aucune autre surface touchée.
+
+
+══════════════════════════════════════════════════════════════════════
