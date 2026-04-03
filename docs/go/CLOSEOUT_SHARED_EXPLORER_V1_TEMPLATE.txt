@@ -1,0 +1,221 @@
+══════════════════════════════════════════════════════════════════════
+CLOSEOUT — MOD_SHARED_EXPLORER V1 — TEMPLATE À REMPLIR
+Mission  : GO_SHARED_EXPLORER_V1_BROWSER_SMOKE_05B
+Branche  : feature/localcms-shared-explorer-cms-installer-v1
+Date     : [À REMPLIR — date d'exécution du smoke]
+Exécuté par : [À REMPLIR — "Ghost" ou autre]
+══════════════════════════════════════════════════════════════════════
+
+Instructions : remplir les sections [ ] après avoir exécuté GUIDE_BROWSER_SMOKE_05B.txt.
+Envoyer ce fichier rempli en début de session pour déclencher le GO suivant.
+
+
+1. ÉTAT DE DÉPART RETENU
+──────────────────────────
+
+  Version testée      : MOD_SHARED_EXPLORER V1.0.0
+  HEAD commité        : 443ee71a113f011db3a6ae0e9397fbb04e382145
+  Branche             : feature/localcms-shared-explorer-cms-installer-v1
+  Tests unitaires     : 13/13 PASS (prouvé — non retesté ici)
+  Smoke MOCK          : 6/6 PASS (prouvé — non retesté ici)
+  Statut avant smoke  : review_required
+
+
+2. ENVIRONNEMENT DE SMOKE
+───────────────────────────
+
+  Système              : [À REMPLIR — ex. "Windows 11 — Chrome 134"]
+  Navigateur           : [À REMPLIR — ex. "Google Chrome 134.0.x"]
+  LocalCMS servi via   : [À REMPLIR — ex. "python -m http.server 3000" OU "file://"]
+  Backend FastAPI      : [À REMPLIR — ex. "http://localhost:8000 — uvicorn app:app"]
+  LOCALCMS_SHARED_ROOT : [À REMPLIR — ex. "C:\localcms\shared"]
+  Node.js version      : [À REMPLIR si smoke live exécuté — ex. "v22.0.0"]
+  Smoke live exécuté   : [À REMPLIR — OUI / NON]
+
+  Fichiers de test présents dans SHARED_ROOT :
+    readme.md    : [ ] Présent  [ ] Absent
+    config.yaml  : [ ] Présent  [ ] Absent
+    script.sh    : [ ] Présent  [ ] Absent
+    image.png    : [ ] Présent  [ ] Absent
+    archive.zip  : [ ] Présent  [ ] Absent
+    big.log      : [ ] Présent (> 5 Mo)  [ ] Absent
+    .env         : [ ] Présent  [ ] Absent
+
+
+3. ÉTAPES RÉELLEMENT EXÉCUTÉES
+─────────────────────────────────
+
+  Instructions : pour chaque étape, encadrer PASS ou FAIL et noter l'observation.
+  Laisser vide si l'étape n'a pas pu être exécutée (noter raison).
+
+  ── Bloc A — Chargement ──────────────────────────────────────────
+
+  A1 — Chargement LocalCMS dans Chrome
+    Résultat : [ ] PASS  [ ] FAIL
+    Observation : [                                                      ]
+
+  A2 — Entrée "Shared Explorer" dans la navigation
+    Résultat : [ ] PASS  [ ] FAIL
+    Observation : [                                                      ]
+
+  A3 — Clic sur "Shared Explorer" → panneau ouvert
+    Résultat : [ ] PASS  [ ] FAIL
+    Observation : [                                                      ]
+    URL appelée (Network) : [                                            ]
+    Code HTTP retourné : [       ]
+
+  ── Bloc B — Navigation fichiers ─────────────────────────────────
+
+  B1 — Listing racine visible
+    Résultat : [ ] PASS  [ ] FAIL
+    Observation : [                                                      ]
+
+  B2 — Navigation dans test_docs/
+    Résultat : [ ] PASS  [ ] FAIL  [ ] Non exécuté (raison : [          ])
+    Observation : [                                                      ]
+
+  B3 — Preview readme.md
+    Résultat : [ ] PASS  [ ] FAIL  [ ] Non exécuté
+    Observation : [                                                      ]
+    Code HTTP /api/shared/read : [       ]
+
+  B4 — image.png — download seulement (no preview)
+    Résultat : [ ] PASS  [ ] FAIL  [ ] Non exécuté
+    Observation : [                                                      ]
+
+  B5 — archive.zip — download seulement
+    Résultat : [ ] PASS  [ ] FAIL  [ ] Non exécuté
+    Observation : [                                                      ]
+
+  ── Bloc C — Protections ─────────────────────────────────────────
+
+  C1 — big.log > 5 Mo → refus preview
+    Résultat : [ ] PASS  [ ] FAIL  [ ] Non exécuté (big.log absent)
+    Observation : [                                                      ]
+    Code HTTP /api/shared/read : [       ]  (attendu : 413)
+
+  C2 — .env → refus accès
+    Résultat : [ ] PASS  [ ] FAIL  [ ] PASS implicite (.env absent de la liste)
+    Observation : [                                                      ]
+    Code HTTP : [       ]  (attendu : 403 OU absent de la liste)
+
+  C3 — Path traversal → 403
+    Résultat : [ ] PASS  [ ] FAIL  [ ] Non exécuté
+    URL testée : [                                                       ]
+    Code HTTP retourné : [       ]  (attendu : 403)
+
+  C4 — Aucun bouton d'écriture visible
+    Résultat : [ ] PASS  [ ] FAIL
+    Observation : [                                                      ]
+
+  ── Bloc D — Recherche ───────────────────────────────────────────
+
+  D1 — Recherche "readme"
+    Résultat : [ ] PASS  [ ] FAIL  [ ] Non exécuté (champ absent — V1 limit documentée)
+    Observation : [                                                      ]
+
+  ── Bloc E — Console et réseau ───────────────────────────────────
+
+  E1 — Zéro erreur rouge dans console Chrome
+    Résultat : [ ] PASS  [ ] FAIL
+    Erreurs observées (si FAIL) : [                                      ]
+
+  E2 — Uniquement appels GET vers /api/shared/*
+    Résultat : [ ] PASS  [ ] FAIL  [ ] Non vérifié
+    Observation : [                                                      ]
+
+  ── Smoke live Node.js ───────────────────────────────────────────
+
+  Smoke LIVE (6/6)
+    Exécuté   : [ ] OUI  [ ] NON
+    Résultat  : [   ]/6 PASS  [   ] FAIL
+    Output terminal (si FAIL, coller ici) :
+    [                                                                    ]
+
+
+4. RÉSULTATS OBSERVÉS — SYNTHÈSE
+───────────────────────────────────
+
+  Critères PASS obligatoires satisfaits :
+    A1 [ ] A2 [ ] A3 [ ] B1 [ ] B2 [ ] B3 [ ] C2 [ ] C4 [ ] E1 [ ]
+    + au moins un de : C3 [ ] OU Smoke live 6/6 [ ]
+
+  Critères non testés (lister les raisons) :
+    [                                                                    ]
+
+  Comportements inattendus / anomalies observées :
+    [                                                                    ]
+
+  Erreurs console Chrome (verbatim si FAIL E1) :
+    [                                                                    ]
+
+
+5. VERDICT
+────────────
+
+  [ ] PASS — MOD_SHARED_EXPLORER V1 validé → statut passe à "validated"
+  [ ] PASS AVEC LIMITES — validé avec points mineurs documentés ci-dessous
+  [ ] FAIL — statut reste "review_required" — bug à corriger (voir section 6)
+
+  Limites mineures acceptées (si PASS AVEC LIMITES) :
+    [                                                                    ]
+
+  Raison du FAIL (si FAIL) :
+    Critère(s) bloquant(s) : [                                          ]
+    Description du bug : [                                              ]
+    GO correctif à ouvrir : GO_SHARED_EXPLORER_V1_FIX_[NOM_DU_BUG]
+
+
+6. LIMITES RESTANTES RÉELLES
+──────────────────────────────
+
+  (À remplir uniquement si verdict PASS ou PASS AVEC LIMITES)
+
+  Limites V1 confirmées (déjà documentées dans l'établi) :
+    - user_id hardcodé "cms_user" : [ ] Confirmé non bloquant
+    - Preview image non implémentée (B4) : [ ] Confirmé non bloquant
+    - Résultats de recherche max 200 entrées : [ ] Non testable en smoke
+    - Pas de pagination listing : [ ] Confirmé non bloquant
+
+  Nouvelles limites découvertes durant le smoke :
+    [                                                                    ]
+
+  Points à surveiller en V2 :
+    [                                                                    ]
+
+
+7. POINT DE REPRISE SUIVANT
+─────────────────────────────
+
+  Si verdict PASS ou PASS AVEC LIMITES :
+  ─────────────────────────────────────
+  Prochain trigger :
+    GO_SHARED_EXPLORER_V1_CLOSEOUT_COMMIT_01
+
+  Objet :
+    1. Committer ce closeout rempli sur la branche canonique
+    2. Mettre à jour docs/claude/00_etabli_MOD_SHARED_EXPLORER_V1.txt :
+       - statut "review_required" → "validated"
+       - date de validation : [DATE DU SMOKE]
+    3. Mettre à jour docs/claude/00_etat_courant_MOD_SHARED_EXPLORER_V1.txt
+    4. Déclarer la condition d'ouverture CMS Installer satisfaite
+    5. Ouvrir : GO_CMS_INSTALLER_V1_LIVE_VALIDATION_01
+
+  Contexte à transmettre au prochain GO :
+    - Branche : feature/localcms-shared-explorer-cms-installer-v1
+    - MOD_SHARED_EXPLORER V1 = validated (date : [DATE DU SMOKE])
+    - Condition CMS Installer V1 : satisfaite
+    - Smoke live résultat : [X]/6 PASS
+    - Environnement testé : [NAVIGATEUR / OS]
+
+  Si verdict FAIL :
+  ─────────────────
+  Prochain trigger :
+    GO_SHARED_EXPLORER_V1_FIX_[NOM_DU_BUG]
+
+  Objet :
+    Corriger le(s) bug(s) identifié(s) dans le smoke.
+    Relancer BROWSER_SMOKE_05B après correction.
+    NE PAS ouvrir CMS Installer tant que BROWSER_SMOKE_05B n'est pas PASS.
+
+══════════════════════════════════════════════════════════════════════

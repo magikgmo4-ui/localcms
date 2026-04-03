@@ -384,7 +384,7 @@ const MOD_SHARED_EXPLORER = (() => {
               const isSel    = state.selected?.path === e.path;
               const entryStr = JSON.stringify(e).replace(/\\/g,'\\\\').replace(/"/g,"'");
               return `
-                <tr onclick="MOD_SHARED_EXPLORER.selectEntry(${JSON.stringify(JSON.stringify(e))})"
+                <tr onclick='MOD_SHARED_EXPLORER.selectEntry(${JSON.stringify(JSON.stringify(e))})'
                   style="cursor:pointer;${isSel
                     ? 'background:var(--accent-glow);'
                     : ''}"
@@ -550,7 +550,7 @@ const MOD_SHARED_EXPLORER = (() => {
             </thead>
             <tbody>
               ${results.map(e => `
-                <tr onclick="MOD_SHARED_EXPLORER.selectEntry(${JSON.stringify(JSON.stringify(e))})"
+                <tr onclick='MOD_SHARED_EXPLORER.selectEntry(${JSON.stringify(JSON.stringify(e))})'
                   style="cursor:pointer">
                   <td style="text-align:center;font-size:14px">
                     ${CATEGORY[_category(e.name)]?.icon || '❓'}</td>

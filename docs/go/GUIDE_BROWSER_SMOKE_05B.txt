@@ -1,0 +1,264 @@
+══════════════════════════════════════════════════════════════════════
+GUIDE — BROWSER_SMOKE_05B
+MOD_SHARED_EXPLORER V1 — Validation navigateur finale
+Branche : feature/localcms-shared-explorer-cms-installer-v1
+Date    : 2026-04-02
+══════════════════════════════════════════════════════════════════════
+
+Ce guide est à exécuter sur votre machine Windows avec Chrome.
+Temps estimé : 20 à 30 minutes (setup inclus).
+
+
+1. CONTEXTE
+──────────────
+
+  Ce qui est déjà validé (hors scope de ce smoke) :
+    ✓ 13/13 tests unitaires Node.js — PASS
+    ✓ 6/6 smoke tests mode MOCK — PASS
+    ✓ Critères V1..V13 prouvés en environnement contrôlé
+    ✓ Aucun endpoint d'écriture (vérifié par grep)
+    ✓ Sécurité path traversal / symlinks / .env documentée
+
+  Ce qui reste à prouver (objet de ce guide) :
+    ✗ Rendu visuel dans Chrome avec un backend FastAPI réel
+    ✗ Navigation et interactions dans le panneau Shared Explorer
+    ✗ Smoke live Node.js avec BACKEND_URL réel
+
+
+2. PRÉREQUIS
+────────────────
+
+  P1 — Backend FastAPI LocalCMS démarré sur port 8000
+    La route /api/shared doit être montée :
+      from api.shared_explorer import shared_router
+      app.include_router(shared_router, prefix="/api/shared")
+
+    Variable d'environnement obligatoire :
+      export LOCALCMS_SHARED_ROOT=<chemin_absolu_vers_votre_répertoire_shared>
+      (exemple Windows : set LOCALCMS_SHARED_ROOT=C:\localcms\shared)
+
+  P2 — Répertoire /shared peuplé avec des fichiers de test
+    Créer les fichiers suivants dans LOCALCMS_SHARED_ROOT :
+      test_docs/
+        readme.md        (fichier texte, ≤ 5 Mo, contenu quelconque)
+        config.yaml      (fichier texte, ≤ 5 Mo)
+        script.sh        (fichier texte, ≤ 5 Mo)
+        image.png        (image — download seulement)
+        archive.zip      (archive — download seulement)
+        big.log          (fichier texte > 5 Mo — doit déclencher refus preview)
+      .env               (fichier à la racine — doit être BLOQUÉ)
+    Note : big.log peut être simulé avec : python -c "open('big.log','wb').write(b'x'*6*1024*1024)"
+
+  P3 — LocalCMS ouvert dans Chrome
+    Option A : ouvrir localcms-v5.html directement depuis le disque
+      (certains appels API peuvent échouer en file:// si pas de CORS configuré)
+    Option B (recommandée) : servir le fichier via un serveur HTTP léger
+      python -m http.server 3000
+      puis ouvrir http://localhost:3000/localcms-v5.html dans Chrome
+
+  P4 — Console Chrome ouverte
+    F12 → onglet Console
+    Garder visible pendant toute la session
+
+  P5 — Smoke Node.js live (optionnel mais fortement recommandé)
+    Requiert Node.js ≥ 18 (ou node-fetch installé si Node < 18)
+    Commande : BACKEND_URL=http://localhost:8000 node tests/shared-explorer.smoke.js
+    Note Windows : SET BACKEND_URL=http://localhost:8000 && node tests/...
+
+
+3. SÉQUENCE DE VALIDATION NAVIGATEUR
+────────────────────────────────────────
+
+  ── Bloc A — Chargement du module ──────────────────────────────────
+
+  A1 — Ouvrir LocalCMS dans Chrome
+    Action : charger la page
+    Observer : aucune erreur rouge dans la console au chargement
+    PASS : page chargée, aucune exception JavaScript visible
+    FAIL : erreur d'import shared-explorer.js ou exception au boot
+
+  A2 — Entrée "Shared Explorer" dans la navigation
+    Action : regarder la barre de navigation latérale
+    Observer : icône 📂 et label "Shared Explorer" visible
+    PASS : entrée présente et cliquable
+    FAIL : entrée absente ou désactivée
+
+  A3 — Cliquer sur "Shared Explorer"
+    Action : clic sur l'entrée navigation
+    Observer : le panneau "Shared Explorer — /shared · Lecture seule · V1" s'ouvre
+    Observer : indicateur "Chargement…" suivi du contenu
+    PASS : panneau ouvert, listing de fichiers affiché, tag "read-only" vert visible
+    FAIL : panneau vide, erreur affiché, ou console indique erreur réseau
+
+  Quoi noter : URL appelée dans l'onglet Network de Chrome (/api/shared/list?path=)
+               Code de retour HTTP attendu : 200
+
+  ── Bloc B — Navigation fichiers ──────────────────────────────────
+
+  B1 — Listing racine
+    Action : observer le contenu initial du panneau
+    Observer : fichiers et dossiers de LOCALCMS_SHARED_ROOT listés
+    PASS : au moins un fichier ou dossier visible, colonnes (nom / type / taille / date) présentes
+    FAIL : liste vide sans raison, ou message d'erreur réseau
+
+  B2 — Naviguer dans un sous-dossier
+    Action : cliquer sur le dossier test_docs/
+    Observer : contenu de test_docs affiché, chemin mis à jour
+    PASS : listing du sous-dossier visible, bouton "retour" ou breadcrumb présent
+    FAIL : navigation impossible, erreur 403/404 ou exception console
+
+  B3 — Sélectionner un fichier texte (readme.md)
+    Action : cliquer sur readme.md
+    Observer : panneau de détail ouvert à droite, contenu texte affiché
+    PASS : contenu du fichier visible (preview), métadonnées affichées (taille, date)
+    FAIL : panneau vide, erreur 500, ou texte "preview non disponible" non justifié
+
+  Quoi noter : URL /api/shared/read?path=test_docs/readme.md, code 200
+
+  B4 — Sélectionner un fichier image (image.png)
+    Action : cliquer sur image.png
+    Observer : panneau de détail ouvert — NO preview — bouton download présent
+    PASS : message indiquant "preview non disponible pour ce type" OU "Télécharger",
+           aucune tentative d'affichage inline de l'image
+    FAIL : tentative de preview image (hors contrat V1)
+
+  B5 — Sélectionner une archive (archive.zip)
+    Action : cliquer sur archive.zip
+    Observer : même comportement que image — download seulement
+    PASS : bouton "Télécharger" présent, aucune tentative d'extraction
+    FAIL : extraction ou liste de contenu de l'archive affichée
+
+  ── Bloc C — Protections et limites ───────────────────────────────
+
+  C1 — Fichier trop lourd (big.log > 5 Mo)
+    Action : cliquer sur big.log
+    Observer : message signalant que la preview est refusée (taille max 5 Mo)
+    PASS : message d'erreur ou "trop grand pour la prévisualisation", download possible
+    FAIL : contenu affiché malgré la taille, ou crash
+
+    Quoi noter : code HTTP attendu depuis /api/shared/read : 413
+
+  C2 — Tentative d'accès à .env (depuis la racine)
+    Action : si .env apparaît dans la liste, cliquer dessus
+            Si .env n'apparaît pas dans la liste, PASS implicite (bloqué avant affichage)
+    Observer : refus d'accès — message "Access denied" ou équivalent
+    PASS : accès refusé (HTTP 403) OU absent de la liste — aucun contenu affiché
+    FAIL : contenu de .env visible
+
+    Quoi noter : code HTTP attendu : 403
+
+  C3 — Tentative de navigation hors /shared (path traversal)
+    Action : dans l'URL du navigateur, ajouter manuellement un paramètre path traversal
+            Exemple : /api/shared/read?path=../../etc/passwd
+            (taper directement dans la barre d'adresse)
+    Observer : réponse 403 du backend
+    PASS : erreur 403 / "Access denied" retournée par le backend
+    FAIL : contenu retourné (faille de sécurité)
+
+  C4 — Absence de bouton ou action d'écriture
+    Action : examiner le panneau Shared Explorer sur plusieurs fichiers et dossiers
+    Observer : aucun bouton "Modifier", "Supprimer", "Renommer", "Upload", "Créer"
+    PASS : interface entièrement en lecture seule — download uniquement
+    FAIL : bouton d'écriture présent
+
+  ── Bloc D — Recherche ────────────────────────────────────────────
+
+  D1 — Recherche par nom
+    Action : utiliser le champ de recherche s'il est visible, entrer "readme"
+    Observer : résultat filtré affichant les fichiers contenant "readme"
+    PASS : résultats cohérents, aucun crash
+    FAIL : erreur 500, crash, ou liste non filtrée
+
+  ── Bloc E — Console et réseau ────────────────────────────────────
+
+  E1 — Aucune erreur rouge dans la console
+    Action : vérifier l'onglet Console de Chrome après avoir effectué B1..D1
+    Observer : aucune exception JavaScript non gérée, aucun ERR_CONNECTION_REFUSED
+              (les 404 sur des ressources CSS/font sont acceptables)
+    PASS : zéro erreur rouge liée à Shared Explorer
+    FAIL : exception JavaScript ou erreur réseau non gérée sur /api/shared/*
+
+  E2 — Appels réseau cohérents
+    Action : vérifier l'onglet Network pendant la navigation (filtrer /api/shared)
+    Observer : uniquement des appels GET — aucun POST/PUT/PATCH/DELETE vers /api/shared
+    PASS : tous les appels vers /api/shared/* sont GET
+    FAIL : appel POST/PUT/PATCH/DELETE visible
+
+
+4. SMOKE LIVE NODE.JS (complément recommandé)
+──────────────────────────────────────────────
+
+  Cette étape valide les mêmes scenarios via Node.js avec un vrai backend.
+  Elle peut remplacer les étapes C3 et une partie de C2/C1 si le backend est actif.
+
+  Commande :
+    Sur Linux/Mac :
+      BACKEND_URL=http://localhost:8000 node tests/shared-explorer.smoke.js
+
+    Sur Windows (cmd) :
+      SET BACKEND_URL=http://localhost:8000 && node tests/shared-explorer.smoke.js
+
+    Sur Windows (PowerShell) :
+      $env:BACKEND_URL="http://localhost:8000"; node tests/shared-explorer.smoke.js
+
+  Résultat attendu : 6/6 smoke tests PASS
+
+  Note : si le backend n'est pas accessible depuis Node.js (ex. firewall local),
+  cette étape est optionnelle — les blocs A..E du guide navigateur suffisent.
+
+
+5. CRITÈRES GLOBAUX DE VERDICT
+─────────────────────────────────
+
+  PASS complet (→ validated) :
+    - A1, A2, A3 : PASS
+    - B1, B2, B3 : PASS
+    - C1, C2, C4 : PASS
+    - E1         : PASS
+    - ET au moins un des deux : C3 PASS OU Smoke live 6/6 PASS
+
+  PASS avec limites acceptées (→ validated avec note) :
+    - Tous les critères obligatoires ci-dessus PASS
+    - B4 ou B5 : comportement différent mais cohérent (ex. icône générique)
+    - D1 : non testable (champ absent de l'UI) → documenter comme V1 limit
+
+  review_required maintenu si :
+    - A3 FAIL (panneau ne s'ouvre pas)
+    - B1 FAIL (listing vide sans raison)
+    - C2 FAIL (.env accessible)
+    - C3 FAIL (path traversal non bloqué)
+    - C4 FAIL (bouton d'écriture présent)
+    - E1 FAIL (exception JavaScript non gérée liée au module)
+
+
+6. CE QU'IL FAUT CAPTURER / NOTER
+────────────────────────────────────
+
+  Pour chaque étape : noter PASS ou FAIL et l'observation exacte.
+  En cas de FAIL : copier le message d'erreur de la console Chrome.
+
+  Captures à prendre (facultatives mais recommandées) :
+    - Screenshot du panneau Shared Explorer avec listing visible (B1)
+    - Screenshot du détail d'un fichier texte (B3)
+    - Screenshot du message de refus pour .env (C2)
+    - Output terminal de la commande smoke live (section 4)
+
+
+7. QUOI FAIRE APRÈS L'EXÉCUTION
+─────────────────────────────────
+
+  Si verdict PASS :
+    Remplir le template CLOSEOUT_SHARED_EXPLORER_V1_TEMPLATE.txt
+    avec les résultats observés, puis déclencher :
+    → GO_SHARED_EXPLORER_V1_CLOSEOUT_COMMIT_01
+    Objet : committer le closeout rempli, mettre à jour le statut
+            review_required → validated dans les docs canoniques,
+            puis ouvrir GO_CMS_INSTALLER_V1_LIVE_VALIDATION_01.
+
+  Si verdict FAIL sur critère bloquant :
+    Identifier la correction minimale nécessaire.
+    Ne pas ouvrir de correctif dans ce guide — ouvrir un GO séparé :
+    → GO_SHARED_EXPLORER_V1_FIX_<NOM_DU_BUG>
+    Puis relancer BROWSER_SMOKE_05B après correction.
+
+══════════════════════════════════════════════════════════════════════
