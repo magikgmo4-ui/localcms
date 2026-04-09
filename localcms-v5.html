@@ -1365,6 +1365,7 @@ const BUS = (() => {
    * 'settings:reset'    ()
    * 'system:refresh'    ()
    * 'system:save'       ()
+   * 'installer:sanity'  (moduleId)   — module installé avec sanity_check validé
    */
 
   return { on, off, emit };
@@ -9371,9 +9372,10 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   renderSwitchBar();
-  BUS.on('router:switch', (id) => window.switchIface(id));
-  BUS.on('system:refresh', () => MOD_DASHBOARD.render());
-  BUS.on('system:save',    () => MOD_SETTINGS.save && MOD_SETTINGS.save());
+  BUS.on('router:switch',    (id) => window.switchIface(id));
+  BUS.on('system:refresh',   () => MOD_DASHBOARD.render());
+  BUS.on('system:save',      () => MOD_SETTINGS.save && MOD_SETTINGS.save());
+  BUS.on('installer:sanity', () => BUS.emit('system:refresh'));
 });
 
 </script>
