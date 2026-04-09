@@ -1,6 +1,6 @@
 /**
  * cms-installer.smoke.js — CMS Module Installer V1
- * 6 smoke tests : mock HTTP + live backend optionnel
+ * 7 smoke tests : mock HTTP + live backend optionnel
  *
  * Usage :
  *   node tests/cms-installer.smoke.js              # mode MOCK (pas de backend)
@@ -61,6 +61,23 @@ const MOCK_HISTORY_LOGS = [
   },
 ];
 
+const MOCK_INSTALL_WITH_SANITY = {
+  result:          'ok',
+  bundle:          'hello-mod-v1.0.0.zip',
+  module_id:       'hello_mod',
+  sanity_check:    'hello_mod_sanity',
+  installed_files: ['/app/localcms/modules/hello-mod.js'],
+  steps: {
+    precheck:   { status: 'ok' },
+    backup:     { status: 'skipped' },
+    staging:    { status: 'ok' },
+    validate:   { status: 'ok' },
+    install:    { status: 'ok' },
+    post_check: { status: 'ok', sanity_fn: 'hello_mod_sanity' },
+    finalize:   { status: 'ok' },
+  },
+};
+
 function mockFetch(url, options) {
   const urlObj  = new URL(url, 'http://localhost');
   const path    = urlObj.pathname;
@@ -113,8 +130,15 @@ function mockFetch(url, options) {
 
   // POST /api/installer/install — bundle valide
   if (method === 'POST' && path === '/api/installer/install') {
-    const body = options && options.body ? JSON.parse(options.body) : {};
+    const body   = options && options.body ? JSON.parse(options.body) : {};
     const bundle = body.bundle || '';
+    // branche sanity_check != null
+    if (bundle === 'hello-mod-v1.0.0.zip') {
+      return Promise.resolve({
+        ok: true, status: 200,
+        json: () => Promise.resolve(MOCK_INSTALL_WITH_SANITY),
+      });
+    }
     return Promise.resolve({
       ok: true, status: 200,
       json: () => Promise.resolve({
@@ -241,6 +265,25 @@ await smoke('S6 — History retourne logs avec champs obligatoires', async () =>
     REQUIRED.forEach(f => assert(f in log, `Log doit contenir : ${f}`));
     assert(log.user_id === 'cms_user', `user_id doit être "cms_user", obtenu : ${log.user_id}`);
   }
+});
+
+// S7 — Install avec sanity_check non nul : réponse porte le champ + post_check ok
+await smoke('S7 — Install avec sanity_check : champ retourné + post_check ok', async () => {
+  const res = await fetchFn(`${BASE}/api/installer/install`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ bundle: 'hello-mod-v1.0.0.zip' }),
+  });
+  if (!res.ok && res.status === 404) { console.log('    (bundle absent en mode live — skip)'); return; }
+  const data = await res.json();
+  assert('sanity_check' in data,             'sanity_check doit être présent dans la réponse');
+  assert(data.sanity_check === 'hello_mod_sanity',
+    `sanity_check attendu 'hello_mod_sanity', obtenu : ${data.sanity_check}`);
+  assert(data.steps && data.steps.post_check, 'steps.post_check doit être présent');
+  assert(data.steps.post_check.status === 'ok',
+    `post_check.status attendu 'ok', obtenu : ${data.steps.post_check.status}`);
+  assert(data.steps.post_check.sanity_fn === 'hello_mod_sanity',
+    `post_check.sanity_fn attendu 'hello_mod_sanity', obtenu : ${data.steps.post_check.sanity_fn}`);
 });
 
 /* ─── Résumé ─────────────────────────────────────────────────────────── */
