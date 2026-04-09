@@ -1,0 +1,14 @@
+# LocalCMS Host Minimal — dépendances Python
+# Uniquement les dépendances réellement utilisées par main.py + M1 + M2.
+
+# Framework ASGI — utilisé par main.py, shared_explorer.py, cms_installer.py
+fastapi>=0.111.0,<1.0.0
+
+# Serveur ASGI — uvicorn simple suffit (pas de websockets ni d'upload multipart dans M1/M2)
+uvicorn>=0.29.0,<1.0.0
+
+# Validation Pydantic — utilisée par cms_installer.py (BundleRequest(BaseModel))
+pydantic>=2.0.0,<3.0.0
+
+# Lecture async de fichiers — requise par Starlette FileResponse (shared_explorer.py ligne 239)
+aiofiles>=23.0.0,<25.0.0
