@@ -170,6 +170,11 @@ def _validate_manifest(m: dict, zip_names: Optional[list] = None) -> list[str]:
                 if zip_names and f["src"] not in zip_names:
                     errors.append(f"files[{i}].src '{f['src']}' absent du zip")
 
+    # sanity_check : optionnel — si présent et non nul, doit être un identifiant valide
+    if m.get("sanity_check") is not None:
+        if not VALID_ID_RE.match(str(m["sanity_check"])):
+            errors.append("sanity_check invalide — seuls [a-z0-9_] autorisés")
+
     return errors
 
 

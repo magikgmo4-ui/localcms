@@ -128,6 +128,10 @@ def _validate_manifest(m, zip_names=None):
                     errors.append(f"files[{i}].dest extension non autorisée : {ext}")
                 if zip_names and f["src"] not in zip_names:
                     errors.append(f"files[{i}].src '{f['src']}' absent du zip")
+    # sanity_check : optionnel — si présent et non nul, doit être un identifiant valide
+    if m.get("sanity_check") is not None:
+        if not VALID_ID_RE.match(str(m["sanity_check"])):
+            errors.append("sanity_check invalide — seuls [a-z0-9_] autorisés")
     return errors
 
 def _rollback(module_id, bundle, installed_files, backup_src, target_path, steps):
@@ -477,6 +481,35 @@ def test_i13():
     except HTTPException as e:
         a(e.status_code == 404, f"Attendu 404, obtenu {e.status_code}")
 t("I13 — Bundle inexistant → HTTPException 404", test_i13)
+
+# I14 — sanity_check valide → post_check.status = "ok", champ retourné
+def test_i14():
+    manifest_sanity = {**VALID_MANIFEST, "id": "sanity_mod", "sanity_check": "hello_mod_sanity",
+                       "files": [{"src": "module.js", "dest": "sanity-mod.js"}]}
+    make_bundle("bundle-i14.zip", manifest_data=manifest_sanity)
+    result = run_install_pipeline("bundle-i14.zip")
+    a(result["result"] == "ok", f"Pipeline doit retourner ok: {result}")
+    steps = result["steps"]
+    a("post_check" in steps, "post_check doit être dans steps")
+    a(steps["post_check"]["status"] == "ok",
+      f"post_check doit être ok quand sanity_check est défini, obtenu: {steps['post_check']}")
+    a(result.get("sanity_check") == "hello_mod_sanity",
+      f"sanity_check doit être retourné dans le résultat, obtenu: {result.get('sanity_check')}")
+t("I14 — sanity_check valide → post_check ok + champ retourné", test_i14)
+
+# I15 — sanity_check invalide → precheck failed, erreur explicite
+def test_i15():
+    manifest_evil = {**VALID_MANIFEST, "id": "evil_mod", "sanity_check": "../evil",
+                     "files": [{"src": "module.js", "dest": "evil-mod.js"}]}
+    make_bundle("bundle-i15.zip", manifest_data=manifest_evil)
+    result = run_install_pipeline("bundle-i15.zip")
+    a(result["result"] == "failed", f"Precheck doit échouer pour sanity_check invalide, obtenu: {result['result']}")
+    steps = result["steps"]
+    a("precheck" in steps, "precheck doit être dans steps")
+    a(steps["precheck"]["status"] == "failed", "precheck status doit être failed")
+    err = steps["precheck"].get("error", "")
+    a("sanity_check" in err.lower(), f"Erreur doit mentionner sanity_check, obtenu: {err}")
+t("I15 — sanity_check invalide → precheck failed", test_i15)
 
 # ─── Cleanup ──────────────────────────────────────────────────────────────
 
