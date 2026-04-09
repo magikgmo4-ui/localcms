@@ -1,9 +1,9 @@
 /**
  * cms-installer.test.js — CMS Module Installer V1
- * 13 tests unitaires — Node.js sans dépendances externes
+ * 15 tests unitaires — Node.js sans dépendances externes
  *
  * Couvre : validation manifeste, sécurité path, pipeline logique,
- *          rollback, log format, API surface
+ *          rollback, log format, API surface, sanity_check
  *
  * Usage : node tests/cms-installer.test.js
  */
@@ -72,6 +72,10 @@ function validateManifest(m, zipNames = null) {
           errors.push(`files[${i}].src absent du zip`);
       });
     }
+  }
+  // sanity_check : optionnel — si présent et non nul, doit être un identifiant valide
+  if (m.sanity_check != null && !VALID_ID_RE.test(String(m.sanity_check))) {
+    errors.push('sanity_check invalide — seuls [a-z0-9_] autorisés');
   }
   return errors;
 }
@@ -192,6 +196,18 @@ test('T13 — format log conforme (champs obligatoires)', () => {
   // error est optionnel — présent uniquement si non null
   const logWithError = { ...mockLog, error: 'raison' };
   assert('error' in logWithError, 'error optionnel doit être inclus si défini');
+});
+
+// T14 — sanity_check valide accepté
+test('T14 — sanity_check valide accepté (0 erreur)', () => {
+  const errors = validateManifest({ ...VALID_MANIFEST, sanity_check: 'hello_mod_sanity' });
+  assert(errors.length === 0, `Attendu 0 erreur, obtenu : ${errors.join(', ')}`);
+});
+
+// T15 — sanity_check invalide rejeté
+test('T15 — sanity_check invalide rejeté', () => {
+  const errors = validateManifest({ ...VALID_MANIFEST, sanity_check: '../evil' });
+  assertIncludes(errors, 'sanity_check', 'sanity_check non conforme doit être rejeté');
 });
 
 /* ─── Résumé ────────────────────────────────────────────────────────────── */
