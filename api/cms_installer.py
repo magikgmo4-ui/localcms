@@ -333,7 +333,7 @@ async def install_bundle(body: BundleRequest):
         target_path.mkdir(parents=True, exist_ok=True)
 
         # ── 4. Backup ─────────────────────────────────────────────────
-        ts            = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+        ts            = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
         backup_path   = BACKUP_DIR / f"{module_id}_{ts}"
         existing_files = [
             target_path / f["dest"]

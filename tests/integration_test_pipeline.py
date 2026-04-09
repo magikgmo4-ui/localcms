@@ -177,7 +177,7 @@ def run_install_pipeline(bundle_name):
         target_path = TARGET_PATHS[target_key]
         target_path.mkdir(parents=True, exist_ok=True)
 
-        ts             = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+        ts             = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
         backup_path    = BACKUP_DIR / f"{module_id}_{ts}"
         existing_files = [
             target_path / f["dest"]
