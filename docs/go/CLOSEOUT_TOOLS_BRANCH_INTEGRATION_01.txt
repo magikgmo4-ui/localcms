@@ -1,0 +1,183 @@
+GO_LOCALCMS_TOOLS_BRANCH_INTEGRATION_01
+
+Statut
+PASS (validation sandbox complète — live uvicorn à confirmer côté Ghost)
+
+1. État de départ repris
+- repo : magikgmo4-ui/localcms
+- branche : feature/localcms-shared-explorer-cms-installer-v1
+- HEAD de départ : 6467f77 (close out CMS Installer V1 live validation)
+- working tree non propre en entrée : 29 fichiers modifiés (CRLF/BOM)
+- branche source complémentaire : tools/localcms-dev-host @ 54da71f
+
+2. Étape 0 — Assainissement Git BOM/CRLF
+
+Nature de l'écart confirmée
+- 29 fichiers modifiés
+- tous CRLF → LF uniquement (Windows origin)
+- zéro changement fonctionnel (5653 insertions = 5653 suppressions)
+- .gitignore déjà correct (__pycache__/, .env, *.py[cod])
+
+Commit produit
+- SHA : c0bc610
+- message : localcms: normalize line endings CRLF → LF (docs, tests, modules)
+- 29 files changed, 5653 insertions(+), 5653 deletions(-)
+
+Résultat
+- working tree propre après commit
+
+Note sandbox
+- Le filesystem monté (NTFS via FUSE) empêche git de supprimer ses lock files
+  après chaque opération ("unable to unlink index.lock").
+- Contournement appliqué : renommage Python (os.rename) des lock files
+  avant chaque commit — opération fiable, sans effet sur l'intégrité Git.
+- Aucune corruption de repo observée.
+
+3. Étape 1 — Intégration des fichiers hôtes
+
+Source
+- tools/localcms-dev-host @ 54da71f
+- méthode : git show <branch>:<file> > <dest> (copie de contenu, pas de merge)
+
+Fichiers intégrés
+- main.py          (2385 octets) — hôte FastAPI V1.0.1, monte M1+M2+static
+- requirements.txt (579 octets)  — fastapi, uvicorn, pydantic, aiofiles
+- run.sh           (274 octets)  — script lancement Linux
+- run.bat          (251 octets)  — script lancement Windows
+- .env.example     (849 octets)  — template LOCALCMS_SHARED_ROOT / MODULES_DIR / PORT
+
+Commit produit
+- SHA : 26d7bf7
+- message : localcms: add host entry point from tools/localcms-dev-host
+- 5 files changed, 101 insertions(+)
+
+Cohérence de structure vérifiée
+- main.py importe api.shared_explorer.shared_router → PRESENT dans api/shared_explorer.py
+- main.py importe api.cms_installer.installer_router → PRESENT dans api/cms_installer.py
+- mount /modules → StaticFiles("modules") → modules/ présent dans le repo
+- serve_frontend → FileResponse("localcms-v5.html") → présent dans le repo
+
+4. Validation runnable exécutée
+
+4.1 Syntaxe Python
+- python3 -m py_compile main.py           → OK
+- python3 -m py_compile api/cms_installer.py → OK
+- python3 -m py_compile api/shared_explorer.py → OK
+
+4.2 Structure d'imports (AST)
+- shared_router défini dans api/shared_explorer.py → PRESENT
+- installer_router défini dans api/cms_installer.py → PRESENT
+
+4.3 Installation des dépendances
+- pip install -r requirements.txt → IMPOSSIBLE en sandbox (proxy PyPI bloqué)
+- FastAPI / uvicorn non disponibles dans la sandbox
+- Validation live uvicorn déléguée à Ghost (voir section 7)
+
+4.4 Routes /health, /api/shared/ls, /api/installer/scan
+- Non testées dans la sandbox (uvicorn non disponible)
+- À valider côté Ghost : instructions section 7
+
+5. Validation M1 / M2 exécutée
+
+Tests unitaires M1 (shared-explorer.test.js)
+- node tests/shared-explorer.test.js
+- Résultat : 13/13 PASS ✓
+
+Tests unitaires M2 (cms-installer.test.js)
+- node tests/cms-installer.test.js
+- Résultat : 13/13 PASS ✓
+
+Smoke tests M1 — mode MOCK (shared-explorer.smoke.js)
+- node tests/shared-explorer.smoke.js
+- Résultat : 6/6 PASS ✓
+
+Smoke tests M2 — mode MOCK (cms-installer.smoke.js)
+- node tests/cms-installer.smoke.js
+- Résultat : 6/6 PASS ✓
+
+Total : 38/38 tests passés côté sandbox
+
+6. Impact sur la branche canonique
+
+HEAD final
+- SHA : 26d7bf7
+- branche : feature/localcms-shared-explorer-cms-installer-v1
+
+Nouveaux commits (2)
+- 26d7bf7 localcms: add host entry point from tools/localcms-dev-host
+- c0bc610 localcms: normalize line endings CRLF → LF (docs, tests, modules)
+
+Structure résultante de la branche
+- localcms-v5.html        : frontend LocalCMS (M1+M2 patchés)
+- modules/shared-explorer.js  : M1 frontend module
+- modules/cms-installer.js    : M2 frontend module
+- api/shared_explorer.py      : M1 backend router
+- api/cms_installer.py        : M2 backend router
+- main.py                 : hôte FastAPI (NOUVEAU)
+- requirements.txt        : dépendances Python (NOUVEAU)
+- run.sh / run.bat        : scripts lancement (NOUVEAU)
+- .env.example            : template env (NOUVEAU)
+
+La branche est désormais un stack complet et autonome.
+
+7. Limites restantes réelles
+
+7.1 Validation live uvicorn non exécutée dans cette passe
+La sandbox Claude Cowork ne peut pas atteindre PyPI (proxy 403).
+FastAPI et uvicorn ne sont pas installés dans la sandbox.
+
+Pour finaliser la validation live sur la machine de Ghost :
+
+  cd C:\Users\ghost\localcms
+  git checkout feature/localcms-shared-explorer-cms-installer-v1
+  git pull
+
+  copy .env.example .env
+  # Éditer .env : renseigner LOCALCMS_SHARED_ROOT et LOCALCMS_MODULES_DIR
+
+  pip install -r requirements.txt
+  uvicorn main:app --host 127.0.0.1 --port 8000
+
+  # Dans un autre terminal :
+  curl http://127.0.0.1:8000/health
+  # Attendu : {"status":"ok"}
+
+  curl http://127.0.0.1:8000/api/shared/ls
+  # Attendu : JSON avec files[] et dirs[]
+
+  curl http://127.0.0.1:8000/api/installer/scan
+  # Attendu : JSON avec bundles[]
+
+7.2 tools/localcms-dev-host non mergée
+Intentionnel — la branche tools reste comme archive de référence.
+Seuls les fichiers hôtes ont été copiés dans la branche canonique.
+
+7.3 __pycache__/ résiduel en working tree
+L'api/__pycache__/ est exclu du tracking par .gitignore mais présent
+physiquement en working tree sur la machine Ghost (résidu du run live CMS Installer).
+Aucune action requise — .gitignore est correct.
+
+8. Verdict final canonique
+
+╔══════════════════════════════════════════════════════════════╗
+║  VERDICT : PASS (sandbox)                                   ║
+║                                                              ║
+║  - Écart BOM/CRLF soldé proprement (commit c0bc610)         ║
+║  - Fichiers hôtes intégrés (commit 26d7bf7)                 ║
+║  - Syntaxe Python : OK                                       ║
+║  - Cohérence imports AST : OK                               ║
+║  - Tests M1 : 13/13 unit + 6/6 smoke = PASS                 ║
+║  - Tests M2 : 13/13 unit + 6/6 smoke = PASS                 ║
+║  - Régression : aucune                                       ║
+║                                                              ║
+║  Live uvicorn → délégué à Ghost (voir section 7)            ║
+╚══════════════════════════════════════════════════════════════╝
+
+9. Point de reprise suivant
+
+GO_LOCALCMS_TOOLS_BRANCH_INTEGRATION_CLOSEOUT_01
+
+Condition d'ouverture
+- Ghost valide la séquence live (pip install + uvicorn + curl /health + /api/shared/ls + /api/installer/scan)
+- Si les 3 routes répondent correctement → CLOSEOUT confirmé
+- Si erreur d'import ou de route → GO_LOCALCMS_TOOLS_BRANCH_INTEGRATION_FIXES_01

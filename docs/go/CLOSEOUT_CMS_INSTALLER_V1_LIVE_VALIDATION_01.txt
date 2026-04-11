@@ -1,0 +1,56 @@
+﻿GO_CMS_INSTALLER_V1_LIVE_VALIDATION_01
+
+Statut
+PASS
+
+1. État de départ retenu
+- repo : magikgmo4-ui/localcms
+- branche : feature/localcms-shared-explorer-cms-installer-v1
+- HEAD de départ : b137665
+- working tree propre avant validation
+
+2. Environnement réel utilisé
+- Windows PowerShell
+- backend local FastAPI sur http://127.0.0.1:8011
+- LOCALCMS_SHARED_ROOT = C:\Users\ghost\localcms\cms_installer_live_shared
+- LOCALCMS_MODULES_DIR = C:\Users\ghost\localcms\modules
+
+3. Bundle de validation retenu
+- hello_mod-v1.0.0.zip
+- manifest.json à la racine
+- module.js à la racine
+- id = hello_mod
+- group = tools
+- target_key = modules_dir
+- files = [{ src: module.js, dest: hello_mod.js }]
+
+4. Étapes réellement validées
+- scan : PASS
+- inspect : PASS
+- precheck : PASS
+- install : PASS
+- finalize : PASS
+
+5. Résultats observés
+- le bundle est détecté par /api/installer/scan
+- le manifeste est bien lu par /api/installer/inspect
+- le pipeline complet retourne result = ok
+- le fichier hello_mod.js est installé dans C:\Users\ghost\localcms\modules
+- le contenu installé est conforme au bundle
+- les logs d'installation sont présents
+
+6. Point important clarifié
+- sans LOCALCMS_MODULES_DIR explicite, la cible modules_dir tombait sur la valeur par défaut d'environnement
+- la validation live finale a été refaite avec LOCALCMS_MODULES_DIR aligné sur le repo local
+- la validation est donc complète côté pipeline et côté cible locale
+
+7. Limites restantes réelles
+- aucune limite bloquante sur CMS Installer V1 dans ce parcours live minimal
+- bundle de validation volontairement minimal
+- pas de sanity_check custom exercé dans cette passe
+
+8. Verdict canonique
+GO_CMS_INSTALLER_V1_LIVE_VALIDATION_01 = PASS
+
+9. Point de reprise suivant
+GO_CMS_INSTALLER_V1_NEXT_SCOPE_SELECTION_01

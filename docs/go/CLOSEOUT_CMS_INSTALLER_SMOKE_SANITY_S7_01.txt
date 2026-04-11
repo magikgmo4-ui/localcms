@@ -1,0 +1,174 @@
+GO_LOCALCMS_CMS_INSTALLER_SMOKE_SANITY_S7_01
+
+Statut
+PASS
+
+══════════════════════════════════════════════════════════════════════
+
+
+1. ÉTAT DE DÉPART REPRIS
+──────────────────────────
+
+  repo          : magikgmo4-ui/localcms
+  branche       : feature/localcms-shared-explorer-cms-installer-v1
+  HEAD de départ: f15a29b (CLOSEOUT_CMS_INSTALLER_UNIT_SANITY_FRONTEND_01)
+  working tree  : propre en entrée
+  suites de départ :
+    integration_test_pipeline.py : 15/15
+    cms-installer.test.js        : 15/15
+    cms-installer.smoke.js       :  6/6
+
+  Gap documenté (cadrage POST_UNIT_SANITY_FRONTEND) :
+    Le mock install de cms-installer.smoke.js retournait invariablement
+    sanity_check: null — la branche sanity_check != null n'était jamais
+    exercée dans la suite smoke.
+
+
+2. FICHIER RÉELLEMENT TOUCHÉ
+──────────────────────────────
+
+  tests/cms-installer.smoke.js
+    — en-tête : « 6 smoke tests » → « 7 smoke tests »
+    — MOCK_INSTALL_WITH_SANITY : nouvelle constante (+16 lignes)
+    — mockFetch /api/installer/install : branche bundle sanity (+7 lignes)
+    — S7 : nouveau test (+17 lignes)
+    Bilan : 1 fichier modifié, 45 insertions, 2 suppressions
+
+  docs/go/CLOSEOUT_CMS_INSTALLER_SMOKE_SANITY_S7_01.txt
+    — création (ce fichier)
+
+  Fichiers non touchés : modules/cms-installer.js, api/cms_installer.py,
+  localcms-v5.html, tests/cms-installer.test.js — AUCUN
+
+
+3. SMOKE S7 APPLIQUÉ
+──────────────────────
+
+  Constante ajoutée :
+
+    const MOCK_INSTALL_WITH_SANITY = {
+      result:          'ok',
+      bundle:          'hello-mod-v1.0.0.zip',
+      module_id:       'hello_mod',
+      sanity_check:    'hello_mod_sanity',
+      installed_files: ['/app/localcms/modules/hello-mod.js'],
+      steps: {
+        precheck:   { status: 'ok' },
+        backup:     { status: 'skipped' },
+        staging:    { status: 'ok' },
+        validate:   { status: 'ok' },
+        install:    { status: 'ok' },
+        post_check: { status: 'ok', sanity_fn: 'hello_mod_sanity' },
+        finalize:   { status: 'ok' },
+      },
+    };
+
+  Branche ajoutée dans mockFetch (/api/installer/install) :
+    if (bundle === 'hello-mod-v1.0.0.zip') {
+      return Promise.resolve({ ok: true, status: 200,
+        json: () => Promise.resolve(MOCK_INSTALL_WITH_SANITY) });
+    }
+
+  Test S7 ajouté :
+    POST install 'hello-mod-v1.0.0.zip'
+    → data.sanity_check === 'hello_mod_sanity'
+    → data.steps.post_check.status === 'ok'
+    → data.steps.post_check.sanity_fn === 'hello_mod_sanity'
+
+
+4. VALIDATION SMOKE EXÉCUTÉE
+──────────────────────────────
+
+  node tests/cms-installer.smoke.js
+
+  ✓  S1 — Scan retourne bundles[]
+  ✓  S2 — Inspect retourne le manifeste
+  ✓  S3 — Precheck sur bundle valide → result ok
+  ✓  S4 — Precheck bundle vide → erreur retournée
+  ✓  S5 — Install retourne steps du pipeline
+  ✓  S6 — History retourne logs avec champs obligatoires
+  ✓  S7 — Install avec sanity_check : champ retourné + post_check ok  ← NOUVEAU
+
+  RÉSULTAT : 7/7 PASS
+
+
+5. VALIDATION NON-RÉGRESSION EXÉCUTÉE
+───────────────────────────────────────
+
+  node tests/cms-installer.test.js
+
+  ✓  T1–T15 — 15/15 PASS — 0 régression
+
+  python3 tests/integration_test_pipeline.py
+
+  ✓  I1–I15 — 15/15 PASS — 0 régression
+  (I14/I15 backend sanity_check inchangés et toujours verts)
+
+
+6. IMPACT SUR LA COUVERTURE sanity_check
+──────────────────────────────────────────
+
+  Triptyque sanity_check désormais complet :
+
+    Niveau         Test         Couverture
+    ─────────────────────────────────────────────────────────────────
+    Intégration    I14          sanity_check valide → post_check ok ✓
+                   I15          sanity_check invalide → precheck fail ✓
+    Unit (JS)      T14          validateManifest() accepte sanity valide ✓
+                   T15          validateManifest() rejette sanity invalide ✓
+    Smoke          S7           install API retourne sanity_check + post_check ✓
+    ─────────────────────────────────────────────────────────────────
+
+  Avant ce GO, la suite smoke ne testait jamais sanity_check != null.
+  Après ce GO, les trois niveaux (intégration, unit, smoke) couvrent
+  le chemin sanity_check du pipeline CMS Installer.
+
+
+7. LIMITES RESTANTES RÉELLES
+──────────────────────────────
+
+  - BUS.on('installer:sanity', ...) : aucun listener enregistré
+    (intentionnel, hors scope — le signal reste émis sans consommateur).
+  - Validation live uvicorn avec bundle sanity_check réel : non exécutée.
+  - Le rendu HTML _renderManifestPanel() et _renderPipeline() pour
+    sanity_check n'est pas couvert par les tests automatisés.
+  - T16 (test BUS.emit depuis l'IIFE cms-installer en Node) : GO futur
+    possible si jugé utile.
+
+
+8. VERDICT FINAL CANONIQUE
+────────────────────────────
+
+╔══════════════════════════════════════════════════════════════╗
+║  VERDICT : PASS                                             ║
+║                                                              ║
+║  Triptyque I14→T14→S7 complet ✓   S7 vert ✓               ║
+║  7/7 smoke ✓   15/15 unit ✓   15/15 intégration ✓         ║
+║  Diff minimal (1 fichier, 45 ins) ✓   0 régression ✓       ║
+╚══════════════════════════════════════════════════════════════╝
+
+
+9. POINT DE REPRISE SUIVANT
+─────────────────────────────
+
+  GO_LOCALCMS_CMS_INSTALLER_SMOKE_SANITY_S7_CLOSEOUT_01
+
+  Note de commit (à exécuter après suppression du lock git) :
+
+    git add tests/cms-installer.smoke.js \
+            docs/go/CLOSEOUT_CMS_INSTALLER_SMOKE_SANITY_S7_01.txt
+    git commit -m "localcms: add S7 smoke — install with sanity_check != null"
+
+  État canonique à reprendre :
+    branche : feature/localcms-shared-explorer-cms-installer-v1
+    suite complète :
+      integration_test_pipeline.py : 15/15
+      cms-installer.test.js        : 15/15
+      cms-installer.smoke.js       :  7/7
+      memory-view-adopt.test.js    : 34/34
+      shared-explorer.test.js      : 13/13
+      shared-explorer.smoke.js     :  6/6
+    prochain chantier candidat : listener installer:sanity, validation live,
+    ou Memory Bricks M3 — selon cadrage
+
+══════════════════════════════════════════════════════════════════════

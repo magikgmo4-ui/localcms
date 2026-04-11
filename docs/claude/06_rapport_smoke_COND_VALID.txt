@@ -1,0 +1,137 @@
+LOCALCMS — RAPPORT SMOKE TEST $COND + $VALID
+Mission  : GO_LOCALCMS_M1_1_COND_VALID_NODE_SMOKE_05A
+Date     : 2026-03-29
+HEAD     : 3f29f46 (post-merge feature/localcms-shared-explorer-cms-installer-v1)
+Passe    : COMMIT_05A — checkpoint $COND + $VALID
+
+=== STATUT ===
+
+NODE_SMOKE_05A  : CLOSE — 26/26 PASS
+BROWSER_SMOKE_05B : OPEN — preuve navigateur réel à faire
+
+=== RECLASSIFICATION PM ===
+
+La passe Node/mock DOM est validée comme preuve technique complémentaire.
+Elle ne constitue PAS une validation navigateur finale.
+GO_COMMIT est accordé sur la base du Node smoke + intégrité code.
+GO_MERGE reste suspendu jusqu'à BROWSER_SMOKE_05B.
+
+=== CONTEXTE D'EXÉCUTION (NODE_SMOKE_05A) ===
+
+Environnement   : Node.js 22.22.0 + mock DOM minimal (sans dépendance externe)
+Raison          : VM Linux réseau loopback uniquement — Chrome Windows ne peut pas
+                  atteindre 127.0.0.1:VM. Aucun navigateur installé dans la VM.
+Équivalence     : Code $COND/$VALID copié bit-à-bit depuis localcms-v5.html.
+                  Mock DOM reproduit les APIs : getElementById, querySelectorAll,
+                  createElement, closest('.c-field'), style.display, appendChild, remove.
+Script          : tests/smoke_cond_valid.js
+
+=== RÉSULTATS (26/26 PASS) ===
+
+Groupe A — IA Config $COND (5/5)
+  A-01  ia_provider=openai → ia_api_key visible                    PASS
+  A-02  ia_provider=none → ia_api_key masqué                       PASS
+  A-03  ia_provider=custom → ia_api_key visible                    PASS
+  A-04  source absente → contrôlé masqué (sémantique 0-condition)  PASS
+  A-05  cible absente → pas de crash                               PASS
+
+Groupe A — IA Config $VALID (6/6)
+  A-06  tous vides → erreur ia_api_key required                    PASS
+  A-07  ia_host invalide → erreur URL invalide                     PASS
+  A-08  ia_host valide + api_key rempli → valid:true               PASS
+  A-09  ia_img_host invalide → erreur URL invalide                 PASS
+  A-10  showErrors → div.cval-error injecté dans wrapper           PASS
+  A-11  clearErrors → tous div.cval-error supprimés                PASS
+
+Groupe B — Machines Config $COND (4/4)
+  B-01  mc_ssh_auth=key → mc_ssh_key visible, pass masqué         PASS
+  B-02  mc_ssh_auth=password → pass visible, key masqué           PASS
+  B-03  mc_ssh_auth=key+password → key ET pass visibles           PASS
+  B-04  mc_ssh_auth=certificate → cert visible, key/pass masqués  PASS
+
+Groupe B — Machines Config $VALID (3/3)
+  B-05  mc_ssh_host vide → erreur required                        PASS
+  B-06  mc_ext_url invalide → erreur URL invalide                 PASS
+  B-07  requis remplis + URLs vides → valid:true                  PASS
+
+Groupe C — Non-régression (8/8)
+  C-01  $COND.apply(null) → pas de crash                          PASS
+  C-02  $COND.apply([]) → pas de crash                            PASS
+  C-03  $VALID.run([], {}) → valid:true, errors:[]                PASS
+  C-04  url vide → pas d'erreur URL (règle : val && !regex)       PASS
+  C-05  required+url champ vide → required seul                   PASS
+  C-06  checkbox type → String(checked) lu correctement           PASS
+  C-07  champ sans wrapper → pas de crash                         PASS
+  C-08  DOM IA+MC combiné → isolation totale (0 contamination)    PASS
+
+=== OBSERVATIONS FACTUELLES ===
+
+OBS-1  Sémantique source absente (A-04)
+  Comportement   : source absente → 0 condition satisfaite → champ contrôlé masqué.
+  Évaluation     : CORRECT — cohérent avec sémantique documentée de $COND.
+  Impact runtime : aucun — source et cible coexistent toujours dans le même form rendu.
+
+OBS-2  Isolation cross-module (C-08)
+  Comportement   : $COND.apply(IA_CONDITIONS) sur DOM mixte IA+MC ne touche pas MC.
+  Évaluation     : CORRECT — $COND opère uniquement sur les champs listés dans show[].
+  Impact BUS     : handler cfg:changed d'un module appelé pendant affichage d'un autre
+                   → getElementById null → skip silencieux. Risque R-2 prouvé sûr.
+
+OBS-3  clearErrors globale
+  Comportement   : querySelectorAll('.cval-error') efface dans tout le DOM.
+  Évaluation     : ACCEPTABLE pour architecture mono-panel exclusive.
+  Risque R-3     : à surveiller si panneaux simultanés dans une version future.
+
+OBS-4  URL vide non signalée
+  Comportement   : champ url avec valeur '' → pas d'erreur URL.
+  Évaluation     : INTENTIONNEL — règle : val && !regex. Cohérent avec ia_host / mc_ext_url.
+
+=== INTÉGRITÉ CODE (post-réapplication sur HEAD 3f29f46) ===
+
+$COND IIFE          : localcms-v5.html l.1599  — identique à implémentation IMPL_04
+$VALID IIFE         : localcms-v5.html l.1639  — identique à implémentation IMPL_04
+MOD_MACHINES_CFG   : _conds, _vals, _getVals, $COND.apply, $VALID.run, BUS.on ✓
+MOD_IA_CFG          : _conds, _vals, _getVals, $COND.apply, $VALID.run, BUS.on ✓
+Total ajouté        : +132 lignes sur 9236 → 9368 lignes
+
+Contexte de réapplication :
+  L'implémentation originale (session IMPL_04) n'avait pas été commitée.
+  Un merge (PR #1 feature/localcms-memory-view-v1) est survenu entre IMPL_04 et ce commit.
+  L'implémentation a été réappliquée manuellement sur HEAD 3f29f46 (post-merge).
+  Les bridges MOD_MACHINES_CFG et MOD_IA_CFG étaient revenus au state stub (pré-IMPL_04).
+  L'ajout de MOD_MEMORY_VIEW (merge) n'est pas affecté.
+
+=== FICHIERS HORS PÉRIMÈTRE SIGNALÉS ===
+
+Whitespace-only (CRLF→LF, diff -w = 0) — exclus du commit :
+  tests/cms-installer.smoke.js
+  tests/integration_test_pipeline.py
+  docs/claude/00_session_index_localcms.txt
+  docs/claude/01_workflow_machine_localcms.txt
+  docs/claude/03_closeout_memory_view_v1.txt
+  docs/claude/04_reprise_localcms.txt
+  .gitignore
+
+Parasites untracked (hors périmètre) — non commitées :
+  .env.example, main.py, requirements.txt, run.bat, run.sh
+
+=== LIMITES RESTANTES ===
+
+LIMITE-1  Browser smoke non prouvé (BROWSER_SMOKE_05B OPEN)
+  La preuve de comportement réel navigateur reste à faire.
+  Impact : GO_MERGE suspendu.
+
+LIMITE-2  MOD_APPS_CFG / MOD_SEC_CFG non câblés à $VALID
+  validators[] présents mais bridges sans $VALID. Hors périmètre IMPL_04.
+  Impact : fonctionnel partiel — à traiter en GO_VALID_EXTEND_06 si décision PM.
+
+LIMITE-3  $USER non implémenté
+  profile_bindings[] présents dans les manifestes mais $USER absent.
+  Décision PM : hors périmètre M1.1.
+
+=== POINT DE REPRISE ===
+
+GO_LOCALCMS_M1_1_COND_VALID_BROWSER_SMOKE_05B
+  But    : prouver $COND + $VALID en navigateur réel
+  Chemin : à identifier (navigateur Linux VM, tunnel, ou autre)
+  Statut : OPEN

@@ -1,0 +1,36 @@
+LOCALCMS — INDEX SESSION
+Date : 2026-03-27
+Statut pack : CONSOLIDE — branche feature/localcms-shared-explorer-cms-installer-v1 post-merge
+
+Projet
+- LocalCMS
+
+Etat de branche retenu
+- Repo canonique local : `C:\Users\ghost\localcms`
+- Branche active : `feature/localcms-shared-explorer-cms-installer-v1`
+- HEAD retenu : `65caff4`
+- Hypothese de travail : branche locale uniquement
+
+Pack documentaire de reprise
+- `00_session_index_localcms.txt` : index du pack et resume de branche
+- `01_workflow_machine_localcms.txt` : etat machine/branche courant consolide
+- `02_etabli_localcms.txt` : faits prouves etablis a conserver
+- `03_closeout_memory_view_v1.txt` : cloture du viewer Memory Bricks V1
+- `04_reprise_localcms.txt` : point de reprise canonique unique
+
+Etat etabli couvert par ce pack
+- Viewer Memory Bricks V1 read-only : CLOSE
+- Source reelle validee : `C:\Users\ghost\Downloads\memory_bricks_localcms_source`
+- `GO_LOCALCMS_GITIGNORE_HARDEN_01` : PASS
+- `GO_LOCALCMS_GITIGNORE_CANONICAL_SYNC_01` : PASS
+- `GO_LOCALCMS_GITIGNORE_LOCAL_COMMIT_01` : PASS
+- PR `#1` mergee dans `feature/localcms-shared-explorer-cms-installer-v1`
+- Branche source `feature/localcms-memory-view-v1` supprimee localement et a distance
+
+Point de reprise courant
+- `GO_LOCALCMS_NEXT_MISSION_SELECTION_04`
+
+Regle de priorite
+1. Etat Git observe sur cette branche
+2. Pack `docs/claude` consolide
+3. Memoire implicite inter-session a ignorer si non prouvee

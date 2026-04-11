@@ -1,0 +1,42 @@
+LOCALCMS — WORKFLOW MACHINE
+Date : 2026-03-27
+
+Depot courant
+- Chemin : `C:\Users\ghost\localcms`
+- Branche : `feature/localcms-shared-explorer-cms-installer-v1`
+- HEAD local : `65caff4` — `Merge pull request #1 from magikgmo4-ui/feature/localcms-memory-view-v1`
+- Worktree : propre
+- Remote utile : `origin/feature/localcms-shared-explorer-cms-installer-v1`
+
+Etat etabli sur cette branche
+- `GO_LOCALCMS_MEMORY_VIEW` : CLOSE
+- `GO_LOCALCMS_VIEWER_UI_ENTRYPOINT_REALIGN_01` : PASS
+- `GO_LOCALCMS_VIEWER_REAL_SOURCE_VALIDATE_01` : PASS
+- `GO_LOCALCMS_MEMORY_VIEW_CLOSEOUT_02` : CLOSE
+- `GO_LOCALCMS_MEMORY_VIEW_CANONICAL_SYNC_01` : PASS
+- `GO_LOCALCMS_GITIGNORE_HARDEN_01` : PASS
+- `GO_LOCALCMS_GITIGNORE_CANONICAL_SYNC_01` : PASS
+- `GO_LOCALCMS_GITIGNORE_LOCAL_COMMIT_01` : PASS
+
+Etat post-merge prouve
+- PR `#1` : MERGED
+- Merge commit : `65caff47c9432e7efc1df6733cb3ee7503e0a382`
+- Branche source distante : supprimee
+- Branche source locale : supprimee
+
+Source reelle validee
+- `C:\Users\ghost\Downloads\memory_bricks_localcms_source`
+- Contrat retenu : `index\index_full.json` + `bricks\MB-*.md`
+
+Hygiene/versioning retenus
+- `.gitignore` present et commite
+- Couverture minimale : `.env`, caches locaux, environnements virtuels, `node_modules/`, logs, temporaires, bruit OS/editeur minimal
+
+Historique utile conserve
+- M1 Shared Explorer V1 et M2 CMS Installer V1 restent etablis ; voir `02_etabli_localcms.txt` si necessaire
+- Le closeout viewer V1 reste dans `03_closeout_memory_view_v1.txt`
+- Les anciennes notes sandbox/host/P0 ne pilotent plus la reprise actuelle
+
+Point de reprise recommande
+- `GO_LOCALCMS_NEXT_MISSION_SELECTION_04`
+- Objet : selectionner le prochain chantier LocalCMS utile depuis la branche de base mergee, sans rouvrir Memory View V1 ni les lignes closes

@@ -1,0 +1,52 @@
+LOCALCMS — ÉTAT COURANT — SESSION CLÔTURE MOD_SHARED_EXPLORER V1
+Date : 2026-03-15
+
+Archive de base de reprise
+- MOD_SHARED_EXPLORER_V1_FINAL.zip  (contient les 6 fichiers livrables)
+
+Fichiers produits dans cette session
+- modules/shared-explorer.js
+- api/shared_explorer.py
+- tests/shared-explorer.test.js
+- tests/shared-explorer.smoke.js      ← 1 correction appliquée (mockFetch path= vide)
+- PATCH_LOCALCMS_V5.txt
+- README.md
+
+État global
+- P1 = CLOSE
+- P2 = CLOSE
+- P3 = CLOSE
+- M-4.1 → M-4.4 = review_required (non bloquant, chantier parallèle)
+- MOD_SHARED_EXPLORER V1 = review_required
+- CMS Module Installer V1 = draft (non ouvert)
+
+Établi
+- spec MOD_SHARED_EXPLORER V1 figée et implémentée
+- backend lecture seule absolue, 4 GET endpoints
+- frontend IIFE pattern LocalCMS, sidebar entrée SHARED
+- 13/13 tests unitaires verts
+- 6/6 smoke tests verts (MOCK)
+- patch LocalCMS documenté (3 insertions, 0 fichier existant modifié)
+
+Règles à préserver
+- ordre du plan : Shared Explorer → Module Installer → reste
+- ne pas ouvrir CMS Module Installer V1 avant validation explicite
+- ne pas ajouter d'écriture dans shared_explorer.py
+- conserver realpath + relative_to() dans _resolve_safe()
+- ne pas casser les modules M-4.1 → M-4.4 existants
+
+Vigilance
+- smoke live (mode BACKEND_URL=...) non exécuté dans cette session
+  → à exécuter sur environnement réel avant de passer validated
+- PATCH_LOCALCMS_V5.txt à appliquer manuellement dans localcms-v5.html
+
+Point de reprise recommandé
+- Appliquer le patch sur localcms-v5.html
+- Lancer les smokes en mode LIVE : BACKEND_URL=http://localhost:8000 node tests/shared-explorer.smoke.js
+- Si verts : passer MOD_SHARED_EXPLORER V1 → validated
+- Ouvrir CMS Module Installer V1
+
+Instruction de reprise (prochaine session)
+- joindre MOD_SHARED_EXPLORER_V1_FINAL.zip comme contexte de base
+- joindre 00_etabli_MOD_SHARED_EXPLORER_V1.txt
+- le pack texte ci-joint est suffisant pour relancer sans perte de contexte
