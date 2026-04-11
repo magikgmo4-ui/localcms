@@ -7,7 +7,7 @@
  * Blocs testés :
  *   N  — normalizeEntry        (8 tests)  — normalisations champs polymorphes
  *   RE — resolveEntries        (6 tests)  — payloads Array/.entries/.items/.bricks
- *   F  — rebuildFilters simulé (8 tests)  — filtres search/type/status via _state
+ *   F  — rebuildFilters simulé (12 tests) — filtres search/type/status/tag via _state
  *   U  — utilitaires pures     (5 tests)  — escapeHtml / normalizePath / unique
  *   P  — findPathMatch         (3 tests)  — résolution path exact / fallback endsWith
  *
@@ -61,6 +61,7 @@ const resetState = (overrides = {}) => {
   s.search       = overrides.search       ?? '';
   s.typeFilter   = overrides.typeFilter   ?? 'all';
   s.statusFilter = overrides.statusFilter ?? 'all';
+  s.tagFilter    = overrides.tagFilter    ?? 'all';
   s.filesByPath  = overrides.filesByPath  ?? new Map();
   s.markdownById = overrides.markdownById ?? new Map();
 };
@@ -77,7 +78,7 @@ console.log('INIT — Module et __test_helpers\n');
 
 test('INIT01: MOD_MEMORY_VIEW est un objet', () => assert(M && typeof M === 'object'));
 test('INIT02: API publique présente', () => {
-  ['init','render','openPicker','loadFromInput','loadFiles','setSearch','setTypeFilter','setStatusFilter','selectBrick'].forEach(k => {
+  ['init','render','openPicker','loadFromInput','loadFiles','setSearch','setTypeFilter','setStatusFilter','setTagFilter','selectBrick'].forEach(k => {
     assert(typeof M[k] === 'function', `M.${k} manquant`);
   });
 });
@@ -235,6 +236,36 @@ test('F08: type + status combinés — 0 résultat possible', () => {
   resetState({ entries: [BRICK_A, BRICK_B, BRICK_C], typeFilter: 'doc', statusFilter: 'active' });
   H.rebuildFilters();
   assert(H._state.filtered.length === 0, `attendu 0, obtenu ${H._state.filtered.length}`);
+});
+
+/* ── F-tag : tagFilter ──────────────────────────────────── */
+
+console.log('\nF-tag — tagFilter\n');
+
+test('F09: tagFilter localcms — 1 brick retenue (BRICK_A)', () => {
+  resetState({ entries: [BRICK_A, BRICK_B, BRICK_C], tagFilter: 'localcms' });
+  H.rebuildFilters();
+  assert(H._state.filtered.length === 1, `attendu 1, obtenu ${H._state.filtered.length}`);
+  assert(H._state.filtered[0].id === 'MB-00001', `id: ${H._state.filtered[0].id}`);
+});
+
+test('F10: tagFilter viewer — 1 brick retenue (BRICK_B)', () => {
+  resetState({ entries: [BRICK_A, BRICK_B, BRICK_C], tagFilter: 'viewer' });
+  H.rebuildFilters();
+  assert(H._state.filtered.length === 1, `attendu 1, obtenu ${H._state.filtered.length}`);
+  assert(H._state.filtered[0].id === 'MB-00002', `id: ${H._state.filtered[0].id}`);
+});
+
+test('F11: tagFilter inconnu — 0 brick retenue', () => {
+  resetState({ entries: [BRICK_A, BRICK_B, BRICK_C], tagFilter: 'inexistant' });
+  H.rebuildFilters();
+  assert(H._state.filtered.length === 0, `attendu 0, obtenu ${H._state.filtered.length}`);
+});
+
+test('F12: tagFilter all — toutes les bricks passent', () => {
+  resetState({ entries: [BRICK_A, BRICK_B, BRICK_C], tagFilter: 'all' });
+  H.rebuildFilters();
+  assert(H._state.filtered.length === 3, `attendu 3, obtenu ${H._state.filtered.length}`);
 });
 
 /* ── U : utilitaires pures ──────────────────────────────── */

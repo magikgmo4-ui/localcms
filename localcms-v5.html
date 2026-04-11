@@ -8904,6 +8904,7 @@ const MOD_MEMORY_VIEW = (() => {
     search: '',
     typeFilter: 'all',
     statusFilter: 'all',
+    tagFilter: 'all',
     filesByPath: new Map(),
     markdownById: new Map(),
   };
@@ -8946,6 +8947,7 @@ const MOD_MEMORY_VIEW = (() => {
     state.filtered = state.entries.filter((entry) => {
       if (state.typeFilter !== 'all' && entry.type !== state.typeFilter) return false;
       if (state.statusFilter !== 'all' && entry.status !== state.statusFilter) return false;
+      if (state.tagFilter !== 'all' && !(entry.tags || []).includes(state.tagFilter)) return false;
       if (!query) return true;
       const haystack = [entry.id, entry.title, entry.summary_short, entry.resume_point, entry.project, entry.module, ...(entry.tags || [])]
         .join(' ')
@@ -9087,10 +9089,17 @@ const MOD_MEMORY_VIEW = (() => {
     ensureSelection();
   };
 
+  const setTagFilter = (value) => {
+    state.tagFilter = value || 'all';
+    rebuildFilters();
+    ensureSelection();
+  };
+
   const render = () => {
     const active = getActiveEntry();
     const typeOptions = unique(state.entries.map((entry) => entry.type));
     const statusOptions = unique(state.entries.map((entry) => entry.status));
+    const tagOptions = unique(state.entries.flatMap((entry) => entry.tags || []));
 
     FN.html('memory-view-content', `
       <div class="c-card" style="margin-bottom:12px">
@@ -9124,6 +9133,10 @@ const MOD_MEMORY_VIEW = (() => {
               <select class="c-select" style="width:170px" onchange="MOD_MEMORY_VIEW.setStatusFilter(this.value)">
                 <option value="all" ${state.statusFilter==='all'?'selected':''}>Tous les statuts</option>
                 ${statusOptions.map((value) => `<option value="${escapeHtml(value)}" ${state.statusFilter===value?'selected':''}>${escapeHtml(value)}</option>`).join('')}
+              </select>
+              <select class="c-select" style="width:170px" onchange="MOD_MEMORY_VIEW.setTagFilter(this.value)">
+                <option value="all" ${state.tagFilter==='all'?'selected':''}>Tous les tags</option>
+                ${tagOptions.map((value) => `<option value="${escapeHtml(value)}" ${state.tagFilter===value?'selected':''}>${escapeHtml(value)}</option>`).join('')}
               </select>
             </div>
           </div>
@@ -9167,7 +9180,7 @@ const MOD_MEMORY_VIEW = (() => {
   };
 
   const init = () => render();
-  return { init, render, openPicker, loadFromInput, loadFiles, setSearch, setTypeFilter, setStatusFilter, selectBrick,
+  return { init, render, openPicker, loadFromInput, loadFiles, setSearch, setTypeFilter, setStatusFilter, setTagFilter, selectBrick,
     __test_helpers:{ normalizeEntry, resolveEntries, escapeHtml, normalizePath, unique, rebuildFilters, findPathMatch, _state: state } };
 })();
 
