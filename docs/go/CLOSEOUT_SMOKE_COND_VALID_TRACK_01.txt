@@ -1,0 +1,79 @@
+══════════════════════════════════════════════════════════════════════
+CLOSEOUT — GO_LOCALCMS_SMOKE_COND_VALID_TRACK_01
+Branche  : feature/localcms-shared-explorer-cms-installer-v1
+Date     : 2026-04-10
+Verdict  : PASS
+══════════════════════════════════════════════════════════════════════
+
+
+1. ÉTAT DE DÉPART
+──────────────────
+
+  HEAD de départ   : 2b61fb5
+  Fichier statué   : tests/smoke_cond_valid.js
+  Statut git avant : ?? (untracked depuis GO_LOCALCMS_M1_1_COND_VALID_SMOKE_05)
+  Cause du reliquat: staging parasite annulé via git restore --staged lors de
+                     sessions précédentes — fichier resté orphelin dans le
+                     working tree sans commit dédié
+
+
+2. EXÉCUTION DU SMOKE
+──────────────────────
+
+  Commande : node tests/smoke_cond_valid.js
+
+  Groupe A — IA Config $COND + $VALID  : 11/11 PASS
+  Groupe B — Machines Config $COND     :  7/7  PASS
+  Groupe C — Non-régression            :  8/8  PASS
+  ──────────────────────────────────────────────────
+  RÉSULTAT : 26/26 PASS — 0 FAIL
+
+
+3. COUVERTURE DU FICHIER
+─────────────────────────
+
+  Mission source : GO_LOCALCMS_M1_1_COND_VALID_SMOKE_05
+
+  Modules couverts :
+    MOD_IA_CFG    — $COND (ia_provider → ia_api_key visible/masqué)
+                  — $VALID (URL ia_host / ia_img_host, required ia_api_key)
+    MOD_MACHINES  — $COND (mc_ssh_auth → key/pass/cert combinaisons)
+                  — $VALID (mc_ssh_host required, mc_ext_url URL)
+
+  Isolation prouvée :
+    — $COND IA et MC sur DOM combiné → zéro cross-contamination (C-08)
+    — $COND.apply(null/[]) → pas de crash (C-01/C-02)
+    — $VALID.run([], {}) → valid:true, errors:[] (C-03)
+
+
+4. FICHIERS COMMITÉS
+──────────────────────
+
+  tests/smoke_cond_valid.js                        tracké (26/26 PASS)
+  docs/go/CLOSEOUT_SMOKE_COND_VALID_TRACK_01.txt   créé
+
+  Fichiers non touchés : localcms-v5.html, modules/*, api/*, autres tests
+
+
+5. VERDICT FINAL
+──────────────────
+
+╔══════════════════════════════════════════════════════════════╗
+║  VERDICT : PASS                                             ║
+║                                                              ║
+║  26/26 smoke $COND + $VALID ✓                              ║
+║  Fichier orphelin tracké proprement ✓                      ║
+║  0 patch HTML ✓   0 nouveau code ✓                         ║
+║  Dette de tracking GO_M1_1_COND_VALID_SMOKE_05 fermée ✓   ║
+╚══════════════════════════════════════════════════════════════╝
+
+
+6. POINT DE REPRISE SUIVANT
+─────────────────────────────
+
+  Candidats restants (triés par priorité repo-sourcée) :
+    — PR / merge feature → main  (gouvernance macro, main = initial commit seul)
+    — index_short.md consumer    (déféré — source non prouvée)
+    — Validation live uvicorn    (infra Ghost dépendante)
+
+══════════════════════════════════════════════════════════════════════
