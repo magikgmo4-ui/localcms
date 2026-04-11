@@ -1,0 +1,125 @@
+══════════════════════════════════════════════════════════════════════
+CLOSEOUT — GO_LOCALCMS_FEATURE_TO_MAIN_MERGE_01
+Branche source  : feature/localcms-shared-explorer-cms-installer-v1
+Branche cible   : main
+Date            : 2026-04-10
+Verdict         : PASS
+══════════════════════════════════════════════════════════════════════
+
+
+1. ÉTAT DE DÉPART
+──────────────────
+
+  origin/main avant merge  : 995206e — Initial commit (README.md, +1L)
+  HEAD feature de départ   : 13ede1a — localcms: track smoke_cond_valid.js
+  Commits à fusionner      : 34 (incluant 13ede1a)
+  Stratégie retenue        : PR GitHub via bridge branch (--merge, no squash)
+
+
+2. DÉROULEMENT DU MERGE
+─────────────────────────
+
+  Ghost a créé une bridge branch : bridge/localcms-v1-main-merge
+  Merge du bridge vers main via : gh pr merge 2 --merge
+
+  Commits de merge :
+    2a92641 — Merge branch 'feature/...' into bridge/localcms-v1-main-merge
+              (parents : 995206e + 13ede1a)
+    290b115 — Merge pull request #2 from magikgmo4-ui/bridge/localcms-v1-main-merge
+              (HEAD main final)
+
+  Pull local :
+    git checkout main
+    git pull --ff-only origin main
+    → Updating 995206e..290b115 (Fast-forward)
+    → 71 files changed, 24 089 insertions, 1 deletion
+
+
+3. ANOMALIE DE TRAÇABILITÉ CONSIGNÉE
+──────────────────────────────────────
+
+  Constat : le message du commit 2a92641 référence
+    "feature/localcms-shared-explorer-cms-installer-v-2"
+    au lieu de "feature/localcms-shared-explorer-cms-installer-v1"
+
+  Analyse :
+    — Erreur de nommage dans le message de merge uniquement
+    — Le parent SHA du commit bridge est 13ede1a, qui est bien
+      le HEAD de feature/localcms-shared-explorer-cms-installer-v1
+      (confirmé : git cat-file -p 2a92641 → parent 13ede1aaa0ba...)
+    — Contenu intégré = contenu correct à 100%
+    — Impact sur le repo : nul — message erroné, SHA correct
+
+  Verdict anomalie : faible risque, non bloquant, consigné ici comme
+  référence de traçabilité.
+
+
+4. CONTENU FUSIONNÉ DANS MAIN
+───────────────────────────────
+
+  UI principale    : localcms-v5.html (9 396L)
+  Backend Python   : api/cms_installer.py (465L)
+                     api/shared_explorer.py (311L)
+  Point d'entrée   : main.py (54L)
+  Modules JS (9)   : shared-explorer, cms-installer, apps-config,
+                     data-sources, devtools-config, env-global,
+                     ia-config, machines-config, sec-config
+  Smokes modules   : 8 fichiers modules/**.smoke.js
+  Tests            : tests/cms-installer.test.js
+                     tests/cms-installer.smoke.js
+                     tests/shared-explorer.test.js
+                     tests/shared-explorer.smoke.js
+                     tests/memory-view-adopt.test.js
+                     tests/smoke_cond_valid.js
+                     tests/integration_test_pipeline.py
+  Docs GO          : 13 closeouts + 1 cadrage + guides
+  Config           : .gitignore, .env.example, run.sh, run.bat,
+                     requirements.txt
+
+
+5. SUITES VALIDÉES AVANT MERGE (sur bridge)
+─────────────────────────────────────────────
+
+  memory-view-adopt.test.js    : 38/38
+  cms-installer.test.js        : 15/15
+  cms-installer.smoke.js       :  7/7
+  shared-explorer.test.js      : 13/13
+  shared-explorer.smoke.js     :  6/6
+  smoke_cond_valid.js          : 26/26
+  integration_test_pipeline.py : 15/15
+  ────────────────────────────────────────
+  TOTAL                        : 130/130
+
+
+6. VERDICT FINAL
+──────────────────
+
+╔══════════════════════════════════════════════════════════════╗
+║  VERDICT : PASS                                             ║
+║                                                              ║
+║  PR #2 mergée — main = 290b115 ✓                           ║
+║  71 fichiers / 24 089 insertions intégrés ✓                ║
+║  130/130 tests validés avant merge ✓                        ║
+║  Anomalie message commit 2a92641 consignée (sans impact) ✓ ║
+║  Working tree propre post-merge ✓                           ║
+╚══════════════════════════════════════════════════════════════╝
+
+
+7. ÉTAT CANONIQUE POST-MERGE
+──────────────────────────────
+
+  repo    : magikgmo4-ui/localcms
+  branche : main
+  HEAD    : 290b115
+  working tree : propre (git status --short = vide)
+
+  Branches actives restantes :
+    feature/localcms-shared-explorer-cms-installer-v1  (fermée, peut être archivée)
+    bridge/localcms-v1-main-merge                      (fermée, peut être supprimée)
+    tools/localcms-dev-host                            (outillage, hors scope)
+
+  Prochains candidats :
+    — Nettoyage branches mortes (feature + bridge)
+    — Nouveau chantier selon sélection (index_short.md, uvicorn live, autre axe)
+
+══════════════════════════════════════════════════════════════════════
