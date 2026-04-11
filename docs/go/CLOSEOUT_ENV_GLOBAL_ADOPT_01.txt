@@ -1,0 +1,120 @@
+══════════════════════════════════════════════════════════════════════
+CLOSEOUT — GO_LOCALCMS_ENV_GLOBAL_ADOPT_01
+Branche  : main
+Date     : 2026-04-11
+Verdict  : PASS
+══════════════════════════════════════════════════════════════════════
+
+
+1. ÉTAT DE DÉPART
+──────────────────
+
+  HEAD             : 05d529e
+  Module cible     : modules/env-global.js — MOD_ENV_GLOBAL_DATA
+  Smoke existant   : modules/env-global.smoke.js (~52 assertions)
+  Test adopt avant : AUCUN dans tests/
+
+
+2. CORRECTION DU CADRAGE
+─────────────────────────
+
+  Le cadrage GO_LOCALCMS_CONFIG_ADOPT_CADRAGE_01 indiquait 0/0/0
+  pour conditions/validators/profile_bindings de env-global.
+
+  Correction repo-sourcée :
+    conditions[]     : 0 (correct)
+    validators[]     : 3 — eg_m_host / eg_m_name / eg_n_vpn_server (required:true)
+    profile_bindings[]: 0 (correct)
+  → Bloc VAL ajouté au test (5 assertions).
+
+
+3. ARTEFACT SANDBOX
+────────────────────
+
+  modules/env-global.js était tronqué dans le mount virtiofs (179L vs 183L
+  en objet git). Restauré depuis git object 05d529e avant exécution.
+  Aucune modification du contenu du module — restauration à l'état git.
+
+
+4. FICHIER CRÉÉ
+────────────────
+
+  tests/env-global-adopt.test.js     créé, 194L
+
+  Pattern DATA-ONLY :
+    const src = fs.readFileSync('../modules/env-global.js');
+    eval(src.replace(/\bconst\s+MOD_ENV_GLOBAL_DATA\b/, 'globalThis.MOD_ENV_GLOBAL_DATA'));
+    const D = globalThis.MOD_ENV_GLOBAL_DATA;
+  Aucun mock FN/BUS/DOM. Aucun __test_helpers. Aucun patch HTML.
+
+
+5. BLOCS ET RÉSULTATS
+──────────────────────
+
+  INIT  (2)  — chargement + id              : 2/2  ✓
+  M     (6)  — identité complète            : 6/6  ✓
+  K     (6)  — structure groups/C/V/B/forms : 6/6  ✓
+  G1    (9)  — groupe machines 9 champs     : 9/9  ✓
+  G2    (9)  — groupe shared_env 9 champs   : 9/9  ✓
+  G3    (7)  — groupe network 7 champs      : 7/7  ✓
+  TOT   (5)  — 25 total, IDs, F-15         : 5/5  ✓
+  VAL   (5)  — 3 validators required        : 5/5  ✓
+  ────────────────────────────────────────────────
+  TOTAL      : 49/49 PASS
+
+
+6. NON-RÉGRESSION
+──────────────────
+
+  memory-view-adopt.test.js : 38/38 ✓
+  cms-installer.test.js     : 15/15 ✓
+  shared-explorer.test.js   : 13/13 ✓
+
+
+7. DIFF SYNTHÉTIQUE
+──────────────────────
+
+  tests/env-global-adopt.test.js              créé (+194L)
+  docs/go/CLOSEOUT_ENV_GLOBAL_ADOPT_01.txt    créé
+  Fichiers non touchés : modules/env-global.js · localcms-v5.html · tous modules
+
+
+8. VERDICT FINAL
+──────────────────
+
+╔══════════════════════════════════════════════════════════════╗
+║  VERDICT : PASS                                             ║
+║                                                              ║
+║  49/49 tests env-global-adopt ✓                            ║
+║  Pattern DATA-ONLY établi pour la campagne 8 modules ✓     ║
+║  0 régression suites existantes ✓                          ║
+║  Diff minimal : 1 test + 1 closeout ✓                      ║
+╚══════════════════════════════════════════════════════════════╝
+
+
+9. NOTE PATTERN — SANDBOX
+──────────────────────────
+
+  Les modules/*.js dans le mount virtiofs peuvent être tronqués.
+  Sur la machine Ghost, les fichiers sont complets (Git correct).
+  Le test fonctionne tel quel sur Ghost — aucun ajustement nécessaire.
+  Avant tout rerun sandbox : vérifier wc -l vs longueur git object.
+
+
+10. COMMIT ATTENDU (Ghost)
+───────────────────────────
+
+  git add tests/env-global-adopt.test.js \
+          docs/go/CLOSEOUT_ENV_GLOBAL_ADOPT_01.txt
+  git commit -m "localcms: add env-global adopt tests — 49/49 PASS"
+  git push origin main
+
+
+11. PROCHAIN GO
+────────────────
+
+  GO_LOCALCMS_SEC_CONFIG_ADOPT_01
+  Module : modules/sec-config.js — MOD_SEC_CFG_DATA
+  Struct : forms×6 — 108 fields — 0 COND — 1 VAL — 0 BIND
+
+══════════════════════════════════════════════════════════════════════
