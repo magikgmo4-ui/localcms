@@ -1,0 +1,136 @@
+GO_LOCALCMS_CMS_INSTALLER_SANITY_CHECK_IMPL_01
+
+Statut
+PASS
+
+1. État de départ repris
+- repo : magikgmo4-ui/localcms
+- branche : feature/localcms-shared-explorer-cms-installer-v1
+- HEAD de départ : b7c20d3 (CLOSEOUT_INTEGRATION_TEST_I11_FIX_01)
+- working tree propre en entrée
+- suite d'intégration : 13/13 (I14/I15 inexistants)
+
+2. Fichiers réellement touchés
+
+  api/cms_installer.py
+    _validate_manifest — ajout validation sanity_check (+4 lignes)
+
+  tests/integration_test_pipeline.py
+    _validate_manifest (copie test) — ajout validation sanity_check (+4 lignes)
+    I14 — nouveau test (+14 lignes)
+    I15 — nouveau test (+16 lignes)
+
+  docs/go/CLOSEOUT_CMS_INSTALLER_SANITY_CHECK_IMPL_01.txt
+    création (ce fichier)
+
+  Diff total : 2 fichiers modifiés, 38 insertions, 0 suppression.
+
+3. Validation sanity_check appliquée
+
+Bloc ajouté dans _validate_manifest (api/cms_installer.py + copie test) :
+
+  # sanity_check : optionnel — si présent et non nul, doit être un identifiant valide
+  if m.get("sanity_check") is not None:
+      if not VALID_ID_RE.match(str(m["sanity_check"])):
+          errors.append("sanity_check invalide — seuls [a-z0-9_] autorisés")
+
+Comportement résultant :
+  - absent ou null             → accepté sans erreur
+  - "hello_mod_sanity"         → accepté (conforme [a-z0-9_])
+  - "../evil"                  → rejeté au precheck (erreur explicite)
+  - "mon-module" (tiret)       → rejeté (non conforme VALID_ID_RE)
+  - "" (chaîne vide)           → rejeté (ne matche pas ^[a-z0-9_]+$)
+
+Note : la validation est symétrique dans api/cms_installer.py
+et dans la copie test de tests/integration_test_pipeline.py.
+Sans cet alignement, I15 restait vert côté backend mais vert
+côté test même sans validation.
+
+Aucune exécution de sanity_check n'est introduite.
+Le backend reste passif — il valide le format et transmet.
+
+4. Validation intégration exécutée
+
+  python3 tests/integration_test_pipeline.py
+
+  ✓  I1  — Scan: liste les .zip présents
+  ✓  I2  — Inspect: manifeste lu depuis zip réel
+  ✓  I3  — Precheck: bundle valide → 0 erreur
+  ✓  I4  — Precheck: manifest absent → ValueError
+  ✓  I5  — Precheck: path traversal dans dest → rejeté
+  ✓  I6  — Precheck: target_key inconnu → rejeté
+  ✓  I7  — Pipeline complet: install réussie + fichier présent
+  ✓  I8  — Backup: réinstall → backup réel créé et contenu vérifié
+  ✓  I9  — Staging: créé dans zone isolée puis nettoyé après install
+  ✓  I10 — Rollback: install fail → rollback déclenché
+  ✓  I11 — Logs: structurés, conformes, écrits dans LOG_DIR
+  ✓  I12 — Sécurité: path traversal dans nom bundle → HTTPException 400/403
+  ✓  I13 — Bundle inexistant → HTTPException 404
+  ✓  I14 — sanity_check valide → post_check ok + champ retourné  ← NOUVEAU
+  ✓  I15 — sanity_check invalide → precheck failed               ← NOUVEAU
+
+  RÉSULTAT : 15/15 PASS
+
+5. Validation CMS Installer exécutée
+
+  Tests unitaires — node tests/cms-installer.test.js
+  13/13 PASS — aucune régression
+
+  Smoke tests — node tests/cms-installer.smoke.js
+  6/6 PASS — aucune régression
+
+6. Impact sur le contrat backend
+
+  Nouveau comportement de precheck :
+  - Un bundle portant sanity_check="hello_mod_sanity" passe le precheck.
+  - Un bundle portant sanity_check="../evil" est rejeté au precheck
+    avec l'erreur "sanity_check invalide — seuls [a-z0-9_] autorisés".
+
+  Pipeline install avec sanity_check valide :
+  - steps["post_check"]["status"] = "ok" (non "skipped")
+  - steps["post_check"]["sanity_fn"] = "hello_mod_sanity"
+  - réponse contient "sanity_check": "hello_mod_sanity"
+  - BUS.emit('installer:sanity', module_id) déclenché côté frontend
+
+  La validation est non-bloquante sur le pipeline post-install :
+  le post_check reste "ok" ou "skipped" selon la présence du champ,
+  sans aucune exécution de fonction.
+
+7. Limites restantes réelles
+
+- BUS.on('installer:sanity', ...) : aucun listener enregistré (intentionnel,
+  hors scope — le signal est émis dans le vide).
+- La fonction nommée par sanity_check n'est jamais appelée côté backend ni
+  côté frontend dans cette passe.
+- Tests unitaires (cms-installer.test.js) ne couvrent pas encore la
+  validation sanity_check (T14/T15 ne sont pas ajoutés — les unit tests
+  testent la logique frontend, pas _validate_manifest côté Python).
+- Validation live (uvicorn) non re-exécutée dans cette passe — le
+  precheck et l'install avec sanity_check peuvent être validés live
+  par Ghost sur sa machine.
+
+8. Verdict final canonique
+
+╔══════════════════════════════════════════════════════════════╗
+║  VERDICT : PASS                                             ║
+║                                                              ║
+║  Format sanity_check validé ✓   I14/I15 verts ✓            ║
+║  15/15 intégration ✓   13/13 unit ✓   6/6 smoke ✓         ║
+║  Diff minimal (2 fichiers, 38 ins) ✓   Aucune exécution ✓  ║
+╚══════════════════════════════════════════════════════════════╝
+
+9. Point de reprise suivant
+
+GO_LOCALCMS_CMS_INSTALLER_SANITY_CHECK_CLOSEOUT_01
+
+État canonique à reprendre
+- branche : feature/localcms-shared-explorer-cms-installer-v1
+- HEAD : a01f693 (validate sanity_check format in _validate_manifest + I14/I15)
+- suite complète verte :
+    integration_test_pipeline.py : 15/15
+    cms-installer.test.js        : 13/13
+    cms-installer.smoke.js       :  6/6
+    shared-explorer.test.js      : 13/13
+    shared-explorer.smoke.js     :  6/6
+- prochain chantier candidat : Memory Bricks M3 viewer ou axe suivant
+  selon cadrage post-sanity_check

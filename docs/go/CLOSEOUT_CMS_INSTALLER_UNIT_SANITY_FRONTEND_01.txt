@@ -1,0 +1,175 @@
+GO_LOCALCMS_CMS_INSTALLER_UNIT_SANITY_FRONTEND_01
+
+Statut
+PASS
+
+══════════════════════════════════════════════════════════════════════
+
+
+1. ÉTAT DE DÉPART REPRIS
+──────────────────────────
+
+  repo          : magikgmo4-ui/localcms
+  branche       : feature/localcms-shared-explorer-cms-installer-v1
+  HEAD de départ: 1f30dae (CLOSEOUT_CMS_INSTALLER_SANITY_CHECK_IMPL_01)
+  working tree  : propre en entrée
+  suites de départ :
+    integration_test_pipeline.py : 15/15
+    cms-installer.test.js        : 13/13
+    cms-installer.smoke.js       :  6/6
+
+  Gap documenté (CLOSEOUT_SANITY_CHECK_IMPL_01 § 7) :
+    « Tests unitaires (cms-installer.test.js) ne couvrent pas encore
+      la validation sanity_check (T14/T15 ne sont pas ajoutés — les
+      unit tests testent la logique frontend, pas _validate_manifest
+      côté Python). »
+
+
+2. FICHIER RÉELLEMENT TOUCHÉ
+──────────────────────────────
+
+  tests/cms-installer.test.js
+    — en-tête : « 13 tests » → « 15 tests »,
+                 ajout « sanity_check » dans la ligne Couvre
+    — validateManifest() : ajout bloc sanity_check (+3 lignes)
+    — T14 : nouveau test (+4 lignes)
+    — T15 : nouveau test (+4 lignes)
+    Bilan : 1 fichier modifié, 18 insertions, 2 suppressions
+
+  docs/go/CLOSEOUT_CMS_INSTALLER_UNIT_SANITY_FRONTEND_01.txt
+    — création (ce fichier)
+
+  Fichiers non touchés : modules/cms-installer.js, api/cms_installer.py,
+  localcms-v5.html — AUCUN
+
+
+3. VALIDATION JS sanity_check APPLIQUÉE
+─────────────────────────────────────────
+
+  Bloc ajouté dans validateManifest() (tests/cms-installer.test.js) :
+
+    // sanity_check : optionnel — si présent et non nul, doit être un identifiant valide
+    if (m.sanity_check != null && !VALID_ID_RE.test(String(m.sanity_check))) {
+      errors.push('sanity_check invalide — seuls [a-z0-9_] autorisés');
+    }
+
+  Comportement résultant :
+    absent                   → accepté (0 erreur) — conforme
+    null                     → accepté (0 erreur) — conforme
+    'hello_mod_sanity'       → accepté (0 erreur) — conforme VALID_ID_RE
+    '../evil'                → rejeté — erreur 'sanity_check invalide...'
+    'mon-module' (tiret)     → rejeté — non conforme VALID_ID_RE
+    '' (chaîne vide)         → rejeté — ne matche pas ^[a-z0-9_]+$
+
+  Alignement Python ↔ JS :
+    Python (api/cms_installer.py) :
+      if m.get("sanity_check") is not None:
+          if not VALID_ID_RE.match(str(m["sanity_check"])):
+              errors.append("sanity_check invalide — seuls [a-z0-9_] autorisés")
+    JS (tests/cms-installer.test.js) :
+      if (m.sanity_check != null && !VALID_ID_RE.test(String(m.sanity_check))) {
+        errors.push('sanity_check invalide — seuls [a-z0-9_] autorisés');
+      }
+    → même condition, même message, même VALID_ID_RE = /^[a-z0-9_]+$/
+
+
+4. VALIDATION UNIT FRONTEND EXÉCUTÉE
+──────────────────────────────────────
+
+  node tests/cms-installer.test.js
+
+  ✓  T1  — Manifeste valide retourne 0 erreur
+  ✓  T2  — Champ manquant détecté (target_key)
+  ✓  T3  — id avec tirets rejeté
+  ✓  T4  — version non semver rejetée
+  ✓  T5  — group non autorisé rejeté
+  ✓  T6  — target_key inconnue rejetée
+  ✓  T7  — path traversal dans dest rejeté
+  ✓  T8  — chemin absolu dans dest rejeté
+  ✓  T9  — extension .exe dans dest rejetée
+  ✓  T10 — src absent du zip détecté
+  ✓  T11 — files vide rejeté
+  ✓  T12 — extensions autorisées (.js .json .md .txt .css) acceptées
+  ✓  T13 — format log conforme (champs obligatoires)
+  ✓  T14 — sanity_check valide accepté (0 erreur)          ← NOUVEAU
+  ✓  T15 — sanity_check invalide rejeté                    ← NOUVEAU
+
+  RÉSULTAT : 15/15 PASS
+
+
+5. VALIDATION NON-RÉGRESSION EXÉCUTÉE
+───────────────────────────────────────
+
+  node tests/cms-installer.smoke.js
+
+  ✓  S1–S6 — 6/6 PASS — 0 régression
+
+  python3 tests/integration_test_pipeline.py
+
+  ✓  I1–I15 — 15/15 PASS — 0 régression
+  (I14/I15 backend sanity_check inchangés et toujours verts)
+
+
+6. IMPACT SUR LA PARITÉ PYTHON ↔ JS
+──────────────────────────────────────
+
+  Avant ce GO :
+    Python  — _validate_manifest()  : valide sanity_check ✓
+    JS test — validateManifest()    : ne valide PAS sanity_check ✗
+
+  Après ce GO :
+    Python  — _validate_manifest()  : valide sanity_check ✓
+    JS test — validateManifest()    : valide sanity_check ✓
+
+  Parité complète rétablie. Le miroir JS est désormais symétrique
+  avec le comportement backend pour le champ sanity_check.
+
+
+7. LIMITES RESTANTES RÉELLES
+──────────────────────────────
+
+  - BUS.on('installer:sanity', ...) : aucun listener enregistré
+    (intentionnel, hors scope — le signal reste émis sans consommateur).
+  - Validation live uvicorn avec bundle sanity_check réel : non exécutée
+    dans cette passe.
+  - Les tests unitaires JS couvrent la logique validateManifest() (côté
+    test helper), pas le rendu HTML _renderDetail() ni l'émission BUS.
+    Ces surfaces restent testables via smoke (S5 couvert) ou un futur GO.
+
+
+8. VERDICT FINAL CANONIQUE
+────────────────────────────
+
+╔══════════════════════════════════════════════════════════════╗
+║  VERDICT : PASS                                             ║
+║                                                              ║
+║  Parité Python ↔ JS rétablie ✓   T14/T15 verts ✓          ║
+║  15/15 unit ✓   6/6 smoke ✓   15/15 intégration ✓         ║
+║  Diff minimal (1 fichier, 18 ins) ✓   0 régression ✓       ║
+╚══════════════════════════════════════════════════════════════╝
+
+
+9. POINT DE REPRISE SUIVANT
+─────────────────────────────
+
+  GO_LOCALCMS_CMS_INSTALLER_UNIT_SANITY_FRONTEND_CLOSEOUT_01
+
+  Note de commit (à exécuter après suppression du lock git) :
+
+    git add tests/cms-installer.test.js \
+            docs/go/CLOSEOUT_CMS_INSTALLER_UNIT_SANITY_FRONTEND_01.txt
+    git commit -m "localcms: add sanity_check validation in JS validateManifest + T14/T15"
+
+  État canonique à reprendre :
+    branche : feature/localcms-shared-explorer-cms-installer-v1
+    suite complète :
+      integration_test_pipeline.py : 15/15
+      cms-installer.test.js        : 15/15
+      cms-installer.smoke.js       :  6/6
+      memory-view-adopt.test.js    : 34/34
+      shared-explorer.test.js      : 13/13
+      shared-explorer.smoke.js     :  6/6
+    prochain chantier candidat : listener installer:sanity ou
+    validation live sanity_check ou Memory Bricks M3, selon cadrage
+
+══════════════════════════════════════════════════════════════════════

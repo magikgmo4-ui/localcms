@@ -1,0 +1,125 @@
+GO_LOCALCMS_INTEGRATION_TEST_I11_FIX_01
+
+Statut
+PASS
+
+1. État de départ repris
+- repo : magikgmo4-ui/localcms
+- branche : feature/localcms-shared-explorer-cms-installer-v1
+- HEAD de départ : 1564633 (localcms: add CLOSEOUT_TOOLS_BRANCH_INTEGRATION_01)
+- working tree propre en entrée
+- suite d'intégration : 12/13 (I11 rouge)
+
+2. Fichiers réellement touchés
+
+  tests/integration_test_pipeline.py
+    ligne 180 — run_install_pipeline — backup timestamp
+
+  api/cms_installer.py
+    ligne 336 — install_bundle — backup timestamp
+
+  docs/go/CLOSEOUT_INTEGRATION_TEST_I11_FIX_01.txt
+    création (ce fichier)
+
+3. Fix timestamp backup appliqué
+
+Avant (2 fichiers)
+  ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+
+Après (2 fichiers)
+  ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
+
+Root cause confirmée
+- Le timestamp de backup à précision seconde causait une collision de
+  répertoire quand plusieurs installs du même module s'enchaînaient dans
+  la même seconde.
+- Le répertoire réutilisé contenait un fichier read-only (0o444) copié
+  par I10 (chmod test). shutil.copy2 échouait silencieusement dessus.
+- _emit_log n'étant appelé que sur backup "ok", aucun log n'était produit.
+- L'assertion I11 "len(logs) > before_count" ratait en conséquence.
+- Le même défaut existait dans api/cms_installer.py en production :
+  deux installs rapides du même module pouvaient collisionner sur le
+  même répertoire de backup.
+
+Diff minimal
+  2 fichiers, 2 lignes, 2 insertions, 2 suppressions.
+  Aucune autre modification.
+
+Commit produit
+  SHA : 26a4a64
+  message : localcms: fix backup timestamp precision (sec → µs) in test + backend
+
+4. Validation intégration exécutée
+
+  python3 tests/integration_test_pipeline.py
+
+  ✓  I1  — Scan: liste les .zip présents
+  ✓  I2  — Inspect: manifeste lu depuis zip réel
+  ✓  I3  — Precheck: bundle valide → 0 erreur
+  ✓  I4  — Precheck: manifest absent → ValueError
+  ✓  I5  — Precheck: path traversal dans dest → rejeté
+  ✓  I6  — Precheck: target_key inconnu → rejeté
+  ✓  I7  — Pipeline complet: install réussie + fichier présent
+  ✓  I8  — Backup: réinstall → backup réel créé et contenu vérifié
+  ✓  I9  — Staging: créé dans zone isolée puis nettoyé après install
+  ✓  I10 — Rollback: install fail → rollback déclenché
+  ✓  I11 — Logs: structurés, conformes, écrits dans LOG_DIR   ← FERMÉ
+  ✓  I12 — Sécurité: path traversal dans nom bundle → HTTPException 400/403
+  ✓  I13 — Bundle inexistant → HTTPException 404
+
+  RÉSULTAT : 13/13 PASS
+
+5. Validation CMS Installer exécutée
+
+  Tests unitaires — node tests/cms-installer.test.js
+  13/13 PASS — aucune régression
+
+  Smoke tests — node tests/cms-installer.smoke.js
+  6/6 PASS — aucune régression
+
+6. Impact sur le backend réel
+
+  api/cms_installer.py (install_bundle) utilise désormais
+  strftime("%Y%m%dT%H%M%S%f") pour le chemin de backup.
+
+  Le répertoire de backup est maintenant unique à la microseconde,
+  éliminant le risque de collision même en cas d'installs rapides
+  successives du même module.
+
+  Comportement observable inchangé côté utilisateur :
+  - les chemins de backup sont plus longs (26 vs 15 caractères)
+  - aucun endpoint ni réponse API n'expose le chemin de backup
+  - aucun changement de comportement frontend
+
+7. Limites restantes réelles
+
+- sanity_check n'est toujours pas exercé en live (inchangé — hors scope)
+- aucun test de bundle edge-case supplémentaire dans cette passe
+- la validation live uvicorn /api/installer/* reste à la charge de Ghost
+  (inchangé depuis le closeout Tools Integration)
+
+8. Verdict final canonique
+
+╔══════════════════════════════════════════════════════════════╗
+║  VERDICT : PASS                                             ║
+║                                                              ║
+║  I11 fermé ✓    13/13 intégration ✓                        ║
+║  13/13 unit ✓    6/6 smoke ✓                               ║
+║  Bug production corrigé ✓   Diff minimal ✓                 ║
+╚══════════════════════════════════════════════════════════════╝
+
+9. Point de reprise suivant
+
+GO_LOCALCMS_INTEGRATION_TEST_I11_FIX_CLOSEOUT_01
+
+État canonique à reprendre
+- branche : feature/localcms-shared-explorer-cms-installer-v1
+- HEAD : 26a4a64 (fix backup timestamp)
+- suite complète verte :
+    integration_test_pipeline.py : 13/13
+    cms-installer.test.js        : 13/13
+    cms-installer.smoke.js       :  6/6
+    shared-explorer.test.js      : 13/13 (prouvé sessions précédentes)
+    shared-explorer.smoke.js     :  6/6  (prouvé sessions précédentes)
+- prochain chantier candidat : GO_LOCALCMS_CMS_INSTALLER_SANITY_CHECK_01
+  ou ouverture Memory Bricks M3 selon cadrage suivant

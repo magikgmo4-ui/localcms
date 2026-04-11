@@ -1,0 +1,112 @@
+LOCALCMS — ÉTABLI REPRISE CANONIQUE M1+M2+M3
+Date : 2026-03-18
+
+=== ADDENDUM 2026-03-27 — M3 MEMORY VIEW V1 ===
+
+M3 — MEMORY BRICKS VIEWER V1
+  Statut    : CLOSE — read-only minimal utile valide
+  Frontend  : `localcms-v5.html`
+  Source    : `C:\Users\ghost\Downloads\memory_bricks_localcms_source`
+  Contrat   : `index\index_full.json` pour liste + filtres simples ; `bricks\MB-*.md` pour detail lisible
+  Garantie  : aucun write-back vers `memory_bricks`
+  Validation: UI entrypoint realignee + validation sur source reelle Windows
+  Limites   : aucun backend/runtime supplementaire ; aucun melange shared explorer / cms installer / forms
+
+=== ADDENDUM 2026-03-27 — GITIGNORE HARDEN ===
+
+M3.1 — GITIGNORE CANONIQUE MINIMAL
+  Statut    : PASS — hygiene/versioning locale synchronisee
+  Fichier   : `.gitignore`
+  Portee    : `.env`, caches locaux, environnements virtuels, `node_modules/`, logs, temporaires, bruit OS/editeur minimal
+  Garantie  : aucun code produit touche
+  Limites   : aucune extension fonctionnelle ; aucun impact viewer/backend/runtime
+
+Projet
+- LocalCMS — gestionnaire de configuration local, architecture modulaire IIFE
+
+=== MODULES LIVRÉS ===
+
+M1 — MOD_SHARED_EXPLORER V1
+  Statut    : ÉTABLI — validé live sandbox + tests canoniques
+  Frontend  : modules/shared-explorer.js (602 lignes)
+  Backend   : api/shared_explorer.py (311 lignes — 4 endpoints GET)
+  Tests     : tests/shared-explorer.test.js (13 tests) + smoke.js (6 smokes)
+  Endpoints : /api/shared/list /api/shared/read /api/shared/download /api/shared/search
+  Sécurité  : lecture seule absolue — realpath + relative_to(SHARED_ROOT) — symlinks bloqués
+
+M2 — MOD_CMS_INSTALLER V1
+  Statut    : ÉTABLI — install live hello-mod-v1.0.0.zip réussie dans sandbox
+  Frontend  : modules/cms-installer.js (364 lignes)
+  Backend   : api/cms_installer.py (460 lignes)
+  Tests     : tests/cms-installer.test.js (210 tests) + smoke.js (260 smokes)
+  Endpoints : /api/installer/scan /api/installer/inspect + install pipeline
+  Artefact  : modules/hello-mod.js présent dans sandbox — installation prouvée
+
+=== CORRECTIONS APPLIQUÉES AU CANONIQUE (cette session) ===
+
+CORR-1  commit 6bbe56a
+  Fichier : localcms-v5.html
+  Action  : ajout entrées nav shared_explorer + cms_installer
+            correction bug template string webhook (quote manquante)
+  Preuve  : diff HEAD^ vs HEAD — 2 lignes ajoutées + 1 ligne modifiée
+
+CORR-2  commit 28ac50a
+  Fichier : localcms-v5.html
+  Action  : correction paths nav '/ explorer' → '/explorer'
+                                 '/ installer' → '/installer'
+  Preuve  : diff HEAD^ vs HEAD — 2 lignes modifiées uniquement
+
+CORR-3  commit 67c0bab
+  Fichier : localcms-v5.html
+  Action  : suppression 12 lignes — doublons const (typeList/typeIcons/typeLabels)
+            dans 3 IIFEs : MOD_APPS_CFG, MOD_SEC_CFG, MOD_DEVTOOLS_CFG
+  Nature  : SyntaxError ES6 — deux const identiques dans même scope bloc
+  Preuve  : diff HEAD^ vs HEAD — 12 lignes supprimées, 0 ajoutées
+            déclarations meta-based conservées (seules sources correctes)
+
+=== DIVERGENCES CANONIQUE vs SANDBOX ===
+
+ÉTABLI
+- sandbox HEAD = 826a67a — les 3 commits canoniques ci-dessus sont absents du sandbox
+- localcms-v5.html dans le sandbox ne contient pas CORR-1, CORR-2, CORR-3
+
+Fichiers vérifiés identiques au moment de l'audit initial (base commune : 826a67a)
+  modules/shared-explorer.js
+  modules/cms-installer.js
+  api/shared_explorer.py
+  api/cms_installer.py
+  tests/cms-installer.smoke.js
+  tests/integration_test_pipeline.py
+  → vérification effectuée par diff direct — résultat : 0 ligne de différence (hors CRLF)
+  → cette vérification date de l'audit de session — non re-prouvée depuis
+
+À CONFIRMER
+- que les autres fichiers traqués du sandbox (modules/*.js hors M1/M2, tests/*.js
+  hors les 6 vérifiés) n'ont pas d'autres modifications non auditées
+
+=== ARTEFACT ENVIRONNEMENT ===
+
+ÉTABLI
+- index virtiofs du canonique présente un artefact MM/M sur localcms-v5.html et 2 tests
+- cause : lock .git/index non supprimable depuis VM Linux (restriction virtiofs/NTFS)
+- impact contenu : nul — working tree == HEAD prouvé par diff (hors CRLF)
+- résolution : se résorbe au prochain git pull/checkout depuis Windows
+
+=== POINTS NON TOUCHÉS (explicitement hors périmètre) ===
+
+- modules/cms-installer.js        inchangé
+- modules/shared-explorer.js      inchangé
+- api/cms_installer.py            inchangé
+- api/shared_explorer.py          inchangé
+- tous les tests                  inchangés
+- tous les autres modules *.js    inchangés
+- les déclarations meta-based
+  (typeIcons/typeLabels/typeList)  conservées dans les 3 IIFEs
+
+=== RÈGLES À PRÉSERVER ===
+
+- ne pas ajouter d'endpoint écriture dans shared_explorer.py
+- ne pas casser MOD_SHARED_EXPLORER V1
+- ne pas mélanger UI et backend M1 / M2
+- conserver realpath + relative_to() dans _resolve_safe()
+- tout patch futur sur localcms-v5.html : minimal, ciblé, diff vérifié avant commit

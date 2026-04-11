@@ -1,0 +1,149 @@
+GO_LOCALCMS_MEMORY_VIEW_TAG_FILTER_01
+
+Statut
+PASS
+
+══════════════════════════════════════════════════════════════════════
+
+
+1. ÉTAT DE DÉPART REPRIS
+──────────────────────────
+
+  repo          : magikgmo4-ui/localcms
+  branche       : feature/localcms-shared-explorer-cms-installer-v1
+  HEAD de départ: ada2a41 (add installer:sanity BUS listener + event doc)
+  working tree  : propre en entrée
+  suites de départ :
+    memory-view-adopt.test.js    : 34/34
+    cms-installer.test.js        : 15/15
+    cms-installer.smoke.js       :  7/7
+    integration_test_pipeline.py : 15/15
+
+  Gap repo-sourcé documenté (cadrage MEMORY_BRICKS_M3_CADRAGE_01) :
+    tags modélisés dans normalizeEntry() ✓
+    tags utilisés dans haystack de recherche texte ✓
+    tagFilter absent de state, setTagFilter absent,
+    select tags absent du render() ✗
+
+
+2. FICHIERS RÉELLEMENT TOUCHÉS
+──────────────────────────────
+
+  localcms-v5.html (section MOD_MEMORY_VIEW uniquement)
+    — state : +1 ligne tagFilter: 'all'
+    — rebuildFilters() : +1 ligne contrainte tagFilter
+    — setTagFilter() : +5 lignes (nouvelle fonction)
+    — render() : +1 ligne tagOptions, +4 lignes select tags UI
+    — return : +setTagFilter dans l'API publique
+    Bilan : +12 lignes fonctionnelles
+
+  tests/memory-view-adopt.test.js
+    — en-tête : F 8 tests → 12 tests
+    — resetState() : +1 ligne tagFilter: 'all'
+    — INIT02 : +setTagFilter dans la liste API vérifiée
+    — +section F-tag (F09–F12) : +28 lignes
+    Bilan : +35 lignes
+
+  docs/go/CLOSEOUT_MEMORY_VIEW_TAG_FILTER_01.txt
+    — création (ce fichier)
+
+  Fichiers non touchés : modules/cms-installer.js, api/cms_installer.py,
+  tous les autres tests — AUCUN
+
+
+3. PATCH APPLIQUÉ
+──────────────────
+
+  state :
+    tagFilter: 'all',
+
+  rebuildFilters() :
+    if (state.tagFilter !== 'all' && !(entry.tags || []).includes(state.tagFilter)) return false;
+
+  setTagFilter() :
+    const setTagFilter = (value) => {
+      state.tagFilter = value || 'all';
+      rebuildFilters();
+      ensureSelection();
+    };
+
+  render() — tagOptions + select :
+    const tagOptions = unique(state.entries.flatMap((entry) => entry.tags || []));
+    ...
+    <select class="c-select" style="width:170px" onchange="MOD_MEMORY_VIEW.setTagFilter(this.value)">
+      <option value="all" ...>Tous les tags</option>
+      ${tagOptions.map(...).join('')}
+    </select>
+
+  return :
+    setTagFilter ajouté dans l'API publique exposée
+
+
+4. VALIDATION memory-view-adopt EXÉCUTÉE
+──────────────────────────────────────────
+
+  node tests/memory-view-adopt.test.js
+
+  ✓  INIT01–INIT04  (inchangés)
+  ✓  N01–N08        (inchangés)
+  ✓  RE01–RE06      (inchangés)
+  ✓  F01–F08        (inchangés)
+  ✓  F09 — tagFilter localcms — 1 brick retenue (BRICK_A)   ← NOUVEAU
+  ✓  F10 — tagFilter viewer   — 1 brick retenue (BRICK_B)   ← NOUVEAU
+  ✓  F11 — tagFilter inconnu  — 0 brick retenue             ← NOUVEAU
+  ✓  F12 — tagFilter all      — 3 bricks passent            ← NOUVEAU
+  ✓  U01–U05        (inchangés)
+  ✓  P01–P03        (inchangés)
+
+  RÉSULTAT : 38/38 PASS
+
+
+5. VALIDATION NON-RÉGRESSION EXÉCUTÉE
+───────────────────────────────────────
+
+  node tests/cms-installer.test.js        → 15/15 PASS — 0 régression
+  node tests/cms-installer.smoke.js       →  7/7  PASS — 0 régression
+  python3 tests/integration_test_pipeline.py → 15/15 PASS — 0 régression
+
+
+6. VERDICT FINAL CANONIQUE
+────────────────────────────
+
+╔══════════════════════════════════════════════════════════════╗
+║  VERDICT : PASS                                             ║
+║                                                              ║
+║  tagFilter ajouté : state + rebuildFilters + setTagFilter  ║
+║  select tags UI présent dans render() ✓                    ║
+║  API publique étendue : setTagFilter exposé ✓              ║
+║  38/38 memory-view ✓   15/15 unit ✓   7/7 smoke ✓         ║
+║  Diff minimal : 2 fichiers sources + 1 closeout ✓          ║
+╚══════════════════════════════════════════════════════════════╝
+
+
+7. POINT DE REPRISE SUIVANT
+─────────────────────────────
+
+  Commit à effectuer par Ghost (annuler le staging parasite d'abord) :
+
+    git restore --staged tests/smoke_cond_valid.js
+    git add localcms-v5.html \
+            tests/memory-view-adopt.test.js \
+            docs/go/CLOSEOUT_MEMORY_VIEW_TAG_FILTER_01.txt
+    git commit -m "localcms: add tagFilter to MOD_MEMORY_VIEW + F09-F12 tests"
+
+  État canonique à reprendre :
+    branche : feature/localcms-shared-explorer-cms-installer-v1
+    suite complète :
+      memory-view-adopt.test.js    : 38/38
+      cms-installer.test.js        : 15/15
+      cms-installer.smoke.js       :  7/7
+      integration_test_pipeline.py : 15/15
+      shared-explorer.test.js      : 13/13
+      shared-explorer.smoke.js     :  6/6
+
+  Prochains candidats :
+    — Validation live uvicorn (infrastructure Ghost)
+    — Autre axe Memory Bricks (index_short.md si prouvé sur source réelle)
+    — Autre chantier selon sélection
+
+══════════════════════════════════════════════════════════════════════

@@ -1,0 +1,47 @@
+LOCALCMS — NEXT — CMS MODULE INSTALLER V1
+Date : 2026-03-15
+
+Prochain sous-objectif
+- CMS Module Installer V1 (M2 du plan modulaire)
+
+Condition d'ouverture
+- MOD_SHARED_EXPLORER V1 doit être passé en statut validated avant ouverture
+- validation = patch appliqué + smokes LIVE verts
+
+Pourquoi ce choix
+- suite logique cadrée dans le plan modulaire (M1 → M2)
+- M2 hérite de la navigation /shared produite par M1 (même espace racine)
+- pipeline connu : Scan → Inspect → Precheck → Backup → Staging → Validate → Install → Post-check → Finalize
+- périmètre plus élevé que M1 (actions actives), donc M1 devait être validé en premier
+
+Point de départ
+- archive de reprise : MOD_SHARED_EXPLORER_V1_FINAL.zip + localcms-v5.html patché
+- état :
+  - P1 CLOSE
+  - P2 CLOSE
+  - P3 CLOSE
+  - M-4.1 → M-4.4 review_required
+  - MOD_SHARED_EXPLORER V1 = validated (condition)
+  - CMS Module Installer V1 = à ouvrir
+
+Travail attendu (rappel plan modulaire)
+- spec CMS Module Installer V1 à récupérer depuis plan_modulaire_explorateur_shared_installateur_cms
+- pipeline : Scan bundles /shared → Inspect → Precheck → Backup → Staging → Validate → Install → Post-check → Finalize
+- frontend : panneau dédié dans LocalCMS, séparé de Shared Explorer
+- backend : extension backend LocalCMS existant (pas de service séparé)
+- endpoints : à définir en spec — probablement scan / inspect / install / status
+- AUCUNE action d'écriture/exec hors périmètre installateur explicite
+
+Règles à préserver
+- ne pas casser MOD_SHARED_EXPLORER V1
+- ne pas mélanger les deux modules (UI et backend séparés)
+- patch minimal sur localcms-v5.html
+- spec à figer avant implémentation (même protocole que M1)
+
+Index des fichiers à réuploader en nouvelle session
+- MOD_SHARED_EXPLORER_V1_FINAL.zip             (code final M1)
+- 00_etabli_MOD_SHARED_EXPLORER_V1.txt         (contexte établi)
+- 00_etat_courant_MOD_SHARED_EXPLORER_V1.txt   (état session)
+- plan_modulaire_explorateur_shared_installateur_cms.pdf (spec M2)
+- audit_kanban_projet_rempli_v3.zip            (kanban mis à jour)
+- localcms-v5.html (version patchée avec M1)

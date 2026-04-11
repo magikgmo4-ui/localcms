@@ -1,0 +1,51 @@
+LOCALCMS — CLOSEOUT MEMORY VIEW V1
+Mission : GO_LOCALCMS_MEMORY_VIEW_CLOSEOUT_02
+Date    : 2026-03-27
+Repo    : C:\Users\ghost\localcms
+Branche : feature/localcms-memory-view-v1
+HEAD    : 90a52e9
+Statut  : CLOSE
+
+1. Etat final retenu
+
+- `GO_LOCALCMS_MEMORY_VIEW` : CLOSE sur source synthetique.
+- `GO_LOCALCMS_VIEWER_UI_ENTRYPOINT_REALIGN_01` : PASS.
+- `GO_LOCALCMS_VIEWER_REAL_SOURCE_VALIDATE_01` : PASS.
+
+2. Etabli
+
+- `localcms-v5.html` contient une entree UI `Memory Bricks`.
+- `localcms-v5.html` contient la route `memory_view`.
+- `localcms-v5.html` contient le panel `panel-memory_view`.
+- `localcms-v5.html` contient `MOD_MEMORY_VIEW`.
+- Le viewer reste borne a une lecture read-only.
+- Contrat V1 retenu :
+  - `index\index_full.json` pour liste + filtres simples ;
+  - `bricks\MB-*.md` pour le detail lisible.
+- Source reelle validee : `C:\Users\ghost\Downloads\memory_bricks_localcms_source`.
+- Presence reelle prouvee :
+  - `C:\Users\ghost\Downloads\memory_bricks_localcms_source\index\index_full.json`
+  - `C:\Users\ghost\Downloads\memory_bricks_localcms_source\bricks\MB-00001__persistent-localcms-seed.md`
+  - `C:\Users\ghost\Downloads\memory_bricks_localcms_source\bricks\MB-00002__read-only-viewer-contract.md`
+  - `C:\Users\ghost\Downloads\memory_bricks_localcms_source\bricks\MB-00003__minimal-persisted-dataset-ready.md`
+- Validation reelle retenue : liste, filtre simple, detail lisible et garde-fou read-only.
+
+3. Limites restantes reelles
+
+- Aucun write-back vers `memory_bricks`.
+- Aucun backend / runtime / host / FastAPI / port 8000 ajoute.
+- Aucun patch noyau `memory_bricks` requis.
+- Aucun melange avec shared explorer / cms installer / forms.
+- Aucun elargissement vers cloud / mobile / multi-IA / HF.
+
+4. Point de cloture
+
+- Le viewer Memory Bricks V1 LocalCMS est ferme dans son perimetre minimal read-only utile.
+
+5. Point de reprise
+
+- `GO_LOCALCMS_MEMORY_VIEW_CANONICAL_SYNC_01` : PASS.
+- `GO_LOCALCMS_GITIGNORE_HARDEN_01` : PASS.
+- `GO_LOCALCMS_GITIGNORE_CANONICAL_SYNC_01` : PASS.
+- Prochain trigger recommande : `GO_LOCALCMS_NEXT_MISSION_SELECTION_02`.
+- Objet : selectionner le prochain chantier LocalCMS utile apres sync hygiene/versioning, sans rouvrir Memory View V1 par defaut.

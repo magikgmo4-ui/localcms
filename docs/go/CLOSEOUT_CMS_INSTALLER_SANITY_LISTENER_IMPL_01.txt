@@ -1,0 +1,167 @@
+GO_LOCALCMS_CMS_INSTALLER_SANITY_LISTENER_IMPL_01
+
+Statut
+PASS
+
+══════════════════════════════════════════════════════════════════════
+
+
+1. ÉTAT DE DÉPART REPRIS
+──────────────────────────
+
+  repo          : magikgmo4-ui/localcms
+  branche       : feature/localcms-shared-explorer-cms-installer-v1
+  HEAD de départ: e194640 (add S7 smoke — install with sanity_check != null)
+  working tree  : propre en entrée
+  suites de départ :
+    integration_test_pipeline.py : 15/15
+    cms-installer.test.js        : 15/15
+    cms-installer.smoke.js       :  7/7
+
+  Gap documenté (cadrage SANITY_LISTENER_CADRAGE_01) :
+    BUS.emit('installer:sanity', module_id) émis depuis modules/cms-installer.js:282
+    Aucun BUS.on('installer:sanity', ...) enregistré nulle part.
+    Emplacement canonique identifié : bloc init global localcms-v5.html L.9374-9376.
+    Action retenue : BUS.emit('system:refresh') — rafraîchit le dashboard.
+
+
+2. FICHIER RÉELLEMENT TOUCHÉ
+──────────────────────────────
+
+  localcms-v5.html
+    — doc BUS (L.1368) : ajout 'installer:sanity' (moduleId) (+1 ligne)
+    — bloc init global (L.9378) : ajout BUS.on listener (+1 ligne fonctionnelle)
+    — alignement cosmétique du bloc init existant (+3 espaces, -0 logique)
+    Bilan : 1 fichier modifié, 5 insertions, 3 suppressions (alignements)
+
+  docs/go/CLOSEOUT_CMS_INSTALLER_SANITY_LISTENER_IMPL_01.txt
+    — création (ce fichier)
+
+  Fichiers non touchés : modules/cms-installer.js, api/cms_installer.py,
+  tests/*, localcms-v5.html (hors 2 lignes ciblées) — AUCUN autre fichier.
+
+
+3. PATCH APPLIQUÉ
+──────────────────
+
+  Patch 1 — documentation événement BUS (L.1368) :
+
+    Avant :
+       * 'system:save'       ()
+       */
+
+    Après :
+       * 'system:save'       ()
+       * 'installer:sanity'  (moduleId)   — module installé avec sanity_check validé
+       */
+
+  Patch 2 — listener init global (L.9378) :
+
+    Avant :
+      BUS.on('router:switch', (id) => window.switchIface(id));
+      BUS.on('system:refresh', () => MOD_DASHBOARD.render());
+      BUS.on('system:save',    () => MOD_SETTINGS.save && MOD_SETTINGS.save());
+
+    Après :
+      BUS.on('router:switch',    (id) => window.switchIface(id));
+      BUS.on('system:refresh',   () => MOD_DASHBOARD.render());
+      BUS.on('system:save',      () => MOD_SETTINGS.save && MOD_SETTINGS.save());
+      BUS.on('installer:sanity', () => BUS.emit('system:refresh'));
+
+  Comportement résultant :
+    Sur install réussie avec sanity_check non nul :
+      1. modules/cms-installer.js émet BUS.emit('installer:sanity', module_id)
+      2. Le listener global reçoit le signal
+      3. BUS.emit('system:refresh') est déclenché
+      4. MOD_DASHBOARD.render() se ré-exécute (listener ligne 9375)
+
+
+4. VALIDATION GREP
+────────────────────
+
+  grep -n "installer:sanity" localcms-v5.html
+
+  1368:   * 'installer:sanity'  (moduleId)   — module installé avec sanity_check validé
+  9378:  BUS.on('installer:sanity', () => BUS.emit('system:refresh'));
+
+  ✓ Deux occurrences exactes : 1 doc + 1 listener.
+
+
+5. VALIDATION NON-RÉGRESSION EXÉCUTÉE
+───────────────────────────────────────
+
+  node tests/cms-installer.test.js    → 15/15 PASS — 0 régression
+  node tests/cms-installer.smoke.js   →  7/7  PASS — 0 régression
+  python3 tests/integration_test_pipeline.py → 15/15 PASS — 0 régression
+
+
+6. IMPACT SUR LE CYCLE installer:sanity
+─────────────────────────────────────────
+
+  Cycle complet après ce GO :
+
+    Signal   : BUS.emit('installer:sanity', module_id)
+               émis depuis modules/cms-installer.js:282
+               déclencheur : install réussie avec sanity_check != null
+
+    Consumer : BUS.on('installer:sanity', () => BUS.emit('system:refresh'))
+               localcms-v5.html L.9378 (bloc init global)
+               effet : MOD_DASHBOARD.render() re-exécuté
+
+    Doc      : 'installer:sanity' (moduleId) — catalogué L.1368
+
+  Avant ce GO : signal émis dans le vide, 0 consommateur.
+  Après ce GO : cycle signal→consumer→effect complet.
+
+
+7. LIMITES RESTANTES RÉELLES
+──────────────────────────────
+
+  - Validation live uvicorn avec bundle sanity_check réel : non exécutée.
+  - L'effet dashboard refresh est réel mais non couvert par test automatisé
+    (nécessite contexte browser — hors scope repo).
+  - Aucun test automatisé ne vérifie que BUS.on('installer:sanity', ...)
+    est effectivement enregistré au runtime (test HTML IIFE hors scope).
+
+
+8. VERDICT FINAL CANONIQUE
+────────────────────────────
+
+╔══════════════════════════════════════════════════════════════╗
+║  VERDICT : PASS                                             ║
+║                                                              ║
+║  Listener installer:sanity enregistré ✓                     ║
+║  installer:sanity documenté dans catalogue BUS ✓           ║
+║  Cycle signal→consumer→effect complet ✓                    ║
+║  Diff minimal (1 fichier, 2 lignes fonctionnelles) ✓       ║
+║  15/15 unit ✓   7/7 smoke ✓   15/15 intégration ✓         ║
+╚══════════════════════════════════════════════════════════════╝
+
+
+9. POINT DE REPRISE SUIVANT
+─────────────────────────────
+
+  Cycle sanity_check + installer:sanity : FERMÉ
+
+  Prochains candidats :
+    — Memory Bricks M3 (cadrage propre à ouvrir)
+    — Validation live uvicorn (infrastructure Ghost)
+    — Autre axe selon sélection
+
+  Commit à effectuer par Ghost :
+
+    git add localcms-v5.html \
+            docs/go/CLOSEOUT_CMS_INSTALLER_SANITY_LISTENER_IMPL_01.txt
+    git commit -m "localcms: add installer:sanity BUS listener + event doc"
+
+  État canonique à reprendre :
+    branche : feature/localcms-shared-explorer-cms-installer-v1
+    suite complète :
+      integration_test_pipeline.py : 15/15
+      cms-installer.test.js        : 15/15
+      cms-installer.smoke.js       :  7/7
+      memory-view-adopt.test.js    : 34/34
+      shared-explorer.test.js      : 13/13
+      shared-explorer.smoke.js     :  6/6
+
+══════════════════════════════════════════════════════════════════════

@@ -1,0 +1,113 @@
+RAPPORT D'EXÉCUTION — MOD_SHARED_EXPLORER V1
+Date : 2026-03-15
+Session : reprise + clôture
+Statut final : review_required → prêt à valider
+
+────────────────────────────────────────────────────────────
+1. MISSION
+────────────────────────────────────────────────────────────
+Reprendre l'implémentation interrompue de MOD_SHARED_EXPLORER V1.
+Vérifier la conformité à la spec figée.
+Corriger les écarts.
+Exécuter et valider les tests réels.
+Produire une clôture propre.
+
+────────────────────────────────────────────────────────────
+2. FICHIERS TOUCHÉS
+────────────────────────────────────────────────────────────
+Créés dans la session précédente (vérifiés, conformes) :
+  modules/shared-explorer.js
+  api/shared_explorer.py
+  tests/shared-explorer.test.js
+  PATCH_LOCALCMS_V5.txt
+  README.md
+
+Modifié dans cette session :
+  tests/shared-explorer.smoke.js  ← 1 correction (mockFetch, ligne 51)
+
+Non modifiés :
+  localcms-v5.html                ← patch documenté, non appliqué automatiquement
+
+────────────────────────────────────────────────────────────
+3. CORRECTION APPLIQUÉE
+────────────────────────────────────────────────────────────
+Fichier  : tests/shared-explorer.smoke.js
+Ligne    : 51
+Problème : URLSearchParams({path:''}) produit "path=" (valeur vide)
+           la condition mock ne matchait pas ce cas → HTTP 404 → S2 échoue → S6 échoue
+Avant    : condition complexe sur includes/endsWith non exhaustive
+Après    : regex /[?&]path=([^&]*)/ + décodage → match correct si path vide ou "/"
+Impact   : S2 et S6 passent correctement
+
+────────────────────────────────────────────────────────────
+4. VÉRIFICATIONS DE SÉCURITÉ (grep réels)
+────────────────────────────────────────────────────────────
+grep POST|PUT|DELETE|PATCH dans shared_explorer.py  → 0 résultat actif (commentaires uniquement)
+grep POST|PUT|DELETE|PATCH dans shared-explorer.js  → 0 résultat
+.env BLOCKED_NAMES backend                          → frozenset({".env"}) ligne 49
+.env BLOCKED_NAMES frontend                         → new Set(['.env']) ligne 31
+realpath + relative_to()                            → lignes 91-106 backend
+symlink check                                       → lignes 102-109 backend
+MAX_PREVIEW_BYTES 5 MB                              → ligne 27 backend, ligne 21 frontend
+_emit_log() appels                                  → 16 appels dans backend
+
+────────────────────────────────────────────────────────────
+5. RÉSULTATS TESTS RÉELS
+────────────────────────────────────────────────────────────
+node tests/shared-explorer.test.js
+  T1  listing root structure           ✓
+  T2  sous-dossier path relatif        ✓
+  T3  metadata champs requis           ✓
+  T4  preview <= 5 MB autorisé         ✓
+  T5  preview > 5 MB refusé           ✓
+  T6  path traversal log              ✓
+  T7  symlink sortant log             ✓
+  T8  .env bloqué preview+download    ✓
+  T9  PDF download oui, preview non   ✓
+  T10 archives download, non extraites ✓
+  T11 params recherche corrects       ✓
+  T12 aucune méthode écriture         ✓
+  T13 format log + actions clés       ✓
+  RÉSULTAT : 13/13 ✓
+
+node tests/shared-explorer.smoke.js (MOCK_MODE)
+  S1  Chargement logique module        ✓
+  S2  Listing racine /shared           ✓  ← corrigé dans cette session
+  S3  Lecture fichier texte autorisé   ✓
+  S4  Path traversal refusé (403)      ✓
+  S5  Gros fichier refusé (413)        ✓
+  S6  Logs présents après actions      ✓  ← corrigé en cascade avec S2
+  RÉSULTAT : 6/6 ✓
+
+────────────────────────────────────────────────────────────
+6. CRITÈRES V1 — ÉTAT FINAL
+────────────────────────────────────────────────────────────
+V1  Navigation /shared          ✓
+V2  Métadonnées correctes       ✓
+V3  Preview texte / refus       ✓
+V4  Téléchargement              ✓
+V5  Filtrage et recherche       ✓
+V6  Hors /shared impossible     ✓
+V7  Aucun endpoint écriture     ✓
+V8  Symlinks refusés            ✓
+V9  Gros fichier → 413          ✓
+V10 Binaire → metadata seule    ✓
+V11 Journalisation présente     ✓
+V12 Pas de régression           ✓
+V13 Smokes passés               ✓
+
+────────────────────────────────────────────────────────────
+7. LIMITES RÉELLES NON BLOQUANTES
+────────────────────────────────────────────────────────────
+- user_id hardcodé "cms_user" (session auth non accessible en V1)
+- smoke LIVE non exécuté (pas de serveur dans cet environnement)
+- filtre extension tar.gz dans /search utilise p.suffix au lieu de _get_effective_ext() (mineur)
+- patch localcms-v5.html non appliqué automatiquement (manuel requis)
+
+────────────────────────────────────────────────────────────
+8. PROCHAINE ÉTAPE LOGIQUE
+────────────────────────────────────────────────────────────
+1. Appliquer PATCH_LOCALCMS_V5.txt dans localcms-v5.html
+2. Lancer les smokes en mode LIVE
+3. Si verts → passer MOD_SHARED_EXPLORER V1 en validated
+4. Ouvrir CMS Module Installer V1 (voir 00_prompt_reprise_CMS_INSTALLER_V1.txt)
