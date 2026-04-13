@@ -14,7 +14,7 @@ topic_keys:
   - consumer
 surface: consumer
 source_kind: canonical
-updated_at: 2026-04-11
+updated_at: 2026-04-13
 links:
   - docs/index/GO_INDEX.md
   - docs/index/ACTIVE_STREAMS.md
@@ -25,10 +25,6 @@ links:
 
 ## Candidats actuels
 
-### GO_LOCALCMS_MEMORY_BRICKS_CONSUMER_PILOT_01
-- origine : `GO_LOCALCMS_UNIFORM_CONTINUITY_ALIGNMENT_01`
-- type : chantier pilote consumer
-- valeur attendue : valider un premier cas canonique localcms directement relié à la consommation de `memory_bricks`
-- condition d’ouverture : index locaux minimum en place
-- pourquoi pas maintenant : ouverture dans la suite immédiate du présent flux
-- priorité : high
+- aucun nouveau GO nommé nécessaire avant l’enrichissement des index locaux
+- suite courte utile : normalisation historique ciblée d’artefacts consumer utiles
+- suite transverse utile : prolonger l’alignement sans changer le rôle consumer de `localcms`

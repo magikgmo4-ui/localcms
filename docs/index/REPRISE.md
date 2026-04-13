@@ -14,7 +14,7 @@ topic_keys:
   - consumer
 surface: consumer
 source_kind: canonical
-updated_at: 2026-04-11
+updated_at: 2026-04-13
 links:
   - docs/governance/REPO_ROLE.md
   - docs/governance/DOC_LAYERS.md
@@ -29,5 +29,6 @@ links:
 - références prioritaires :
   - `docs/governance/REPO_ROLE.md`
   - `docs/governance/DOC_LAYERS.md`
-- dernier point établi : socle minimal d’alignement local posé
-- prochaine action recommandée : poser les index locaux et ouvrir un pilote consumer relié à `memory_bricks`
+  - `docs/chantiers/GO_LOCALCMS_MEMORY_BRICKS_CONSUMER_PILOT_01/90_closeout.md`
+- dernier point établi : rôle consumer stabilisé et pilote `memory_bricks` PASS disponible localement
+- prochaine action recommandée : enrichir les index locaux puis décider d’une normalisation historique utile ou d’une suite transverse utile
