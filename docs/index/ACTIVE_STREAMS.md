@@ -28,9 +28,9 @@ Ce document référence les flux réellement actifs ou bloqués dans `localcms`.
 ## Flux actifs
 
 ### GO_LOCALCMS_UNIFORM_CONTINUITY_ALIGNMENT_01
-- statut : stabilise
+- statut : active
 - repo : localcms
 - branche : main
-- dernier point établi : rôle consumer local posé et pilote consumer `memory_bricks` clos PASS
+- dernier point établi : rôle consumer local posé, pilote consumer `memory_bricks` clos PASS, continuité locale encore portée par l'alignement consumer
 - prochaine action : enrichir les index locaux puis choisir entre normalisation historique utile et suite transverse utile
 - blocages : aucun blocage établi à ce stade

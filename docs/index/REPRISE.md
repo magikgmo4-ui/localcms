@@ -30,5 +30,5 @@ links:
   - `docs/governance/REPO_ROLE.md`
   - `docs/governance/DOC_LAYERS.md`
   - `docs/chantiers/GO_LOCALCMS_MEMORY_BRICKS_CONSUMER_PILOT_01/90_closeout.md`
-- dernier point établi : rôle consumer stabilisé et pilote `memory_bricks` PASS disponible localement
+- dernier point établi : rôle consumer local posé, pilote `memory_bricks` PASS disponible localement, sans faire de `localcms` la source maîtresse de `memory_bricks`
 - prochaine action recommandée : enrichir les index locaux puis décider d’une normalisation historique utile ou d’une suite transverse utile

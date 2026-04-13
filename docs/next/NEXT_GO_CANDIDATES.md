@@ -25,6 +25,6 @@ links:
 
 ## Candidats actuels
 
-- aucun nouveau GO nommé nécessaire avant l’enrichissement des index locaux
+- aucun nouveau GO local prioritaire établi avant l’enrichissement des index locaux
 - suite courte utile : normalisation historique ciblée d’artefacts consumer utiles
 - suite transverse utile : prolonger l’alignement sans changer le rôle consumer de `localcms`

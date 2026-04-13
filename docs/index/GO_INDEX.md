@@ -31,9 +31,9 @@ Ce document référence les GO connus et utiles à la continuité locale de `loc
 ### GO_LOCALCMS_UNIFORM_CONTINUITY_ALIGNMENT_01
 - repo : localcms
 - type : gouvernance locale / alignement consumer
-- statut : stabilise
+- statut : active
 - titre court : alignement localcms avec la méthode uniforme
-- dernier état connu : socle consumer local posé sur `main` et premier pilote consumer PASS intégré
+- dernier état connu : socle consumer local posé sur `main`, pilote consumer PASS intégré, enrichissement des index encore utile localement
 - lien utile : `docs/governance/REPO_ROLE.md`, `docs/governance/DOC_LAYERS.md`, `docs/index/REPRISE.md`
 
 ### GO_LOCALCMS_MEMORY_BRICKS_CONSUMER_PILOT_01
