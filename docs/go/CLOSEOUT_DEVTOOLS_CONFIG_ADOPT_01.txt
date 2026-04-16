@@ -1,0 +1,189 @@
+══════════════════════════════════════════════════════════════════════
+CLOSEOUT — GO_LOCALCMS_DEVTOOLS_CONFIG_ADOPT_01
+Branche  : main
+Date     : 2026-04-16
+Verdict  : PASS
+══════════════════════════════════════════════════════════════════════
+
+
+1. ÉTAT DE DÉPART
+──────────────────
+
+  Module cible     : modules/devtools-config.js — MOD_DEVTOOLS_CFG_DATA
+  Smoke existant   : modules/devtools-config.smoke.js (193 assertions — PASS)
+  Test adopt avant : AUCUN dans tests/
+  Campagne adopt   : GO-5/8 (GO-1/2/3/4 DONE)
+
+
+2. CORRECTION DE CADRAGE
+─────────────────────────
+
+  Écart détecté sur le total champs et le comptage precommit :
+
+  GO cadrage indiquait  : 137 champs
+  Module header indique : 138 champs (TOTAL 138 dans le commentaire)
+  Réalité runtime       : 137 champs
+
+  Explication : le form precommit contient 17 champs (16 toggles + 1
+  file-ext) et non 18 comme l'indique le commentaire du module. Le
+  runtime confirme 17. Les tests adoptent la valeur réelle : 137.
+
+  GO cadrage indiquait  : sensitive = 1
+  Module header indique : F-15 — aucun (0)
+  Réalité runtime       : 0 sensitive, 0 password
+  → Tests alignés sur la réalité : 0 sensitive.
+
+  Toutes les autres données (8 forms, clés, C/V/B vides) sont conformes.
+
+
+3. MODULE ANALYSÉ
+──────────────────
+
+  id              : devtools_cfg
+  label           : Dev Tools
+  version         : 1.0.0
+  type            : config
+  capabilities    : ['render', 'generate']
+  struct          : forms × 8
+  forms           : eslint(18) / prettier(15) / typescript(28) / vite(18)
+                    jest(12) / python_tools(16) / editorconfig(13) / precommit(17)
+  total champs    : 137
+  conditions[]    : 0 (vide)
+  validators[]    : 0 (vide)
+  profile_bindings[]: 0 (vide)
+  F-15 sensitive  : 0 (aucun champ password, aucun sensitive:true)
+
+  Observations P0 :
+    vt_base value:'/' et placeholder:'/' — conservés (racine générique)
+    py_name value:'' — conforme (placeholder uniquement)
+    pr_overrides value:'' — conforme
+    vt_proxy value:'' — conforme
+
+
+4. FICHIER CRÉÉ
+────────────────
+
+  tests/devtools-config-adopt.test.js     créé
+
+  Pattern DATA-ONLY (identique GO-1/GO-2/GO-3/GO-4) :
+    eval(src.replace(/\bconst\s+MOD_DEVTOOLS_CFG_DATA\b/, 'globalThis.MOD_DEVTOOLS_CFG_DATA'));
+    const D = globalThis.MOD_DEVTOOLS_CFG_DATA;
+  Aucun mock FN/BUS/DOM. Aucun __test_helpers. Aucun patch HTML.
+
+  Helpers :
+    allFields()         — tous champs à plat (toutes forms/sections)
+    fieldInForm(fk, id) — champ par form + id
+    countInForm(fk)     — nb champs d'une form
+
+
+5. BLOCS ET RÉSULTATS
+──────────────────────
+
+  INIT  (2)  — chargement + id                           : 2/2  ✓
+  M     (8)  — identité label/version/type/cap/meta      : 8/8  ✓
+  K     (6)  — forms 8 clés + C/V/B vides               : 6/6  ✓
+  F1    (5)  — eslint        18 champs                   : 5/5  ✓
+  F2    (5)  — prettier      15 champs                   : 5/5  ✓
+  F3    (5)  — typescript    28 champs                   : 5/5  ✓
+  F4    (5)  — vite          18 champs                   : 5/5  ✓
+  F5    (5)  — jest          12 champs                   : 5/5  ✓
+  F6    (5)  — python_tools  16 champs                   : 5/5  ✓
+  F7    (5)  — editorconfig  13 champs                   : 5/5  ✓
+  F8    (5)  — precommit     17 champs                   : 5/5  ✓
+  TYPE  (6)  — multiselect / textarea / file-ext / toggle: 6/6  ✓
+  S     (3)  — F-15 = 0 sensitive / P0 vt_base          : 3/3  ✓
+  TOT   (4)  — 137 total / ids / sensitive / file-ext×8  : 4/4  ✓
+  ─────────────────────────────────────────────────────────────
+  TOTAL      : 69/69 PASS
+
+
+6. NON-RÉGRESSION
+──────────────────
+
+  devtools-config.smoke.js   : 193/193 ✓  (inchangé)
+  modules/devtools-config.js : non modifié ✓
+  localcms-v5.html           : non modifié ✓
+
+
+7. DIFF SYNTHÉTIQUE
+──────────────────────
+
+  tests/devtools-config-adopt.test.js            créé  (+203 lignes)
+  docs/go/CLOSEOUT_DEVTOOLS_CONFIG_ADOPT_01.txt  créé
+  Fichiers non touchés : modules/devtools-config.js · localcms-v5.html
+
+
+8. ÉTABLI (état contractuel post-GO)
+──────────────────────────────────────
+
+  module          : modules/devtools-config.js
+  const           : MOD_DEVTOOLS_CFG_DATA
+  id              : devtools_cfg
+  forms           : 8 — eslint / prettier / typescript / vite /
+                        jest / python_tools / editorconfig / precommit
+  total champs    : 137  (runtime — header module: 138, écart documenté)
+  precommit       : 17 champs (non 18 comme le header l'indique)
+  sensitive       : 0
+  conditions      : 0
+  validators      : 0
+  profile_bindings: 0
+  adopt test      : tests/devtools-config-adopt.test.js  69/69 PASS
+  smoke           : modules/devtools-config.smoke.js    193/193 PASS
+
+
+9. TODO
+────────
+
+  [ ] Corriger le commentaire header de modules/devtools-config.js :
+        precommit  17 champs  (non 18)
+        TOTAL     137 champs  (non 138)
+      → optionnel, ne bloque pas le GO
+
+
+10. REPRISE
+────────────
+
+  Si régression future sur devtools-config-adopt :
+    1. node modules/devtools-config.smoke.js   → vérifier smoke intact
+    2. node tests/devtools-config-adopt.test.js → identifier bloc en échec
+    3. Ne pas modifier modules/devtools-config.js sans nouveau GO
+    4. Tout écart de comptage → documenter dans CORRECTION DE CADRAGE
+
+
+11. VERDICT FINAL
+──────────────────
+
+╔══════════════════════════════════════════════════════════════╗
+║  VERDICT : PASS                                              ║
+║                                                              ║
+║  69/69 tests devtools-config-adopt ✓                        ║
+║  8 forms / 137 champs / F-15(×0) / P0 / C/V/B couverts ✓   ║
+║  smoke devtools-config 193/193 inchangé ✓                   ║
+║  Écart cadrage documenté (137 vs 138, precommit 17 vs 18) ✓ ║
+╚══════════════════════════════════════════════════════════════╝
+
+
+12. COMMIT ATTENDU (Ghost)
+───────────────────────────
+
+  git add tests/devtools-config-adopt.test.js \
+          docs/go/CLOSEOUT_DEVTOOLS_CONFIG_ADOPT_01.txt
+  git commit -m "localcms: add devtools-config adopt tests — 69/69 PASS"
+  git push origin main
+
+
+13. PROCHAIN GO
+────────────────
+
+  GO_LOCALCMS_*_ADOPT_01     (GO-6/8)
+  Campagne adopt : 5/8 DONE
+    ✓ GO-1 env-global
+    ✓ GO-2 sec-config
+    ✓ GO-3 data-sources
+    ✓ GO-4 queue-config
+    ✓ GO-5 devtools-config  ← CE GO
+    · GO-6 à GO-8 : modules restants à identifier
+
+══════════════════════════════════════════════════════════════════════
+NO_MEMORY
+══════════════════════════════════════════════════════════════════════
