@@ -1,0 +1,210 @@
+══════════════════════════════════════════════════════════════════════
+CLOSEOUT — GO_LOCALCMS_MACHINES_CONFIG_ADOPT_01
+Branche  : main
+Date     : 2026-04-16
+Verdict  : PASS
+══════════════════════════════════════════════════════════════════════
+
+
+1. ÉTAT DE DÉPART
+──────────────────
+
+  Module cible     : modules/machines-config.js — MOD_MACHINES_CFG_DATA
+  Smoke existant   : modules/machines-config.smoke.js (151 assertions — PASS)
+  Test adopt avant : AUCUN dans tests/
+  Campagne adopt   : GO-8/8 — DERNIER GO (GO-1→7 DONE)
+
+
+2. CORRECTION DE CADRAGE
+─────────────────────────
+
+  Écart détecté sur le nombre de champs sensitive :
+
+  GO cadrage indiquait  : sensitive = 8
+  Module header indique : F-15 — 7 champs password
+  Réalité runtime       : 7 sensitive
+
+  Champs confirmés (7) :
+    mc_ssh_pass (ssh)
+    mc_ftp_pass (sftp_ftp)
+    mc_vpn_privkey / mc_vpn_psk (vpn)
+    mc_ext_api_key / mc_ext_client_secret / mc_ext_webhook_secret (external_apps)
+
+  Toutes les autres données (6 forms, 65 champs, 4 conditions,
+  6 validators, profile_bindings vide) sont conformes au cadrage.
+
+
+3. MODULE ANALYSÉ
+──────────────────
+
+  id              : machines_cfg
+  label           : Machines & Profils
+  version         : 1.0.0
+  type            : config
+  capabilities    : ['render', 'generate']
+  struct          : forms × 6
+  forms           : profile(12) / ssh(14) / sftp_ftp(9) / vpn(12)
+                    routes(6) / external_apps(12)
+  total champs    : 65
+  conditions[]    : 4
+                    mc_ssh_auth = key          → show mc_ssh_key
+                    mc_ssh_auth = password     → show mc_ssh_pass
+                    mc_ssh_auth = key+password → show mc_ssh_key + mc_ssh_pass
+                    mc_ssh_auth = certificate  → show mc_ssh_cert
+  validators[]    : 6
+                    mc_ssh_host       required:true
+                    mc_ftp_host       required:true
+                    mc_vpn_server     required:true
+                    mc_ext_url        url:true
+                    mc_ext_oauth_url  url:true
+                    mc_ext_webhook_url url:true
+  profile_bindings[]: 0 (vide — ce module EST la source $USER.machines,
+                          il n'a pas de binding entrant)
+  F-15 sensitive  : 7
+                    mc_ssh_pass (ssh)
+                    mc_ftp_pass (sftp_ftp)
+                    mc_vpn_privkey / mc_vpn_psk (vpn)
+                    mc_ext_api_key / mc_ext_client_secret /
+                    mc_ext_webhook_secret (external_apps)
+
+  Observations P0 :
+    mc_ssh_key       vidé ('' — pas de path ~/.ssh utilisateur)
+    mc_ftp_root      vidé ('' — pas de /var/www/html)
+    mc_rt_hosts      vidé ('' — pas d'IPs/hostnames utilisateur)
+    mc_rt_default_gw vidé ('' — pas d'IP utilisateur)
+    mc_vpn_local_ip  vidé ('' — pas d'IP utilisateur)
+    mc_vpn_dns       vidé ('' — pas d'IP utilisateur)
+  P0 conforme conservé :
+    mc_vpn_routes    '0.0.0.0/0' (notation route technique neutre)
+
+
+4. FICHIER CRÉÉ
+────────────────
+
+  tests/machines-config-adopt.test.js     créé
+
+  Pattern DATA-ONLY (identique GO-1 à GO-7) :
+    eval(src.replace(/\bconst\s+MOD_MACHINES_CFG_DATA\b/, 'globalThis.MOD_MACHINES_CFG_DATA'));
+    const D = globalThis.MOD_MACHINES_CFG_DATA;
+  Aucun mock FN/BUS/DOM. Aucun __test_helpers. Aucun patch HTML.
+
+  Helpers :
+    allFields()         — tous champs à plat (toutes forms/sections)
+    fieldInForm(fk, id) — champ par form + id
+    countInForm(fk)     — nb champs d'une form
+
+
+5. BLOCS ET RÉSULTATS
+──────────────────────
+
+  INIT  (2)  — chargement + id                               : 2/2  ✓
+  M     (8)  — identité label/version/type/cap/meta          : 8/8  ✓
+  K     (6)  — forms 6 clés + C/V/B                         : 6/6  ✓
+  F1    (6)  — profile      12 champs                        : 6/6  ✓
+  F2    (7)  — ssh          14 champs                        : 7/7  ✓
+  F3    (5)  — sftp_ftp      9 champs                        : 5/5  ✓
+  F4    (7)  — vpn          12 champs                        : 7/7  ✓
+  F5    (5)  — routes        6 champs                        : 5/5  ✓
+  F6    (6)  — external_apps 12 champs                       : 6/6  ✓
+  TYPE  (6)  — url(×3) / textarea / toggle                   : 6/6  ✓
+  VAL   (8)  — 6 validators required + url                   : 8/8  ✓
+  COND  (6)  — 4 conditions mc_ssh_auth → show               : 6/6  ✓
+  S     (8)  — spot-check 7 sensitive + exhaustivité F-15    : 8/8  ✓
+  TOT   (4)  — 65 total / ids / 7 sensitive / 7 pwd          : 4/4  ✓
+  ─────────────────────────────────────────────────────────────
+  TOTAL      : 84/84 PASS
+
+
+6. NON-RÉGRESSION
+──────────────────
+
+  machines-config.smoke.js    : 151/151 ✓  (inchangé)
+  modules/machines-config.js  : non modifié ✓
+  localcms-v5.html            : non modifié ✓
+
+
+7. DIFF SYNTHÉTIQUE
+──────────────────────
+
+  tests/machines-config-adopt.test.js            créé  (+229 lignes)
+  docs/go/CLOSEOUT_MACHINES_CONFIG_ADOPT_01.txt  créé
+  Fichiers non touchés : modules/machines-config.js · localcms-v5.html
+
+
+8. ÉTABLI (état contractuel post-GO)
+──────────────────────────────────────
+
+  module          : modules/machines-config.js
+  const           : MOD_MACHINES_CFG_DATA
+  id              : machines_cfg
+  forms           : 6 — profile / ssh / sftp_ftp / vpn / routes / external_apps
+  total champs    : 65
+  sensitive       : 7 (cadrage GO indiquait 8 — écart documenté)
+                    mc_ssh_pass / mc_ftp_pass / mc_vpn_privkey / mc_vpn_psk /
+                    mc_ext_api_key / mc_ext_client_secret / mc_ext_webhook_secret
+  conditions      : 4 (mc_ssh_auth → show selon méthode)
+  validators      : 6 (3×required + 3×url)
+  profile_bindings: 0 (vide — module source de $USER.machines)
+  adopt test      : tests/machines-config-adopt.test.js  84/84 PASS
+  smoke           : modules/machines-config.smoke.js    151/151 PASS
+
+
+9. TODO
+────────
+
+  [ ] Corriger le cadrage GO : sensitive = 7 (non 8)
+      → optionnel, déjà documenté ici
+
+
+10. REPRISE
+────────────
+
+  Si régression future sur machines-config-adopt :
+    1. node modules/machines-config.smoke.js    → vérifier smoke intact
+    2. node tests/machines-config-adopt.test.js → identifier bloc en échec
+    3. Ne pas modifier modules/machines-config.js sans nouveau GO
+    4. Tout écart de comptage → documenter dans CORRECTION DE CADRAGE
+
+
+11. BILAN CAMPAGNE ADOPT — 8/8 COMPLETE
+─────────────────────────────────────────
+
+  ✓ GO-1 env-global      — env-global-adopt.test.js
+  ✓ GO-2 sec-config      — sec-config-adopt.test.js
+  ✓ GO-3 data-sources    — data-sources-adopt.test.js
+  ✓ GO-4 queue-config    — queue-config-adopt.test.js
+  ✓ GO-5 devtools-config — devtools-config-adopt.test.js
+  ✓ GO-6 apps-config     — apps-config-adopt.test.js
+  ✓ GO-7 ia-config       — ia-config-adopt.test.js
+  ✓ GO-8 machines-config — machines-config-adopt.test.js  ← CE GO
+
+  Tous les modules declaratifs LocalCMS sont couverts par des tests
+  adopt DATA-ONLY. Pattern homogène sur les 8 suites.
+
+
+12. VERDICT FINAL
+──────────────────
+
+╔════════════════════════════════════════════════════════════════╗
+║  VERDICT : PASS                                                ║
+║                                                                ║
+║  84/84 tests machines-config-adopt ✓                          ║
+║  6 forms / 65 champs / COND(×4) / VAL(×6) / F-15(×7) ✓      ║
+║  smoke machines-config 151/151 inchangé ✓                     ║
+║  Écart cadrage documenté (sensitive 7 vs 8) ✓                 ║
+║  CAMPAGNE ADOPT 8/8 COMPLETE ✓                                ║
+╚════════════════════════════════════════════════════════════════╝
+
+
+13. COMMIT ATTENDU (Ghost)
+───────────────────────────
+
+  PowerShell — git add sur une seule ligne :
+
+  git add tests/machines-config-adopt.test.js docs/go/CLOSEOUT_MACHINES_CONFIG_ADOPT_01.txt
+  git commit -m "localcms: add machines-config adopt tests — 84/84 PASS — campagne adopt 8/8"
+  git push origin main
+
+══════════════════════════════════════════════════════════════════════
+NO_MEMORY
+══════════════════════════════════════════════════════════════════════
