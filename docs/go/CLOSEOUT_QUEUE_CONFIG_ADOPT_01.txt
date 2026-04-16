@@ -1,0 +1,140 @@
+══════════════════════════════════════════════════════════════════════
+CLOSEOUT — GO_LOCALCMS_QUEUE_CONFIG_ADOPT_01
+Branche  : main
+Date     : 2026-04-11
+Verdict  : PASS
+══════════════════════════════════════════════════════════════════════
+
+
+1. ÉTAT DE DÉPART
+──────────────────
+
+  HEAD             : 05d529e
+  Module cible     : modules/queue-config.js — MOD_QUEUE_CFG_DATA
+  Smoke existant   : modules/queue-config.smoke.js (169 assertions — seul smoke
+                     pleinement opérationnel en sandbox sans truncation)
+  Test adopt avant : AUCUN dans tests/
+  Campagne adopt   : GO-4/8 (GO-1/2/3 DONE)
+
+
+2. CORRECTION DE CADRAGE
+─────────────────────────
+
+  Aucune correction requise. Les données du GO correspondaient exactement
+  au contenu du module : 4 forms / 101 champs / 8 sensitive / 3 validators.
+  — rmq_pass + rmq_erlang_cookie (rabbitmq)
+  — kfk_sasl_pass (kafka)
+  — nats_token + nats_password (nats)
+  — wh_secret + wh_auth_token + wh_in_secret (webhooks)
+
+
+3. MODULE ANALYSÉ
+──────────────────
+
+  id              : queue_cfg
+  struct          : forms × 4
+  forms           : rabbitmq(26) / kafka(33) / nats(23) / webhooks(19)
+  total champs    : 101
+  conditions[]    : 0 (vide)
+  validators[]    : 3
+                    rmq_host    required:true
+                    kfk_brokers required:true
+                    wh_url      type:'url'
+  profile_bindings[]: 0 (vide)
+  F-15 sensitive  : 8
+                    rmq_pass / rmq_erlang_cookie
+                    kfk_sasl_pass
+                    nats_token / nats_password
+                    wh_secret / wh_auth_token / wh_in_secret
+                    (type:password + sensitive:true sur les 8)
+
+  Observations P0 :
+    rmq_pass      vidé ('guest' → '')
+    nats_js_store vidé ('/tmp/nats' → '')
+    wh_in_path    vidé ('/webhooks/incoming' → '')
+    Placeholders neutralisés : rmq_cert, kfk_ssl_ca, wh_url, wh_in_path,
+    wh_in_ip_whitelist — aucune valeur utilisateur résiduelle
+
+
+4. FICHIER CRÉÉ
+────────────────
+
+  tests/queue-config-adopt.test.js     créé
+
+  Pattern DATA-ONLY (identique GO-1/GO-2/GO-3) :
+    eval(src.replace(/\bconst\s+MOD_QUEUE_CFG_DATA\b/, 'globalThis.MOD_QUEUE_CFG_DATA'));
+    const D = globalThis.MOD_QUEUE_CFG_DATA;
+  Aucun mock FN/BUS/DOM. Aucun __test_helpers. Aucun patch HTML.
+
+  Helpers :
+    allFields()         — tous champs à plat (toutes forms/sections)
+    fieldInForm(fk, id) — champ par form + id
+    countInForm(fk)     — nb champs d'une form
+
+
+5. BLOCS ET RÉSULTATS
+──────────────────────
+
+  INIT  (2)  — chargement + id                           : 2/2  ✓
+  M     (6)  — identité + meta                           : 6/6  ✓
+  K     (6)  — forms 4 clés + C/V/B                     : 6/6  ✓
+  F1    (5)  — rabbitmq 26 champs                        : 5/5  ✓
+  F2    (5)  — kafka    33 champs                        : 5/5  ✓
+  F3    (4)  — nats     23 champs                        : 4/4  ✓
+  F4    (4)  — webhooks 19 champs                        : 4/4  ✓
+  TOT   (4)  — 101 total / ids / 8 sensitive / 8 pwd    : 4/4  ✓
+  VAL   (5)  — 3 validators (required + url)             : 5/5  ✓
+  S     (9)  — spot-check 8 sensitive F-15 + exhaustivité: 9/9  ✓
+  ─────────────────────────────────────────────────────────────
+  TOTAL      : 50/50 PASS
+
+
+6. NON-RÉGRESSION
+──────────────────
+
+  queue-config.smoke.js   : 169/169 ✓  (seul smoke opérationnel en sandbox)
+  Tests adopt précédents non re-run (modules truncated) — baseline documentée :
+    env-global-adopt.test.js  49/49 ✓  (GO-1)
+    sec-config-adopt.test.js  50/50 ✓  (GO-2)
+    data-sources-adopt.test.js 52/52 ✓ (GO-3)
+
+
+7. DIFF SYNTHÉTIQUE
+──────────────────────
+
+  tests/queue-config-adopt.test.js           créé
+  docs/go/CLOSEOUT_QUEUE_CONFIG_ADOPT_01.txt créé
+  Fichiers non touchés : modules/queue-config.js · localcms-v5.html
+
+
+8. VERDICT FINAL
+──────────────────
+
+╔══════════════════════════════════════════════════════════════╗
+║  VERDICT : PASS                                             ║
+║                                                              ║
+║  50/50 tests queue-config-adopt ✓                          ║
+║  4 forms / 101 champs / F-15(×8) / P0 / VAL couverts ✓    ║
+║  smoke queue-config 169/169 inchangé ✓                     ║
+║  Aucune correction de cadrage requise ✓                     ║
+╚══════════════════════════════════════════════════════════════╝
+
+
+9. COMMIT ATTENDU (Ghost)
+───────────────────────────
+
+  git add tests/queue-config-adopt.test.js \
+          docs/go/CLOSEOUT_QUEUE_CONFIG_ADOPT_01.txt
+  git commit -m "localcms: add queue-config adopt tests — 50/50 PASS"
+  git push origin main
+
+
+10. PROCHAIN GO
+────────────────
+
+  GO_LOCALCMS_DEVTOOLS_CONFIG_ADOPT_01     (GO-5/8)
+  Module : modules/devtools-config.js — MOD_DEVTOOLS_CFG_DATA
+  À vérifier en cadrage : struct forms/groups, forms count,
+  champs total, sensitive, validators
+
+══════════════════════════════════════════════════════════════════════
