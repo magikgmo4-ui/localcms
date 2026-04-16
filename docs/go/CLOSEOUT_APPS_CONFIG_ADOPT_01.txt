@@ -1,0 +1,208 @@
+══════════════════════════════════════════════════════════════════════
+CLOSEOUT — GO_LOCALCMS_APPS_CONFIG_ADOPT_01
+Branche  : main
+Date     : 2026-04-16
+Verdict  : PASS
+══════════════════════════════════════════════════════════════════════
+
+
+1. ÉTAT DE DÉPART
+──────────────────
+
+  Module cible     : modules/apps-config.js — MOD_APPS_CFG_DATA
+  Smoke existant   : modules/apps-config.smoke.js (236 assertions — PASS)
+  Test adopt avant : AUCUN dans tests/
+  Campagne adopt   : GO-6/8 (GO-1/2/3/4/5 DONE)
+
+
+2. CORRECTION DE CADRAGE
+─────────────────────────
+
+  Écart détecté sur le nombre de champs sensitive :
+
+  GO cadrage indiquait  : sensitive = 6
+  Module header indique : F-15 — champs sensitive:true (5)
+  Réalité runtime       : 5 sensitive
+
+  Champs confirmés (5) :
+    redis_password / redis_replica_auth (form redis)
+    pf_relay_pass (form postfix)
+    bk_repo_pass / bk_aws_secret (form backup)
+
+  Toutes les autres données (6 forms, 154 champs, 3 validators, C/B vides)
+  sont conformes au cadrage.
+
+
+3. MODULE ANALYSÉ
+──────────────────
+
+  id              : apps_cfg
+  label           : Applications
+  version         : 1.0.0
+  type            : config
+  capabilities    : ['render', 'generate']
+  struct          : forms × 6
+  forms           : nginx(36) / postgresql(27) / redis(29) / postfix(20)
+                    prometheus(22) / backup(20)
+  total champs    : 154
+  conditions[]    : 0 (vide)
+  validators[]    : 3
+                    ng_server_name  required:true
+                    pf_hostname     required:true
+                    pf_domain       required:true
+  profile_bindings[]: 0 (vide)
+  F-15 sensitive  : 5
+                    redis_password / redis_replica_auth (redis)
+                    pf_relay_pass (postfix)
+                    bk_repo_pass / bk_aws_secret (backup)
+                    (type:password + sensitive:true sur les 5)
+
+  Observations P0 :
+    ng_server_name  vidé ('' — placeholder '<domaine> www.<domaine>')
+    ng_root         vidé ('')
+    ng_ssl_cert     vidé ('')
+    ng_ssl_key      vidé ('')
+    redis_ssl_cert  vidé ('')
+    redis_ssl_key   vidé ('')
+    redis_dir       vidé ('')
+    pf_hostname     vidé ('')
+    pf_domain       vidé ('')
+    pf_cert         vidé ('')
+    pf_key          vidé ('')
+    pf_aliases      vidé ('')
+    prom_alert_rules vidé ('')
+    bk_src          vidé ('')
+  P0 conformes conservés :
+    ng_proxy_pass       'http://localhost:3000'   (loopback)
+    ng_upstream_servers 'server 127.0.0.1:3000;…' (loopback)
+    prom_path           'http://localhost:9090'   (loopback)
+    prom_alertmgr_url   'http://localhost:9093'   (loopback)
+
+
+4. FICHIER CRÉÉ
+────────────────
+
+  tests/apps-config-adopt.test.js     créé
+
+  Pattern DATA-ONLY (identique GO-1/GO-2/GO-3/GO-4/GO-5) :
+    eval(src.replace(/\bconst\s+MOD_APPS_CFG_DATA\b/, 'globalThis.MOD_APPS_CFG_DATA'));
+    const D = globalThis.MOD_APPS_CFG_DATA;
+  Aucun mock FN/BUS/DOM. Aucun __test_helpers. Aucun patch HTML.
+
+  Helpers :
+    allFields()         — tous champs à plat (toutes forms/sections)
+    fieldInForm(fk, id) — champ par form + id
+    countInForm(fk)     — nb champs d'une form
+
+
+5. BLOCS ET RÉSULTATS
+──────────────────────
+
+  INIT  (2)  — chargement + id                               : 2/2  ✓
+  M     (8)  — identité label/version/type/cap/meta          : 8/8  ✓
+  K     (6)  — forms 6 clés + C/V/B                         : 6/6  ✓
+  F1    (7)  — nginx       36 champs                         : 7/7  ✓
+  F2    (6)  — postgresql  27 champs                         : 6/6  ✓
+  F3    (6)  — redis       29 champs                         : 6/6  ✓
+  F4    (5)  — postfix     20 champs                         : 5/5  ✓
+  F5    (6)  — prometheus  22 champs                         : 6/6  ✓
+  F6    (7)  — backup      20 champs                         : 7/7  ✓
+  TYPE  (6)  — multiselect / url / email / textarea / f-ext  : 6/6  ✓
+  VAL   (5)  — 3 validators required                         : 5/5  ✓
+  S     (6)  — spot-check 5 sensitive + exhaustivité F-15    : 6/6  ✓
+  TOT   (5)  — 154 total / ids / 5 sensitive / 5 pwd / 6 ext : 5/5  ✓
+  ─────────────────────────────────────────────────────────────
+  TOTAL      : 75/75 PASS
+
+
+6. NON-RÉGRESSION
+──────────────────
+
+  apps-config.smoke.js    : 236/236 ✓  (inchangé)
+  modules/apps-config.js  : non modifié ✓
+  localcms-v5.html        : non modifié ✓
+
+
+7. DIFF SYNTHÉTIQUE
+──────────────────────
+
+  tests/apps-config-adopt.test.js            créé  (+209 lignes)
+  docs/go/CLOSEOUT_APPS_CONFIG_ADOPT_01.txt  créé
+  Fichiers non touchés : modules/apps-config.js · localcms-v5.html
+
+
+8. ÉTABLI (état contractuel post-GO)
+──────────────────────────────────────
+
+  module          : modules/apps-config.js
+  const           : MOD_APPS_CFG_DATA
+  id              : apps_cfg
+  forms           : 6 — nginx / postgresql / redis / postfix / prometheus / backup
+  total champs    : 154
+  sensitive       : 5 (cadrage GO indiquait 6 — écart documenté)
+                    redis_password / redis_replica_auth / pf_relay_pass /
+                    bk_repo_pass / bk_aws_secret
+  conditions      : 0
+  validators      : 3 (ng_server_name / pf_hostname / pf_domain — required)
+  profile_bindings: 0
+  adopt test      : tests/apps-config-adopt.test.js  75/75 PASS
+  smoke           : modules/apps-config.smoke.js    236/236 PASS
+
+
+9. TODO
+────────
+
+  [ ] Corriger le cadrage GO : sensitive = 5 (non 6)
+      → optionnel, déjà documenté ici
+
+
+10. REPRISE
+────────────
+
+  Si régression future sur apps-config-adopt :
+    1. node modules/apps-config.smoke.js    → vérifier smoke intact
+    2. node tests/apps-config-adopt.test.js → identifier bloc en échec
+    3. Ne pas modifier modules/apps-config.js sans nouveau GO
+    4. Tout écart de comptage → documenter dans CORRECTION DE CADRAGE
+
+
+11. VERDICT FINAL
+──────────────────
+
+╔══════════════════════════════════════════════════════════════╗
+║  VERDICT : PASS                                              ║
+║                                                              ║
+║  75/75 tests apps-config-adopt ✓                            ║
+║  6 forms / 154 champs / F-15(×5) / P0 / VAL(×3) couverts ✓ ║
+║  smoke apps-config 236/236 inchangé ✓                       ║
+║  Écart cadrage documenté (sensitive 5 vs 6) ✓               ║
+╚══════════════════════════════════════════════════════════════╝
+
+
+12. COMMIT ATTENDU (Ghost)
+───────────────────────────
+
+  PowerShell — ne pas utiliser '\' comme séparateur de ligne.
+  Exécuter en deux temps ou sur une seule ligne :
+
+  git add tests/apps-config-adopt.test.js docs/go/CLOSEOUT_APPS_CONFIG_ADOPT_01.txt
+  git commit -m "localcms: add apps-config adopt tests — 75/75 PASS"
+  git push origin main
+
+
+13. PROCHAIN GO
+────────────────
+
+  GO_LOCALCMS_*_ADOPT_01     (GO-7/8)
+  Campagne adopt : 6/8 DONE
+    ✓ GO-1 env-global
+    ✓ GO-2 sec-config
+    ✓ GO-3 data-sources
+    ✓ GO-4 queue-config
+    ✓ GO-5 devtools-config
+    ✓ GO-6 apps-config      ← CE GO
+    · GO-7 et GO-8 : modules restants à identifier
+
+══════════════════════════════════════════════════════════════════════
+NO_MEMORY
+══════════════════════════════════════════════════════════════════════
