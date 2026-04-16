@@ -1,0 +1,195 @@
+══════════════════════════════════════════════════════════════════════
+CLOSEOUT — GO_LOCALCMS_IA_CONFIG_ADOPT_01
+Branche  : main
+Date     : 2026-04-16
+Verdict  : PASS
+══════════════════════════════════════════════════════════════════════
+
+
+1. ÉTAT DE DÉPART
+──────────────────
+
+  Module cible     : modules/ia-config.js — MOD_IA_CFG_DATA
+  Smoke existant   : modules/ia-config.smoke.js (125 assertions — PASS)
+  Test adopt avant : AUCUN dans tests/
+  Campagne adopt   : GO-7/8 (GO-1/2/3/4/5/6 DONE)
+
+
+2. CORRECTION DE CADRAGE
+─────────────────────────
+
+  Écart détecté sur le nombre de champs sensitive :
+
+  GO cadrage indiquait  : sensitive = 3
+  Module header indique : F-15 — ia_api_key et ia_img_api_key (2)
+  Réalité runtime       : 2 sensitive
+
+  Champs confirmés (2) :
+    ia_api_key    (form endpoint)
+    ia_img_api_key (form image_ia)
+
+  Toutes les autres données (4 forms, 50 champs, 8 conditions,
+  3 validators, 1 profile_binding) sont conformes au cadrage.
+
+
+3. MODULE ANALYSÉ
+──────────────────
+
+  id              : ia_cfg
+  label           : IA / Prompts Config
+  version         : 1.1.0
+  type            : config
+  capabilities    : ['render', 'generate']
+  struct          : forms × 4
+  forms           : endpoint(16) / prompt_template(11) / multi_ia(11) / image_ia(12)
+  total champs    : 50
+  conditions[]    : 8
+                    ia_provider = openai/anthropic/mistral/cohere/groq/
+                    together-ai/huggingface/custom → show ia_api_key
+                    (providers locaux : ollama/lm-studio/gpt4all/llamacpp/
+                    textgen-webui/koboldcpp → ia_api_key caché)
+  validators[]    : 3
+                    ia_host     url:true
+                    ia_api_key  required:true  (actif si $COND visible)
+                    ia_img_host url:true
+  profile_bindings[]: 1
+                    ia_machine → $USER.machines[active].id  (F-14)
+  F-15 sensitive  : 2
+                    ia_api_key (endpoint) / ia_img_api_key (image_ia)
+
+  Observations P0 :
+    ia_api_key      value:'' — jamais persisté en clair dans $STORE ✓
+    ia_img_api_key  value:'' — conforme ✓
+    ia_img_output_dir value:'' — pas de chemin hardcodé ✓
+    ia_host         value:'http://localhost:11434' — loopback conforme ✓
+    ia_img_host     value:'http://localhost:7860'  — loopback conforme ✓
+
+
+4. FICHIER CRÉÉ
+────────────────
+
+  tests/ia-config-adopt.test.js     créé
+
+  Pattern DATA-ONLY (identique GO-1 à GO-6) :
+    eval(src.replace(/\bconst\s+MOD_IA_CFG_DATA\b/, 'globalThis.MOD_IA_CFG_DATA'));
+    const D = globalThis.MOD_IA_CFG_DATA;
+  Aucun mock FN/BUS/DOM. Aucun __test_helpers. Aucun patch HTML.
+
+  Helpers :
+    allFields()         — tous champs à plat (toutes forms/sections)
+    fieldInForm(fk, id) — champ par form + id
+    countInForm(fk)     — nb champs d'une form
+
+
+5. BLOCS ET RÉSULTATS
+──────────────────────
+
+  INIT  (2)  — chargement + id                                : 2/2  ✓
+  M     (8)  — identité label/version/type/cap/meta           : 8/8  ✓
+  K     (6)  — forms 4 clés + C/V/B                          : 6/6  ✓
+  F1    (7)  — endpoint       16 champs + binding             : 7/7  ✓
+  F2    (6)  — prompt_template 11 champs                      : 6/6  ✓
+  F3    (6)  — multi_ia       11 champs                       : 6/6  ✓
+  F4    (7)  — image_ia       12 champs                       : 7/7  ✓
+  TYPE  (5)  — url / textarea / toggle                        : 5/5  ✓
+  VAL   (5)  — 3 validators url + required                    : 5/5  ✓
+  COND  (8)  — 8 conditions cloud providers → ia_api_key      : 8/8  ✓
+  BIND  (6)  — ia_machine → $USER.machines[active].id         : 6/6  ✓
+  S     (3)  — 2 sensitive + exhaustivité F-15                : 3/3  ✓
+  TOT   (4)  — 50 total / ids / 2 sensitive / 2 pwd           : 4/4  ✓
+  ─────────────────────────────────────────────────────────────
+  TOTAL      : 73/73 PASS
+
+
+6. NON-RÉGRESSION
+──────────────────
+
+  ia-config.smoke.js    : 125/125 ✓  (inchangé)
+  modules/ia-config.js  : non modifié ✓
+  localcms-v5.html      : non modifié ✓
+
+
+7. DIFF SYNTHÉTIQUE
+──────────────────────
+
+  tests/ia-config-adopt.test.js            créé  (+215 lignes)
+  docs/go/CLOSEOUT_IA_CONFIG_ADOPT_01.txt  créé
+  Fichiers non touchés : modules/ia-config.js · localcms-v5.html
+
+
+8. ÉTABLI (état contractuel post-GO)
+──────────────────────────────────────
+
+  module          : modules/ia-config.js
+  const           : MOD_IA_CFG_DATA
+  id              : ia_cfg
+  version         : 1.1.0
+  forms           : 4 — endpoint / prompt_template / multi_ia / image_ia
+  total champs    : 50
+  sensitive       : 2 (cadrage GO indiquait 3 — écart documenté)
+                    ia_api_key / ia_img_api_key
+  conditions      : 8 (ia_provider cloud → show ia_api_key)
+  validators      : 3 (ia_host:url · ia_api_key:required · ia_img_host:url)
+  profile_bindings: 1 (ia_machine → $USER.machines[active].id)
+  adopt test      : tests/ia-config-adopt.test.js  73/73 PASS
+  smoke           : modules/ia-config.smoke.js    125/125 PASS
+
+
+9. TODO
+────────
+
+  [ ] Corriger le cadrage GO : sensitive = 2 (non 3)
+      → optionnel, déjà documenté ici
+
+
+10. REPRISE
+────────────
+
+  Si régression future sur ia-config-adopt :
+    1. node modules/ia-config.smoke.js    → vérifier smoke intact
+    2. node tests/ia-config-adopt.test.js → identifier bloc en échec
+    3. Ne pas modifier modules/ia-config.js sans nouveau GO
+    4. Tout écart de comptage → documenter dans CORRECTION DE CADRAGE
+
+
+11. VERDICT FINAL
+──────────────────
+
+╔════════════════════════════════════════════════════════════════╗
+║  VERDICT : PASS                                                ║
+║                                                                ║
+║  73/73 tests ia-config-adopt ✓                                ║
+║  4 forms / 50 champs / COND(×8) / VAL(×3) / BIND(×1) ✓      ║
+║  F-15(×2) / P0 couverts ✓                                    ║
+║  smoke ia-config 125/125 inchangé ✓                           ║
+║  Écart cadrage documenté (sensitive 2 vs 3) ✓                 ║
+╚════════════════════════════════════════════════════════════════╝
+
+
+12. COMMIT ATTENDU (Ghost)
+───────────────────────────
+
+  PowerShell — git add sur une seule ligne :
+
+  git add tests/ia-config-adopt.test.js docs/go/CLOSEOUT_IA_CONFIG_ADOPT_01.txt
+  git commit -m "localcms: add ia-config adopt tests — 73/73 PASS"
+  git push origin main
+
+
+13. PROCHAIN GO
+────────────────
+
+  GO_LOCALCMS_*_ADOPT_01     (GO-8/8 — dernier de la campagne)
+  Campagne adopt : 7/8 DONE
+    ✓ GO-1 env-global
+    ✓ GO-2 sec-config
+    ✓ GO-3 data-sources
+    ✓ GO-4 queue-config
+    ✓ GO-5 devtools-config
+    ✓ GO-6 apps-config
+    ✓ GO-7 ia-config        ← CE GO
+    · GO-8 : module restant à identifier (machines-config ?)
+
+══════════════════════════════════════════════════════════════════════
+NO_MEMORY
+══════════════════════════════════════════════════════════════════════
