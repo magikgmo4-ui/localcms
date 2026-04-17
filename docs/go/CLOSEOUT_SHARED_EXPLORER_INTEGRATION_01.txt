@@ -1,0 +1,186 @@
+══════════════════════════════════════════════════════════════════════
+CLOSEOUT — GO_LOCALCMS_SHARED_EXPLORER_INTEGRATION_01
+Branche  : main
+Date     : 2026-04-16
+Verdict  : PASS
+══════════════════════════════════════════════════════════════════════
+
+
+1. ÉTAT DE DÉPART
+──────────────────
+
+  HEAD canonique   : main@997469c
+  Gap repo-sourcé  : api/shared_explorer.py — 4 routes, 0 test d'intégration
+  Symétrie fermée  : api/cms_installer.py avait 15 tests (integration_test_pipeline.py)
+  Frontend couvert : shared-explorer.test.js (13) + shared-explorer.smoke.js (6)
+
+
+2. APPROCHE TECHNIQUE
+──────────────────────
+
+  Pattern : appel direct des fonctions backend sans serveur FastAPI live.
+  Identique à integration_test_pipeline.py.
+
+  Stubs injectés via sys.modules avant import :
+    fastapi.HTTPException     → stub avec status_code + detail
+    fastapi.APIRouter         → décorateur no-op (fonctions préservées telles quelles)
+    fastapi.Query             → stub passif (params toujours explicites dans les tests)
+    fastapi.responses.FileResponse → _FileResponse (capture path/filename/headers)
+    fastapi.responses.JSONResponse → stub passif
+
+  Monkeypatch post-import :
+    se.SHARED_ROOT = TEST_ROOT / "shared"
+    (variable module-level utilisée par toutes les fonctions)
+
+  Isolation totale :
+    TEST_ROOT = /tmp/localcms_se_integ_<uuid8>
+    Créé en début de run, supprimé en fin via shutil.rmtree.
+
+
+3. FICHIER CRÉÉ
+────────────────
+
+  tests/integration_test_shared_explorer.py     créé  (214 lignes)
+
+  Aucun fichier modifié : api/shared_explorer.py · localcms-v5.html ·
+  modules/ · autres tests
+
+
+4. BLOCS ET RÉSULTATS
+──────────────────────
+
+  L — list_directory (5 tests)
+    L1  racine → dict avec entries                     ✓
+    L2  sous-dossier → entries correctes               ✓
+    L3  structure entries (name/path/type)             ✓
+    L4  path traversal ../../etc → 403                 ✓
+    L5  chemin inexistant → 404                        ✓
+
+  R — read_file (6 tests)
+    R1  fichier texte .md → content retourné           ✓
+    R2  fichier .json lu correctement                  ✓
+    R3  image .png (non-preview) → 403                 ✓
+    R4  archive .zip (whitelist DL, pas preview) → 403 ✓
+    R5  fichier > 5 MB → 413                           ✓
+    R6  nom bloqué .env → 403                          ✓
+
+  D — download_file (5 tests)
+    D1  fichier valide → FileResponse avec filename    ✓
+    D2  header Content-Disposition contient filename   ✓
+    D3  archive .zip (whitelist) téléchargeable        ✓
+    D4  path traversal ../../etc/passwd → 403          ✓
+    D5  fichier inexistant → 404                       ✓
+
+  S — search_files (7 tests)
+    S1  aucun paramètre → 400                          ✓
+    S2  match simple (readme)                          ✓
+    S3  case-insensitive (README → readme.md)          ✓
+    S4  filtre extension .md                           ✓
+    S5  filtre extension .json                         ✓
+    S6  query sans match → 0 résultats                 ✓
+    S7  filtre date futur → 0 résultats                ✓
+  ────────────────────────────────────────────────────
+  TOTAL : 23/23 PASS
+
+
+5. NON-RÉGRESSION
+──────────────────
+
+  shared-explorer.test.js     : 13/13 ✓  (inchangé)
+  shared-explorer.smoke.js    :  6/6  ✓  (inchangé)
+  api/shared_explorer.py      : non modifié ✓
+  localcms-v5.html            : non modifié ✓
+
+
+6. COUVERTURE SURFACE API
+──────────────────────────
+
+  Route                 | Cas normaux | Sécurité | Limites | Couvert
+  ─────────────────────────────────────────────────────────────────
+  GET /api/shared/list  | L1 L2 L3   | L4       | L5      | ✓
+  GET /api/shared/read  | R1 R2      | R3 R4 R6 | R5      | ✓
+  GET /api/shared/download | D1 D2 D3 | D4      | D5      | ✓
+  GET /api/shared/search | S2 S3 S4 S5 | S1    | S6 S7   | ✓
+
+  Fonctions internes exercées :
+    _resolve_safe        — L4 D4 (path traversal) ✓
+    _check_name_blocked  — R6 (blocked .env) ✓
+    _get_effective_ext   — R3 R4 D3 ✓
+    _build_entry         — L1 L2 L3 S2 ✓
+    _emit_log            — exercé implicitement (logger.info) ✓
+
+  Non couvert (acceptable V1) :
+    symlink_escape       — nécessite création de symlinks réels (OS-dépendant)
+    permission_denied    — nécessite chmod 000 (root requis en sandbox)
+    date from_/to_ combinés — couvert unitairement par le frontend test
+
+
+7. DIFF SYNTHÉTIQUE
+──────────────────────
+
+  tests/integration_test_shared_explorer.py      créé  (+214 lignes)
+  docs/go/CLOSEOUT_SHARED_EXPLORER_INTEGRATION_01.txt  créé
+  Fichiers non touchés : api/shared_explorer.py · localcms-v5.html
+
+
+8. ÉTABLI (état contractuel post-GO)
+──────────────────────────────────────
+
+  module backend   : api/shared_explorer.py  — inchangé
+  tests intégration: tests/integration_test_shared_explorer.py  23/23 PASS
+  tests frontend   : shared-explorer.test.js 13/13 ✓
+                     shared-explorer.smoke.js  6/6 ✓
+  symétrie cms_installer / shared_explorer : FERMÉE
+    cms_installer.py   → integration_test_pipeline.py        15/15
+    shared_explorer.py → integration_test_shared_explorer.py 23/23
+
+
+9. TODO
+────────
+
+  [ ] Vérifier sur machine Ghost :
+        node tests/devtools-config-adopt.test.js
+      Si PASS → artefact sandbox uniquement, aucune action repo.
+      Si FAIL → ouvrir GO_LOCALCMS_DEVTOOLS_ADOPT_FIX_01.
+
+  [ ] Nettoyage branches mortes optionnel :
+        feature/localcms-shared-explorer-cms-installer-v1
+        bridge/localcms-v1-main-merge
+
+
+10. VERDICT FINAL
+──────────────────
+
+╔═════════════════════════════════════════════════════════════════╗
+║  VERDICT : PASS                                                 ║
+║                                                                 ║
+║  23/23 tests intégration shared_explorer ✓                     ║
+║  4 routes couvertes (list/read/download/search) ✓              ║
+║  Sécurité path traversal + noms bloqués + taille vérifiée ✓   ║
+║  Non-régression JS 13+6 PASS ✓                                 ║
+║  api/shared_explorer.py non modifié ✓                          ║
+╚═════════════════════════════════════════════════════════════════╝
+
+
+11. COMMIT ATTENDU (Ghost)
+───────────────────────────
+
+  git add tests/integration_test_shared_explorer.py \
+          docs/go/CLOSEOUT_SHARED_EXPLORER_INTEGRATION_01.txt
+  git commit -m "localcms: add shared_explorer integration tests — 23/23 PASS"
+  git push origin main
+
+  PowerShell — git add sur une seule ligne :
+  git add tests/integration_test_shared_explorer.py docs/go/CLOSEOUT_SHARED_EXPLORER_INTEGRATION_01.txt
+
+
+12. PROCHAIN GO
+────────────────
+
+  Vérifier devtools-config-adopt sur machine Ghost (TODO ci-dessus).
+  Si tout est vert → campagne test localcms complète sur main.
+  Prochain chantier : sélection selon priorité produit / runtime.
+
+══════════════════════════════════════════════════════════════════════
+NO_MEMORY
+══════════════════════════════════════════════════════════════════════
