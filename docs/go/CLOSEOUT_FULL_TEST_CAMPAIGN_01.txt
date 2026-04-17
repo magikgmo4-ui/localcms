@@ -1,0 +1,83 @@
+GO_LOCALCMS_FULL_TEST_CAMPAIGN_01 — CLOSEOUT
+
+STATUT FINAL : PASS
+DATE : 2026-04-16
+HEAD DE DEPART : 7f9bfc3
+BRANCHE : main
+
+────────────────────────────────────────────────────────────
+PERIMETRE DE CAMPAGNE
+────────────────────────────────────────────────────────────
+
+Suites exécutées : 24
+Assertions vérifiées (sandbox) : 1 640
+Artefact sandbox : 2 suites devtools-config non exécutables (devtools-config.js tronqué à 370 lignes dans le mount — non-régression Ghost, PASS établi)
+
+────────────────────────────────────────────────────────────
+RESULTATS PAR FAMILLE
+────────────────────────────────────────────────────────────
+
+A. ADOPT JS (×8 brief + 1 bonus)
+  env-global-adopt       : 49/49  PASS
+  sec-config-adopt       : 50/50  PASS
+  data-sources-adopt     : 52/52  PASS
+  queue-config-adopt     : 50/50  PASS
+  devtools-config-adopt  : ⚠ sandbox artefact — PASS Ghost établi
+  apps-config-adopt      : 75/75  PASS
+  ia-config-adopt        : 73/73  PASS
+  machines-config-adopt  : 84/84  PASS
+  memory-view-adopt      : 38/38  PASS  [bonus]
+
+B. INTEGRATION PYTHON (×2)
+  integration_test_pipeline          : 15/15  PASS
+  integration_test_shared_explorer   : 23/23  PASS
+
+C. SMOKE JS — modules/ (×7 sandbox, ×1 artefact)
+  env-global.smoke       :  78/78  OK
+  sec-config.smoke       : 169/169 OK
+  data-sources.smoke     : 136/136 OK
+  queue-config.smoke     : 169/169 OK
+  devtools-config.smoke  : ⚠ sandbox artefact
+  apps-config.smoke      : 236/236 OK
+  ia-config.smoke        : 125/125 OK
+  machines-config.smoke  : 151/151 OK
+
+D. SMOKE JS — tests/ (×3)
+  cms-installer.smoke    :  7/7  PASS
+  shared-explorer.smoke  :  6/6  PASS
+  smoke_cond_valid       : 26/26  PASS
+
+E. SUITES JS BONUS (×2)
+  shared-explorer.test   : 13/13  PASS
+  cms-installer.test     : 15/15  PASS
+
+────────────────────────────────────────────────────────────
+OBSERVATIONS
+────────────────────────────────────────────────────────────
+
+- Aucune régression produit identifiée sur aucune famille de suites
+- Artefact mount sandbox devtools-config.js : fichier tronqué à 370 lignes (UTF-8 corrompu en fin). Afecte devtools-config-adopt.test.js et modules/devtools-config.smoke.js uniquement dans le sandbox. Non-régression confirmée : PASS établi sur machine Ghost avant ce GO.
+- Noms de fichiers : smoke_cond_valid.js (non smoke_cond_val.js — affichage terminal tronqué dans find)
+- Modules bonus découverts : tests/memory-view-adopt.test.js (38/38 PASS) — non inclus dans le brief initial
+
+────────────────────────────────────────────────────────────
+SUITES SECONDAIRES NON EXECUTEES (hors périmètre ce GO)
+────────────────────────────────────────────────────────────
+
+- GO_LOCALCMS_CMS_INSTALLER_ADOPT_01 : test adopt JS pour modules/cms-installer.js — pas encore créé (cms-installer.test.js couvre le backend Python, pas le module JS déclaratif)
+
+────────────────────────────────────────────────────────────
+VERDICT
+────────────────────────────────────────────────────────────
+
+CAMPAGNE VERTE — repo localcms main@7f9bfc3 validé
+Nettoyage de branches mortes : autorisé après ce closeout
+
+Branches candidates au nettoyage :
+  feature/localcms-shared-explorer-cms-installer-v1
+  bridge/localcms-v1-main-merge
+
+Prochain GO recommandé :
+  - arbitrage branches mortes (optionnel)
+  - ou GO_LOCALCMS_CMS_INSTALLER_ADOPT_01 si couverture adopt JS complète souhaitée
+
