@@ -14,7 +14,7 @@ topic_keys:
   - consumer
 surface: consumer
 source_kind: canonical
-updated_at: 2026-04-13
+updated_at: 2026-04-16
 links:
   - docs/index/GO_INDEX.md
   - docs/index/ACTIVE_STREAMS.md
@@ -25,6 +25,7 @@ links:
 
 ## Candidats actuels
 
-- aucun nouveau GO local prioritaire établi avant l’enrichissement des index locaux
-- suite courte utile : normalisation historique ciblée d’artefacts consumer utiles
-- suite transverse utile : prolonger l’alignement sans changer le rôle consumer de `localcms`
+- candidat prioritaire : `GO_LOCALCMS_FULL_TEST_CAMPAIGN_01` (campagne test localcms complète sur `main`)
+- secondaires :
+  - nettoyage branches mortes seulement après campagne verte
+  - normalisation historique ciblée ensuite si encore utile

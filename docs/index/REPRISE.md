@@ -11,10 +11,10 @@ topic_keys:
   - localcms
   - reprise
   - continuity
-  - consumer
+  - tests
 surface: consumer
 source_kind: canonical
-updated_at: 2026-04-13
+updated_at: 2026-04-16
 links:
   - docs/governance/REPO_ROLE.md
   - docs/governance/DOC_LAYERS.md
@@ -24,11 +24,16 @@ links:
 
 ## Reprendre ici
 - repo : `localcms`
-- branche retenue : `main` (support réel observable via GitHub pour ce lot)
+- branche retenue : `main` — HEAD `a88d965`
 - flux à lire : `GO_LOCALCMS_UNIFORM_CONTINUITY_ALIGNMENT_01`
 - références prioritaires :
   - `docs/governance/REPO_ROLE.md`
   - `docs/governance/DOC_LAYERS.md`
-  - `docs/chantiers/GO_LOCALCMS_MEMORY_BRICKS_CONSUMER_PILOT_01/90_closeout.md`
-- dernier point établi : rôle consumer local posé, pilote `memory_bricks` PASS disponible localement, sans faire de `localcms` la source maîtresse de `memory_bricks`
-- prochaine action recommandée : enrichir les index locaux puis décider d’une normalisation historique utile ou d’une suite transverse utile
+  - `docs/go/CLOSEOUT_MACHINES_CONFIG_ADOPT_01.txt`
+  - `docs/go/CLOSEOUT_SHARED_EXPLORER_INTEGRATION_01.txt`
+- dernier point établi :
+  - campagne adopt config 8/8 CLOSE sur `main`
+  - tests d’intégration `shared_explorer` 23/23 PASS sur `main` (`a88d965`)
+  - `devtools-config-adopt` PASS — validé sur machine Ghost
+  - rôle consumer local confirmé
+- prochaine action recommandée : `GO_LOCALCMS_FULL_TEST_CAMPAIGN_01` — campagne test complète sur `main` ; nettoyage de branches mortes seulement après campagne verte

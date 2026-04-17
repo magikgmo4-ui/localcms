@@ -14,7 +14,7 @@ topic_keys:
   - consumer
 surface: consumer
 source_kind: canonical
-updated_at: 2026-04-13
+updated_at: 2026-04-16
 links:
   - docs/index/GO_INDEX.md
 ---
@@ -27,10 +27,4 @@ Ce document référence les flux réellement actifs ou bloqués dans `localcms`.
 
 ## Flux actifs
 
-### GO_LOCALCMS_UNIFORM_CONTINUITY_ALIGNMENT_01
-- statut : active
-- repo : localcms
-- branche : main
-- dernier point établi : rôle consumer local posé, pilote consumer `memory_bricks` clos PASS, continuité locale encore portée par l'alignement consumer
-- prochaine action : enrichir les index locaux puis choisir entre normalisation historique utile et suite transverse utile
-- blocages : aucun blocage établi à ce stade
+### GO_LOCALCMS_UNIFORM_CONTINUITY_ALIGNMENT_01`r`n- statut : active`r`n- repo : localcms`r`n- branche : main`r`n- dernier point établi : socle consumer local posé ; campagne adopt 8/8 close sur `main` ; shared_explorer integration PASS ; devtools-config-adopt PASS sur Ghost`r`n- prochaine action : lancer la campagne test `localcms` complète sur `main`, puis décider entre closeout de campagne et nettoyage optionnel des branches mortes (seulement après campagne verte)`r`n- blocages : aucun blocage établi à ce stade`r`n
