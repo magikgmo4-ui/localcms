@@ -27,4 +27,17 @@ Ce document référence les flux réellement actifs ou bloqués dans `localcms`.
 
 ## Flux actifs
 
-### GO_LOCALCMS_UNIFORM_CONTINUITY_ALIGNMENT_01`r`n- statut : active`r`n- repo : localcms`r`n- branche : main`r`n- dernier point établi : socle consumer local posé ; campagne adopt 8/8 close sur `main` ; shared_explorer integration PASS ; devtools-config-adopt PASS sur Ghost`r`n- prochaine action : lancer la campagne test `localcms` complète sur `main`, puis décider entre closeout de campagne et nettoyage optionnel des branches mortes (seulement après campagne verte)`r`n- blocages : aucun blocage établi à ce stade`r`n
+### GO_LOCALCMS_UNIFORM_CONTINUITY_ALIGNMENT_01
+- statut : clos (suppléanté par GO_LOCALCMS_CONTINUITY_INDEX_REALIGN_01)
+- repo : localcms
+- branche : main
+- dernier point établi : socle consumer local posé ; index locaux réalignés post-campagne adopt 8/8 + intégration shared_explorer PASS
+- prochaine action : aucune — ce flux est fermé
+
+### GO_LOCALCMS_FULL_TEST_CAMPAIGN_01
+- statut : candidat prioritaire
+- repo : localcms
+- branche : main — HEAD `79250cc`
+- dernier point établi : adopt 8/8 PASS · shared_explorer integration 23/23 PASS · devtools-config-adopt PASS sur Ghost
+- prochaine action : lancer campagne test complète sur `main` — toutes suites adopt + intégration + smoke en séquence ; nettoyage branches mortes après campagne verte
+- blocages : aucun
