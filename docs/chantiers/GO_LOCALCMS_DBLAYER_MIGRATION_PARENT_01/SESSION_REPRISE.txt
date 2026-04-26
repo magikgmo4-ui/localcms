@@ -1,0 +1,38 @@
+SESSION_REPRISE — GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01
+
+1_MASTER_TARGET
+Migrer LocalCMS sur db-layer comme repo séparé avec Claude Code CLI en mode worker/cowork-like via tmux.
+
+7_CANONICAL_STATE
+Machine cible : db-layer
+Repo cible : /opt/localcms
+Agent : Claude Code CLI
+Session : tmux claude-localcms
+Branche : go/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01
+Docs : docs/chantiers/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01/
+
+12_INVARIANTS
+- Ne pas mélanger LocalCMS et opt-trading.
+- Ne pas travailler directement sur main.
+- Ne pas patcher sans état Git.
+- Ne pas refactorer globalement.
+- Toujours documenter diff, tests, limites, point de reprise.
+
+16_TODO
+1. Vérifier le repo source LocalCMS actuel.
+2. Installer Claude CLI sur db-layer.
+3. Cloner LocalCMS dans /opt/localcms.
+4. Ouvrir branche dédiée.
+5. Lancer tmux + Claude CLI.
+6. Exécuter baseline smoke.
+7. Remplir BRANCH_STATE et CLOSEOUT.
+
+17_RESUME_POINT
+ssh db-layer
+tmux attach -t claude-localcms || tmux new -s claude-localcms
+cd /opt/localcms
+git status --short --branch
+claude
+
+GO_PROMPT
+Utiliser prompts/GO_PROMPT_CLAUDE_CODE_DBLAYER_LOCALCMS.txt

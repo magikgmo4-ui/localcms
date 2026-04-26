@@ -1,0 +1,27 @@
+{
+  "folders": [
+    {
+      "name": "LocalCMS on db-layer",
+      "path": "/opt/localcms"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/.pytest_cache": true,
+      "**/node_modules": true,
+      "**/.next": true,
+      "**/dist": true,
+      "**/build": true
+    },
+    "terminal.integrated.defaultProfile.linux": "bash"
+  },
+  "extensions": {
+    "recommendations": [
+      "anthropic.claude-code",
+      "ms-python.python",
+      "ms-vscode-remote.remote-ssh",
+      "eamodio.gitlens"
+    ]
+  }
+}

@@ -1,0 +1,40 @@
+== GIT ==
+## go/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01
+?? README_DBLAYER_CLAUDE_IDE_BUNDLE.md
+?? docs/chantiers/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01/
+?? localcms-dblayer.code-workspace
+?? prompts/
+?? scripts/
+9aa4c3f docs(localcms): add full test campaign closeout — PASS 1640 assertions
+7f9bfc3 docs(localcms): clean continuity docs formatting and head refs
+79250cc docs(localcms): realign continuity indexes after latest validation
+a88d965 localcms: add shared_explorer integration tests — 23/23 PASS
+997469c localcms: add machines-config adopt tests — 84/84 PASS — campagne adopt 8/8
+== STACK FILES ==
+./requirements.txt
+== TOP LEVEL ==
+total 592
+drwxrwxr-x   9 ghost ghost   4096 Apr 26 10:24 .
+drwxr-x---+ 36 ghost ghost   4096 Apr 26 10:24 ..
+drwxrwxr-x   2 ghost ghost   4096 Apr 26 10:20 api
+-rw-rw-r--   1 ghost ghost   1762 Apr 26 10:20 BRANCH_INTEGRATION_README.md
+drwxrwxr-x  11 ghost ghost   4096 Apr 26 10:20 docs
+-rw-rw-r--   1 ghost ghost    849 Apr 26 10:20 .env.example
+drwxrwxr-x   8 ghost ghost   4096 Apr 26 10:24 .git
+-rw-rw-r--   1 ghost ghost    190 Apr 26 10:20 .gitignore
+-rw-rw-r--   1 ghost ghost    683 Apr 26 10:20 INVENTORY_CANONICAL_SOURCES.md
+-rw-r--r--   1 ghost ghost    544 Apr 26 06:35 localcms-dblayer.code-workspace
+-rw-rw-r--   1 ghost ghost 523935 Apr 26 10:20 localcms-v5.html
+-rw-rw-r--   1 ghost ghost   2385 Apr 26 10:20 main.py
+drwxrwxr-x   2 ghost ghost   4096 Apr 26 10:20 modules
+drwxrwxr-x   2 ghost ghost   4096 Apr 26 05:37 prompts
+-rw-r--r--   1 ghost ghost   2100 Apr 26 06:35 README_DBLAYER_CLAUDE_IDE_BUNDLE.md
+-rw-rw-r--   1 ghost ghost     10 Apr 26 10:20 README.md
+-rw-rw-r--   1 ghost ghost    579 Apr 26 10:20 requirements.txt
+-rw-rw-r--   1 ghost ghost    251 Apr 26 10:20 run.bat
+-rw-rw-r--   1 ghost ghost    274 Apr 26 10:20 run.sh
+drwxrwxr-x   2 ghost ghost   4096 Apr 26 05:37 scripts
+drwxrwxr-x   2 ghost ghost   4096 Apr 26 10:20 tests
+== PACKAGE SCRIPTS ==
+== PYTHON TEST DISCOVERY ==
+DONE
