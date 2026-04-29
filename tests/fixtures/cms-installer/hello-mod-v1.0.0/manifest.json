@@ -1,0 +1,12 @@
+{
+  "id": "hello_mod",
+  "name": "Hello Mod",
+  "version": "1.0.0",
+  "description": "Module hello CI — fixture avec sanity_check",
+  "group": "tools",
+  "target_key": "modules_dir",
+  "sanity_check": "hello_mod_sanity",
+  "files": [
+    {"src": "hello-mod.js", "dest": "hello-mod.js"}
+  ]
+}
