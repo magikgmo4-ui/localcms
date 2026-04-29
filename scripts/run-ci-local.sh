@@ -56,14 +56,35 @@ with open(path, 'wb') as f:
     f.write(b'x' * (5 * 1024 * 1024 + 1))
 "
 
-# Copier les bundles de test depuis le runtime local si disponible
+# Générer les bundles CI depuis les sources fixtures (déterministes — versionnées)
+export FIXTURES_SRC="${REPO_DIR}/tests/fixtures/cms-installer"
+printf "  Génération bundles depuis fixtures...\n"
+python3 << 'PYEOF'
+import zipfile, os
+
+fixtures_dir = os.environ['FIXTURES_SRC']
+queue_dir    = os.environ['LOCALCMS_SHARED_ROOT'] + '/install-queue'
+
+for bundle_name in sorted(os.listdir(fixtures_dir)):
+    src = os.path.join(fixtures_dir, bundle_name)
+    if not os.path.isdir(src):
+        continue
+    zp = os.path.join(queue_dir, bundle_name + '.zip')
+    with zipfile.ZipFile(zp, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for fn in sorted(os.listdir(src)):
+            zf.write(os.path.join(src, fn), fn)
+    print(f'  Bundle créé : {bundle_name}.zip')
+PYEOF
+
+# Bundles additionnels depuis le runtime local si disponible
 QUEUE_SRC="/home/ghost/localcms_runtime/shared/install-queue"
 if [ -d "$QUEUE_SRC" ]; then
-  cp "$QUEUE_SRC"/*.zip "${LOCALCMS_SHARED_ROOT}/install-queue/" 2>/dev/null \
-    && printf "  Bundles copiés depuis %s\n" "$QUEUE_SRC" \
-    || printf "  (aucun bundle .zip à copier)\n"
-else
-  printf "  (runtime local absent — install-queue vide, smokes bundle → skip gracieux)\n"
+  for f in "$QUEUE_SRC"/*.zip; do
+    [ -f "$f" ] || continue
+    bn="$(basename "$f")"
+    dest="${LOCALCMS_SHARED_ROOT}/install-queue/${bn}"
+    [ -f "$dest" ] || { cp "$f" "$dest" && printf "  Bundle additionnel : %s\n" "$bn"; }
+  done
 fi
 
 # ── Trap cleanup ───────────────────────────────────────────────────────────────

@@ -1,0 +1,11 @@
+{
+  "id": "test_module",
+  "name": "Test Module",
+  "version": "1.0.0",
+  "description": "Module de test CI — fixture déterministe",
+  "group": "tools",
+  "target_key": "modules_dir",
+  "files": [
+    {"src": "module.js", "dest": "test-module.js"}
+  ]
+}
