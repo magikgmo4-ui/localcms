@@ -1,0 +1,173 @@
+REPONSE 20 — GO_LOCALCMS_DBLAYER_V2_SCOPE_01
+GO : GO_LOCALCMS_DBLAYER_V2_SCOPE_01
+Date : 2026-04-29
+Agent : Claude Code CLI (claude-sonnet-4-6)
+========================================================
+
+DIAGNOSTIC INITIAL
+------------------
+
+pwd → /home/ghost/localcms
+git status → main (clean, sync origin)
+HEAD → 53ef3d6 docs: record LocalCMS CI GitHub Actions verify PASS
+Tag → v0.1.0-dblayer → b94c09e (inchangé)
+CI locale → PASS (revalidé)
+
+BASELINE CI
+-----------
+
+bash scripts/run-ci-local.sh
+  LocalCMS CI — PASS
+  integration_test_pipeline.py          15/15 PASS
+  integration_test_shared_explorer.py   23/23 PASS
+  npm run test:adopt                    540/540 PASS
+  shared-explorer.smoke.js (live)       6/6 PASS
+  cms-installer.smoke.js (live)         7/7 PASS
+
+INVENTAIRE GAPS V1
+------------------
+
+Catégorie API backend :
+  GAP_ROLLBACK_API_ABSENTE     → MUST P1
+  GAP_RESTORE_API_ABSENTE      → MUST P2
+  GAP_ABSOLUTE_PATH_404        → SHOULD P3
+  GAP_INSPECT_NO_VALIDATION    → OUT (comportement voulu)
+  GAP_INSTALL_BACKUPS_TTL      → COULD P6
+
+Catégorie frontend / UX :
+  GAP_LEGACY_INSTALLER_SIMULE  → SHOULD P5
+  GAP_IA_RUNNER_SIMULE         → COULD futur
+
+Catégorie runtime / infra :
+  GAP_PACKAGE_JSON_MODULE_WARN → SHOULD P4
+  GAP_UTCNOW_DEPRECATION       → SHOULD P4
+
+Catégorie CI/CD :
+  GAP_CICD_NO_BUNDLE_FIXTURES  → FERMÉ
+  GAP_GH_CLI_NOT_AUTHENTICATED → HORS SCOPE
+
+PÉRIMÈTRE V2 RETENU
+-------------------
+
+MUST V2 :
+  1. Exposer POST /api/installer/rollback
+  2. Exposer POST /api/installer/restore
+
+SHOULD V2 :
+  3. Corriger GAP_ABSOLUTE_PATH_404 (403 sur chemin absolu)
+  4. Corriger GAP_PACKAGE_JSON_MODULE_WARN + GAP_UTCNOW_DEPRECATION
+  5. Réconcilier MOD_INSTALLER legacy (après P1/P2)
+
+COULD V2 :
+  6. TTL purge install-backups/install-logs
+  7. Badge CI README
+  8. IA runner réel (décision externe requise)
+
+OUT OF SCOPE V2 :
+  - GAP_INSPECT_NO_VALIDATION (comportement voulu)
+  - GAP_GH_CLI_NOT_AUTHENTICATED (API REST suffit)
+  - Refactoring global stack
+
+GO ENFANTS PROPOSÉS
+-------------------
+
+P1  GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01
+    Objectif : POST /api/installer/rollback
+    Fichiers : api/cms_installer.py + tests/integration_test_pipeline.py + tests/cms-installer.smoke.js
+    Critère PASS : route HTTP + test intégration + CI PASS
+    Dépendances : aucune
+
+P2  GO_LOCALCMS_DBLAYER_V2_RESTORE_API_01
+    Objectif : POST /api/installer/restore
+    Fichiers : api/cms_installer.py + tests/integration_test_pipeline.py
+    Critère PASS : route HTTP + test intégration + CI PASS
+    Dépendances : indépendant (logiquement après P1)
+
+P3  GO_LOCALCMS_DBLAYER_V2_SECURITY_EDGE_CASES_01
+    Objectif : chemin absolu → 403 (actuellement 404)
+    Fichiers : api/shared_explorer.py + tests/integration_test_shared_explorer.py
+    Critère PASS : test R_ABS → 403 + CI PASS
+    Dépendances : aucune
+
+P4  GO_LOCALCMS_DBLAYER_V2_PACKAGE_TYPE_MODULE_WARN_01
+    Objectif : 0 warning Node + 0 DeprecationWarning Python
+    Fichiers : package.json + tests/integration_test_shared_explorer.py
+    Risque : "type":"module" incompatible avec require() dans run-adopt.js
+    Critère PASS : 0 warning + adopt 540/540 + CI PASS
+    Dépendances : vérifier compatibilité ESM/CJS avant
+
+P5  GO_LOCALCMS_DBLAYER_V2_FRONTEND_LEGACY_RECONCILE_01
+    Objectif : masquer ou connecter MOD_INSTALLER legacy
+    Fichiers : localcms-v5.html (SEUL GO autorisé à modifier ce fichier)
+    Critère PASS : panel résolu + 0 régression adopt + CI PASS
+    Dépendances : après P1/P2 (pour inclure boutons rollback/restore éventuels)
+
+P6  GO_LOCALCMS_DBLAYER_V2_RUNTIME_PURGE_01
+    Objectif : TTL purge install-backups / install-logs
+    Fichiers : api/cms_installer.py ou scripts/purge-runtime.sh
+    Critère PASS : purge fonctionnelle + test isolation + CI PASS
+    Dépendances : indépendant
+
+CRITÈRES RELEASE V2 (v0.2.0-dblayer)
+--------------------------------------
+
+  P1 + P2 mergés sur main
+  CI locale PASS
+  GitHub Actions PASS
+  npm run test:adopt 540/540
+  Documentation mise à jour
+
+HYPOTHÈSES À CONFIRMER
+-----------------------
+
+H1 — _rollback() extractible en route HTTP → À CONFIRMER en P1
+H2 — Backups horodatés adressables par timestamp → À CONFIRMER en P2
+H3 — "type":"module" compatible avec run-adopt.js → À VÉRIFIER avant P4
+H4 — Masquer MOD_INSTALLER n'affecte pas adopt → Probable
+H5 — Absolute path fix = une ligne → Probable
+
+GIT STATUS FINAL
+----------------
+
+main (clean, sync origin)
+HEAD : 53ef3d6
+?? docs/chantiers/GO_LOCALCMS_DBLAYER_V2_SCOPE_01/
+?? docs/responses/response_20_GO_LOCALCMS_DBLAYER_V2_SCOPE_01.txt
+
+Aucun fichier applicatif modifié.
+.env → non tracké.
+node_modules → absent.
+
+VERDICT
+-------
+
+PASS
+
+Scope V2 documenté                         PASS
+Aucun fichier applicatif modifié           PASS
+Gaps V1 repris et classifiés               PASS
+6 GO enfants proposés avec critères        PASS
+Priorités MUST/SHOULD/COULD/OUT claires    PASS
+Critères release V2 définis                PASS
+CI locale revalidée                        PASS
+Documentation écrite                       PASS
+Réponse TXT écrite                         PASS
+Working tree final = docs V2 uniquement    PASS
+
+PROCHAIN GO RECOMMANDÉ
+-----------------------
+
+GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01
+  Exposer POST /api/installer/rollback
+  Base : main HEAD 53ef3d6
+  Branche : go/GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01
+
+POINT DE REPRISE
+----------------
+
+cd /home/ghost/localcms
+git add \
+  docs/chantiers/GO_LOCALCMS_DBLAYER_V2_SCOPE_01/ \
+  docs/responses/response_20_GO_LOCALCMS_DBLAYER_V2_SCOPE_01.txt
+git commit -m "docs: record LocalCMS db-layer V2 scope PASS"
+git push
