@@ -168,6 +168,24 @@ function mockFetch(url, options) {
     });
   }
 
+  // POST /api/installer/rollback
+  if (method === 'POST' && path === '/api/installer/rollback') {
+    const body      = options && options.body ? JSON.parse(options.body) : {};
+    const module_id = body.module_id || '';
+    if (!module_id || !/^[a-z0-9_]+$/.test(module_id)) {
+      return Promise.resolve({ ok: false, status: 400, json: () => Promise.resolve({ detail: 'module_id invalide' }) });
+    }
+    return Promise.resolve({
+      ok: true, status: 200,
+      json: () => Promise.resolve({
+        result:         'ok',
+        module_id,
+        backup_used:    `${module_id}_20260101T000000000000`,
+        restored_files: ['test-module.js'],
+      }),
+    });
+  }
+
   // 404 par défaut
   return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({ detail: 'Not found' }) });
 }
@@ -284,6 +302,33 @@ await smoke('S7 — Install avec sanity_check : champ retourné + post_check ok'
     `post_check.status attendu 'ok', obtenu : ${data.steps.post_check.status}`);
   assert(data.steps.post_check.sanity_fn === 'hello_mod_sanity',
     `post_check.sanity_fn attendu 'hello_mod_sanity', obtenu : ${data.steps.post_check.sanity_fn}`);
+});
+
+// S8 — Rollback : POST /api/installer/rollback → result=ok
+await smoke('S8 — Rollback POST → result ok', async () => {
+  if (!MOCK_MODE) {
+    // Réinstaller pour créer un backup (prérequis du rollback en live)
+    const installRes = await fetchFn(`${BASE}/api/installer/install`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ bundle: 'test-module-v1.0.0.zip' }),
+    });
+    if (!installRes.ok && installRes.status === 404) {
+      console.log('    (bundle absent en live — skip S8)'); return;
+    }
+  }
+  const res = await fetchFn(`${BASE}/api/installer/rollback`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ module_id: 'test_module' }),
+  });
+  if (!res.ok && res.status === 404) { console.log('    (aucun backup en live — skip)'); return; }
+  assert(res.ok, `Rollback HTTP ${res.status}`);
+  const data = await res.json();
+  assert(data.result === 'ok',              `result attendu 'ok', obtenu : ${data.result}`);
+  assert(typeof data.module_id === 'string',  'module_id doit être présent');
+  assert(typeof data.backup_used === 'string','backup_used doit être présent');
+  assert(Array.isArray(data.restored_files),  'restored_files doit être un tableau');
 });
 
 /* ─── Résumé ─────────────────────────────────────────────────────────── */
