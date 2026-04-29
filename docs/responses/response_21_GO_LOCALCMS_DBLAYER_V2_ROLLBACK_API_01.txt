@@ -1,0 +1,238 @@
+REPONSE 21 — GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01
+GO : GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01
+Date : 2026-04-29
+Agent : Claude Code CLI (claude-sonnet-4-6)
+========================================================
+
+DIAGNOSTIC INITIAL
+------------------
+
+pwd → /home/ghost/localcms
+git status → go/GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01
+  BASE main HEAD aaa05c6 docs: record LocalCMS db-layer V2 scope PASS
+git remote → git@github.com:magikgmo4-ui/localcms.git
+git branch → branche dédiée créée depuis main
+git log HEAD -1 → aaa05c6
+git tag → v0.1.0-dblayer ✓
+git check-ignore .env → .gitignore:1:.env ✓
+node_modules → non présent ✓
+
+SYNCHRONISATION MAIN
+--------------------
+
+main = origin/main = HEAD aaa05c6 (déjà synchronisé)
+Branche go/GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01 créée depuis main.
+
+BASELINE CI (avant patch)
+--------------------------
+
+bash scripts/run-ci-local.sh
+  integration_test_pipeline.py          15/15 PASS
+  integration_test_shared_explorer.py   23/23 PASS
+  npm run test:adopt                    540/540 PASS
+  shared-explorer.smoke.js (live)       6/6 PASS
+  cms-installer.smoke.js (live)         7/7 PASS
+
+LECTURE DOCUMENTS CANONIQUES
+-----------------------------
+
+docs/chantiers/GO_LOCALCMS_DBLAYER_V2_SCOPE_01/00_V2_SCOPE.md
+  → GAP_ROLLBACK_API_ABSENTE : MUST P1
+  → Fichiers cibles : api/cms_installer.py + tests
+
+docs/chantiers/GO_LOCALCMS_DBLAYER_BACKUP_ROLLBACK_01/00_BACKUP_ROLLBACK_BASELINE.md
+  → Backup path : install-backups/test_module_20260426T213455442533/
+  → Rollback interne confirmé fonctionnel
+  → Aucune route HTTP existante
+
+api/cms_installer.py (466 lignes avant patch)
+  → _rollback() interne : lignes 181-202
+  → BACKUP_DIR = SHARED_ROOT / "install-backups"
+  → TARGET_PATHS = {"modules_dir": Path(LOCALCMS_MODULES_DIR)}
+  → VALID_ID_RE = r"^[a-z0-9_]+$"
+  → Routes existantes : GET /scan, GET /inspect, POST /precheck,
+                        POST /install, GET /history
+
+main.py
+  → installer_router monté sur prefix="/api/installer"
+  → /rollback disponible sans modification de main.py
+
+HYPOTHÈSE H1 CONFIRMÉE
+-----------------------
+
+_rollback() interne prend :
+  - installed_files : liste des fichiers écrits dans le pipeline courant
+  - backup_src : chemin déjà résolu
+  - target_path : déjà résolu
+  - steps : dict du pipeline
+  → Non réutilisable directement pour une route HTTP post-hoc.
+
+Décision : logique HTTP propre avec mêmes invariants de sécurité.
+
+CONTRAT API ROLLBACK RETENU
+----------------------------
+
+Méthode    : POST
+URL        : /api/installer/rollback
+Body       : {"module_id": "my_module"}
+
+Réponse 200 :
+  {
+    "result":         "ok",
+    "module_id":      "my_module",
+    "backup_used":    "my_module_20260429T143000000000",
+    "restored_files": ["my-module.js"]
+  }
+
+Erreurs :
+  400 — module_id invalide (hors [a-z0-9_]+)
+  403 — path violation (backup hors BACKUP_DIR)
+  404 — aucun backup trouvé pour ce module_id
+  500 — erreur de copie
+
+Cas refusés :
+  module_id "../etc"     → 400 (VALID_ID_RE bloque avant résolution)
+  module_id "mod/evil"   → 400
+  module_id ""           → 400
+  module inexistant      → 404
+  backup hors BACKUP_DIR → 403
+
+GARANTIES DE SÉCURITÉ
+----------------------
+
+1. module_id → VALID_ID_RE = r"^[a-z0-9_]+$"
+   Interdit .., /, \, espaces, tirets, majuscules
+2. backup_src → backup_src.resolve().relative_to(BACKUP_DIR.resolve())
+   Confinement dans install-backups/ vérifié
+3. target_path → TARGET_PATHS["modules_dir"] uniquement
+   Jamais fourni par l'utilisateur
+4. Aucun chemin absolu accepté dans module_id
+5. Aucun subprocess, aucun os.system
+
+PATCH APPLIQUÉ
+--------------
+
+api/cms_installer.py (+55 lignes) :
+  + class RollbackRequest(BaseModel):
+        module_id: str
+
+  + @installer_router.post("/rollback")
+    async def rollback_module(body: RollbackRequest):
+        module_id = body.module_id
+        # 1. Validation VALID_ID_RE → 400
+        # 2. Liste BACKUP_DIR / {module_id}_* → tri desc → 404 si vide
+        # 3. Vérif relative_to(BACKUP_DIR) → 403
+        # 4. target_path = TARGET_PATHS["modules_dir"]
+        # 5. shutil.copy2 chaque fichier du backup → target_path
+        # 6. _emit_log("rollback", ...) + return JSON
+
+tests/integration_test_pipeline.py (+68 lignes) :
+  + run_rollback_api(module_id) — miroir logique endpoint sans FastAPI
+  + I16 — backup existant → fichier restauré + result=ok
+  + I17 — module_id invalide → HTTPException 400
+  + I18 — aucun backup → HTTPException 404
+
+tests/cms-installer.smoke.js (+45 lignes) :
+  + Mock POST /api/installer/rollback (valid → 200, invalid → 400)
+  + S8 — Rollback POST → result ok
+       live : réinstall test-module → crée backup → rollback → assert ok
+
+scripts/run-ci-local.sh (+1/-1) :
+  Résumé : cms-installer.smoke.js (live 7/7) → (live 8/8)
+
+CI FINALE (après patch)
+------------------------
+
+bash scripts/run-ci-local.sh
+  integration_test_pipeline.py          18/18 PASS  (+3 : I16/I17/I18)
+  integration_test_shared_explorer.py   23/23 PASS
+  npm run test:adopt                    540/540 PASS
+  shared-explorer.smoke.js (live)       6/6 PASS
+  cms-installer.smoke.js (live)         8/8 PASS   (+1 : S8)
+
+  LocalCMS CI — PASS
+
+VÉRIFICATIONS ARTEFACTS
+------------------------
+
+git diff --stat
+  api/cms_installer.py               | 56 +++
+  scripts/run-ci-local.sh            |  2 +-
+  tests/cms-installer.smoke.js       | 45 +++
+  tests/integration_test_pipeline.py | 68 +++
+  4 files changed, 170 insertions(+), 1 deletion(-)
+
+git check-ignore .env → .gitignore:1:.env ✓ non tracké
+node_modules → non présent ✓
+localcms-v5.html → non modifié ✓
+artefacts runtime CI → /tmp (trap cleanup EXIT) ✓
+
+GIT STATUS FINAL
+----------------
+
+## go/GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01
+ M api/cms_installer.py
+ M scripts/run-ci-local.sh
+ M tests/cms-installer.smoke.js
+ M tests/integration_test_pipeline.py
+?? docs/chantiers/GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01/
+?? docs/responses/response_21_GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01.txt
+
+Aucun commit. Aucun push. Aucun merge. Aucun tag.
+
+VERDICT
+-------
+
+PASS
+
+Branche dédiée créée                               PASS
+Endpoint POST /api/installer/rollback exposé       PASS
+Validation module_id (VALID_ID_RE)                 PASS
+Sécurité path backup (relative_to BACKUP_DIR)      PASS
+target_path issu de TARGET_PATHS uniquement        PASS
+Refus module_id invalide → 400                     PASS
+Refus aucun backup → 404                           PASS
+Refus path traversal → 400                         PASS
+Test I16 — rollback valide depuis backup existant  PASS
+Test I17 — module_id invalide → 400                PASS
+Test I18 — aucun backup → 404                      PASS
+Smoke S8 — rollback live → result=ok               PASS
+integration_test_pipeline.py 18/18                 PASS
+integration_test_shared_explorer.py 23/23          PASS
+npm run test:adopt 540/540                         PASS
+cms-installer.smoke.js live 8/8                    PASS
+bash scripts/run-ci-local.sh PASS                  PASS
+localcms-v5.html non modifié                       PASS
+.env non tracké                                    PASS
+node_modules non tracké                            PASS
+Aucun artefact runtime tracké                      PASS
+Documentation baseline écrite                      PASS
+Réponse TXT écrite                                 PASS
+
+LIMITES RESTANTES
+-----------------
+
+- Aucun test cms-installer.test.js ajouté (logique pure testée dans
+  integration_test_pipeline.py — valeur ajoutée marginale)
+- Rollback uniquement vers backup le plus récent (pas de sélection par timestamp)
+  → comportement voulu V2 minimal
+
+PROCHAIN GO LOGIQUE
+--------------------
+
+GO_LOCALCMS_DBLAYER_V2_RESTORE_API_01
+  Exposer POST /api/installer/restore
+  Base : merge de ce GO sur main, puis branche dédiée
+
+POINT DE REPRISE
+----------------
+
+cd /home/ghost/localcms
+git add \
+  api/cms_installer.py \
+  tests/integration_test_pipeline.py \
+  tests/cms-installer.smoke.js \
+  scripts/run-ci-local.sh \
+  docs/chantiers/GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01/ \
+  docs/responses/response_21_GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01.txt
+git commit -m "feat: expose POST /api/installer/rollback — GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01 PASS"

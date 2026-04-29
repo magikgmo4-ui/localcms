@@ -65,6 +65,10 @@ class BundleRequest(BaseModel):
     bundle: str
 
 
+class RollbackRequest(BaseModel):
+    module_id: str
+
+
 # ─── Log helper (symétrique à shared_explorer.py) ────────────────────────────
 
 def _emit_log(
@@ -463,3 +467,55 @@ async def install_history():
         return {"logs": logs, "count": len(logs)}
     except Exception as e:
         raise HTTPException(500, str(e))
+
+
+@installer_router.post("/rollback")
+async def rollback_module(body: RollbackRequest):
+    """
+    Restaurer la version précédente d'un module depuis le backup le plus récent.
+    POST /api/installer/rollback  body: {"module_id": "my_module"}
+    """
+    module_id = body.module_id
+    if not module_id or not VALID_ID_RE.match(module_id):
+        raise HTTPException(400, "module_id invalide — seuls [a-z0-9_] autorisés")
+
+    try:
+        BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+        candidates = sorted(
+            [d for d in BACKUP_DIR.iterdir()
+             if d.is_dir() and d.name.startswith(f"{module_id}_")],
+            key=lambda d: d.name,
+            reverse=True,
+        )
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+    if not candidates:
+        _emit_log("rollback", "", module_id, "rollback", "not_found")
+        raise HTTPException(404, f"Aucun backup trouvé pour le module : {module_id}")
+
+    backup_src = candidates[0]
+    try:
+        backup_src.resolve().relative_to(BACKUP_DIR.resolve())
+    except ValueError:
+        raise HTTPException(403, "Path violation")
+
+    target_path = TARGET_PATHS["modules_dir"]
+    target_path.mkdir(parents=True, exist_ok=True)
+
+    restored_files: list[str] = []
+    try:
+        for f in backup_src.iterdir():
+            shutil.copy2(f, target_path / f.name)
+            restored_files.append(f.name)
+    except Exception as e:
+        _emit_log("rollback", "", module_id, "rollback", "failed", str(e))
+        raise HTTPException(500, f"Rollback échoué : {e}")
+
+    _emit_log("rollback", "", module_id, "rollback", "ok")
+    return {
+        "result":         "ok",
+        "module_id":      module_id,
+        "backup_used":    backup_src.name,
+        "restored_files": restored_files,
+    }

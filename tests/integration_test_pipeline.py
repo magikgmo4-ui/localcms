@@ -260,6 +260,39 @@ def run_install_pipeline(bundle_name):
         if staging_dir and staging_dir.exists(): shutil.rmtree(staging_dir, ignore_errors=True)
         raise
 
+def run_rollback_api(module_id):
+    """Logique du POST /api/installer/rollback (sans FastAPI)."""
+    if not module_id or not VALID_ID_RE.match(module_id):
+        raise HTTPException(400, "module_id invalide — seuls [a-z0-9_] autorisés")
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    candidates = sorted(
+        [d for d in BACKUP_DIR.iterdir()
+         if d.is_dir() and d.name.startswith(f"{module_id}_")],
+        key=lambda d: d.name,
+        reverse=True,
+    )
+    if not candidates:
+        _emit_log("rollback", "", module_id, "rollback", "not_found")
+        raise HTTPException(404, f"Aucun backup trouvé pour le module : {module_id}")
+    backup_src = candidates[0]
+    try:
+        backup_src.resolve().relative_to(BACKUP_DIR.resolve())
+    except ValueError:
+        raise HTTPException(403, "Path violation")
+    target_path = TARGET_PATHS["modules_dir"]
+    target_path.mkdir(parents=True, exist_ok=True)
+    restored_files = []
+    for f in backup_src.iterdir():
+        shutil.copy2(f, target_path / f.name)
+        restored_files.append(f.name)
+    _emit_log("rollback", "", module_id, "rollback", "ok")
+    return {
+        "result":         "ok",
+        "module_id":      module_id,
+        "backup_used":    backup_src.name,
+        "restored_files": restored_files,
+    }
+
 # ─── Mini test runner ─────────────────────────────────────────────────────
 
 passed = 0; failed = 0; results = []
@@ -510,6 +543,41 @@ def test_i15():
     err = steps["precheck"].get("error", "")
     a("sanity_check" in err.lower(), f"Erreur doit mentionner sanity_check, obtenu: {err}")
 t("I15 — sanity_check invalide → precheck failed", test_i15)
+
+# I16 — Rollback API: backup existant → fichier restauré
+def test_i16():
+    mod_id      = "rollback_mod"
+    bk_dir      = BACKUP_DIR / f"{mod_id}_20260101T000000000000"
+    bk_dir.mkdir(parents=True, exist_ok=True)
+    orig_content = "/* version originale */"
+    (bk_dir / "rollback-mod.js").write_text(orig_content)
+    target_file = TARGET_DIR / "rollback-mod.js"
+    target_file.parent.mkdir(parents=True, exist_ok=True)
+    target_file.write_text("/* version modifiée */")
+    result = run_rollback_api(mod_id)
+    a(result["result"] == "ok",               f"Rollback doit retourner ok, obtenu: {result}")
+    a(result["module_id"] == mod_id,           "module_id incorrect")
+    a("rollback-mod.js" in result["restored_files"], "Fichier absent de restored_files")
+    a(target_file.read_text() == orig_content, "Contenu non restauré depuis backup")
+t("I16 — Rollback API: backup existant → fichier restauré et result=ok", test_i16)
+
+# I17 — Rollback API: module_id invalide → HTTPException 400
+def test_i17():
+    try:
+        run_rollback_api("../evil")
+        a(False, "Doit lever HTTPException 400")
+    except HTTPException as e:
+        a(e.status_code == 400, f"Attendu 400, obtenu {e.status_code}")
+t("I17 — Rollback API: module_id invalide → HTTPException 400", test_i17)
+
+# I18 — Rollback API: aucun backup → HTTPException 404
+def test_i18():
+    try:
+        run_rollback_api("module_sans_backup_xyz")
+        a(False, "Doit lever HTTPException 404")
+    except HTTPException as e:
+        a(e.status_code == 404, f"Attendu 404, obtenu {e.status_code}")
+t("I18 — Rollback API: aucun backup → HTTPException 404", test_i18)
 
 # ─── Cleanup ──────────────────────────────────────────────────────────────
 
