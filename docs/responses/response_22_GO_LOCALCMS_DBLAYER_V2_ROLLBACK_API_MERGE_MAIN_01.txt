@@ -1,0 +1,161 @@
+REPONSE 22 — GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_MERGE_MAIN_01
+GO : GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_MERGE_MAIN_01
+Date : 2026-04-29
+Agent : Claude Code CLI (claude-sonnet-4-6)
+========================================================
+
+DIAGNOSTIC INITIAL
+------------------
+
+pwd → /home/ghost/localcms
+git status → go/GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01 (propre)
+git remote → git@github.com:magikgmo4-ui/localcms.git
+git branch → * go/GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01 da4b50c [origin/...]
+git log HEAD → da4b50c feat: expose installer rollback API
+git tag → v0.1.0-dblayer ✓
+git check-ignore .env → .gitignore:1:.env ✓
+node_modules → non présent ✓
+
+SYNCHRONISATION SOURCE
+-----------------------
+
+git fetch origin
+git checkout go/GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01
+git pull --rebase origin go/GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01
+→ Déjà à jour. HEAD : da4b50c
+
+CI SOURCE
+---------
+
+bash scripts/run-ci-local.sh
+  integration_test_pipeline.py          18/18 PASS
+  integration_test_shared_explorer.py   23/23 PASS
+  npm run test:adopt                    540/540 PASS
+  shared-explorer.smoke.js (live)       6/6 PASS
+  cms-installer.smoke.js (live)         8/8 PASS
+  LocalCMS CI — PASS
+
+VÉRIFICATION MAIN
+------------------
+
+git checkout main
+git pull --rebase origin main
+→ Déjà à jour. HEAD : aaa05c6 docs: record LocalCMS db-layer V2 scope PASS
+main = origin/main ✓
+
+PRÉVISUALISATION MERGE
+-----------------------
+
+git log --oneline main..go/GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01
+  da4b50c feat: expose installer rollback API
+
+git diff --stat main..go/GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01
+  api/cms_installer.py                   | 56 ++++
+  docs/00_ROLLBACK_API_BASELINE.md       | 301 +++++++++++++++++++++
+  docs/response_21_....txt               | 238 ++++++++++++++++
+  scripts/run-ci-local.sh                |   2 +-
+  tests/cms-installer.smoke.js           | 45 +++
+  tests/integration_test_pipeline.py     | 68 +++++
+  6 files changed, 709 insertions(+), 1 deletion(-)
+
+localcms-v5.html → absent du diff ✓
+.env / node_modules → absents ✓
+
+MERGE
+------
+
+git merge --no-ff go/GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_01 \
+  -m "merge: LocalCMS V2 rollback API — POST /api/installer/rollback"
+
+Stratégie : ort (no-ff)
+Conflits   : aucun
+Résultat   : merge commit f06799a
+
+git log --oneline -3
+  f06799a merge: LocalCMS V2 rollback API — POST /api/installer/rollback
+  da4b50c feat: expose installer rollback API
+  aaa05c6 docs: record LocalCMS db-layer V2 scope PASS
+
+CI POST-MERGE
+-------------
+
+bash scripts/run-ci-local.sh
+  integration_test_pipeline.py          18/18 PASS
+  integration_test_shared_explorer.py   23/23 PASS
+  npm run test:adopt                    540/540 PASS
+  shared-explorer.smoke.js (live)       6/6 PASS
+  cms-installer.smoke.js (live)         8/8 PASS
+  LocalCMS CI — PASS
+
+DOCUMENTATION
+-------------
+
+Créés :
+  docs/chantiers/GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_MERGE_MAIN_01/
+    00_ROLLBACK_API_MERGE_MAIN_REPORT.md
+  docs/responses/
+    response_22_GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_MERGE_MAIN_01.txt
+
+COMMIT DOCUMENTATION
+---------------------
+
+git add \
+  docs/chantiers/GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_MERGE_MAIN_01/ \
+  docs/responses/response_22_GO_LOCALCMS_DBLAYER_V2_ROLLBACK_API_MERGE_MAIN_01.txt
+git commit -m "docs: record LocalCMS rollback API merge main PASS"
+→ [hash doc commit]
+
+CI POST-DOC
+-----------
+
+bash scripts/run-ci-local.sh → LocalCMS CI — PASS
+
+PUSH MAIN
+---------
+
+git push origin main
+→ main pushé sur origin ✓
+
+GIT STATUS FINAL
+----------------
+
+main (clean, sync origin)
+HEAD : doc commit
+Merge commit : f06799a
+.env → non tracké
+node_modules → non présent
+localcms-v5.html → non modifié
+v0.1.0-dblayer → inchangé, pointe b94c09e
+
+VERDICT
+-------
+
+PASS
+
+Branche source mergée sans conflit               PASS
+CI source PASS avant merge                       PASS
+CI post-merge PASS                               PASS
+CI post-doc commit PASS                          PASS
+main pushé                                       PASS
+v0.1.0-dblayer non déplacé                       PASS
+localcms-v5.html non modifié                     PASS
+.env non tracké                                  PASS
+node_modules non tracké                          PASS
+Rapport merge écrit                              PASS
+Réponse TXT écrite                               PASS
+Working tree final clean                         PASS
+
+PROCHAIN GO LOGIQUE
+--------------------
+
+GO_LOCALCMS_DBLAYER_V2_RESTORE_API_01
+  Exposer POST /api/installer/restore
+  Base : main HEAD (post doc commit)
+
+POINT DE REPRISE
+----------------
+
+cd "$HOME/localcms"
+git status --short --branch
+git log --oneline -8
+bash scripts/run-ci-local.sh
