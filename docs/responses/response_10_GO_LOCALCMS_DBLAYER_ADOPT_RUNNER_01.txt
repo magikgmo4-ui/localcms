@@ -1,0 +1,120 @@
+REPONSE 10 — GO_LOCALCMS_DBLAYER_ADOPT_RUNNER_01
+GO : GO_LOCALCMS_DBLAYER_ADOPT_RUNNER_01
+Date : 2026-04-28
+Agent : Claude Code CLI (claude-sonnet-4-6)
+========================================================
+
+DIAGNOSTIC INITIAL
+------------------
+
+pwd → /home/ghost/localcms
+git status → go/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01 (clean)
+HEAD → 7f821d5 docs: record LocalCMS db-layer backup rollback PASS
+.env → gitignored (.gitignore:1)
+node_modules → déjà ignoré (.gitignore: node_modules/)
+Node.js → v22.22.2 / npm 11.13.0
+
+ANALYSE TESTS ADOPT
+-------------------
+
+9 fichiers détectés dans tests/*adopt*.test.js :
+  apps-config-adopt.test.js
+  data-sources-adopt.test.js
+  devtools-config-adopt.test.js
+  env-global-adopt.test.js
+  ia-config-adopt.test.js
+  machines-config-adopt.test.js
+  memory-view-adopt.test.js
+  queue-config-adopt.test.js
+  sec-config-adopt.test.js
+
+Pattern uniforme :
+  require('fs') + require('path') — Node.js built-ins uniquement
+  Harness inline (pass/fail counters)
+  process.exit(1) sur failure
+  Chargement module via eval(src.replace(...)) → globalThis.MOD_*
+  → Aucune dépendance externe → npm install inutile
+
+DÉCISION RUNNER
+---------------
+
+vitest/Jest : écartés (tests sans describe/it/expect)
+Runner retenu : node scripts/run-adopt.js (spawnSync, stdio: inherit)
+
+ÉTAT EXISTANT
+-------------
+
+package.json       → absent
+vitest.config.js   → absent
+node_modules/      → absent
+scripts/           → existait (scripts shell setup) → ajout run-adopt.js sans conflit
+
+FICHIERS CRÉÉS
+--------------
+
+package.json :
+  { "name": "localcms", "version": "1.0.0", "private": true,
+    "scripts": { "test:adopt": "node scripts/run-adopt.js" } }
+
+scripts/run-adopt.js :
+  spawnSync sur 9 suites, stdio: inherit
+  bilan final : ADOPT RUNNER — 9 suites : X PASS  Y FAIL
+  exit 1 si au moins une suite FAIL
+
+EXÉCUTION npm run test:adopt
+-----------------------------
+
+apps-config-adopt.test.js     → 75/75   PASS
+data-sources-adopt.test.js    → 52/52   PASS
+devtools-config-adopt.test.js → 69/69   PASS
+env-global-adopt.test.js      → 49/49   PASS
+ia-config-adopt.test.js       → 73/73   PASS
+machines-config-adopt.test.js → 84/84   PASS
+memory-view-adopt.test.js     → 38/38   PASS
+queue-config-adopt.test.js    → 50/50   PASS
+sec-config-adopt.test.js      → 50/50   PASS
+
+ADOPT RUNNER — 9 suites : 9 PASS  0 FAIL
+
+TOTAL : 540/540 PASS — conformes aux références
+
+GIT STATUS FINAL
+----------------
+
+?? package.json
+?? scripts/run-adopt.js
+?? docs/chantiers/GO_LOCALCMS_DBLAYER_ADOPT_RUNNER_01/
+?? docs/responses/response_10_GO_LOCALCMS_DBLAYER_ADOPT_RUNNER_01.txt
+HEAD : 7f821d5 (inchangé — aucun commit selon contraintes GO)
+
+VERDICT
+-------
+
+PASS
+
+Runner adopt standardisé                   PASS
+npm run test:adopt fonctionnel             PASS
+540/540 tests PASS, 0 FAIL                 PASS
+Comptages conformes aux références         PASS
+node_modules non tracké                    PASS
+Aucun fichier applicatif modifié           PASS
+Aucun secret tracké                        PASS
+Documentation écrite                       PASS
+
+Score cumulé : 702 + 540 = 1242 validations
+
+PROCHAIN GO LOGIQUE
+-------------------
+
+Commit + push package.json + scripts/run-adopt.js + docs
+puis : GO_LOCALCMS_DBLAYER_API_COVERAGE_01
+
+POINT DE REPRISE
+----------------
+
+cd /home/ghost/localcms
+git add package.json scripts/run-adopt.js \
+        docs/chantiers/GO_LOCALCMS_DBLAYER_ADOPT_RUNNER_01/ \
+        docs/responses/response_10_GO_LOCALCMS_DBLAYER_ADOPT_RUNNER_01.txt
+git commit -m "feat: add adopt test runner — npm run test:adopt (9 suites 540/540 PASS)"
+git push
