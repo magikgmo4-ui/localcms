@@ -1,0 +1,150 @@
+REPONSE 15 — GO_LOCALCMS_DBLAYER_FRONTEND_AUDIT_01
+GO : GO_LOCALCMS_DBLAYER_FRONTEND_AUDIT_01
+Date : 2026-04-29
+Agent : Claude Code CLI (claude-sonnet-4-6)
+========================================================
+
+DIAGNOSTIC INITIAL
+------------------
+
+pwd → /home/ghost/localcms
+git status → main (clean, sync origin)
+HEAD → 6768665 docs: record LocalCMS db-layer API coverage PASS
+Tag → v0.1.0-dblayer
+npm run test:adopt → 9 suites 540/540 PASS
+
+FICHIER AUDITÉ
+--------------
+
+localcms-v5.html — 9396 lignes, 512 KB
+Fichier non modifié.
+
+MODULES JS CHARGÉS (10 fichiers)
+---------------------------------
+
+devtools-config.js  → MOD_DEVTOOLS_CFG  → 200  → config locale seule
+apps-config.js      → MOD_APPS_CFG      → 200  → config locale seule
+sec-config.js       → MOD_SEC_CFG       → 200  → config locale seule
+queue-config.js     → MOD_QUEUE_CFG     → 200  → config locale seule
+shared-explorer.js  → MOD_SHARED_EXPLORER → 200 → /api/shared/*
+cms-installer.js    → MOD_CMS_INSTALLER → 200  → /api/installer/*
+env-global.js       → MOD_ENV_GLOBAL    → 200  → config locale seule
+ia-config.js        → MOD_IA_CFG        → 200  → config locale seule
+machines-config.js  → MOD_MACHINES_CFG  → 200  → config locale seule
+data-sources.js     → MOD_DATA_SOURCES  → 200  → config locale seule
+
+Tous les 10 modules : présents sur disque et servis en 200.
+
+ENDPOINTS FRONTEND → BACKEND (9/9 MATCH)
+-----------------------------------------
+
+shared-explorer.js :
+  API_BASE = '/api/shared'  (relatif, same-origin)
+  GET /api/shared/list      → 200  MATCH
+  GET /api/shared/read      → 200  MATCH
+  GET /api/shared/download  → 200  MATCH
+  GET /api/shared/search    → 200  MATCH
+
+cms-installer.js :
+  API = '/api/installer'    (relatif, same-origin)
+  GET  /api/installer/scan     → 200  MATCH
+  GET  /api/installer/inspect  → 200  MATCH
+  POST /api/installer/precheck → 200  MATCH  body: {bundle}
+  POST /api/installer/install  → 200  MATCH  body: {bundle}
+  GET  /api/installer/history  → 200  MATCH
+
+AUCUN CORS — API_BASE relatifs.
+
+COHERENCE ROLLBACK UI
+---------------------
+
+cms-installer.js PIPELINE_ORDER inclut 'rollback' comme step d'affichage.
+result === 'rollback' → badge jaune "⚠ Rollback effectué".
+Cohérent avec le backend (result: "rollback" retourné par /install).
+
+MOD_INSTALLER (legacy — panel "Installer")
+------------------------------------------
+
+Distinct de MOD_CMS_INSTALLER.
+Fonctions installLocal/scanDir/installUrl → setTimeout simulés.
+Référence './available/' inexistant côté backend.
+→ GAP_LEGACY_INSTALLER_SIMULE (non bloquant — décoratif)
+
+IA RUNNER
+---------
+
+Panel ia_run → fetch simulé (commentaire explicite dans code).
+Aucun endpoint IA réel connecté.
+→ GAP_IA_RUNNER_SIMULE (non bloquant — voulu V1)
+
+VÉRIFICATION LIVE
+-----------------
+
+GET / → 200 (localcms-v5.html servi)
+GET /health → 200 {"status":"ok"}
+GET /modules/*.js (x10) → 200 x10
+GET /api/shared/* → 200 x4
+POST /api/installer/precheck → 200
+POST /api/installer/install → 200
+GET /api/installer/history → 200
+
+SMOKES LIVE
+-----------
+
+shared-explorer.smoke.js → 6/6 PASS
+cms-installer.smoke.js   → 7/7 PASS
+
+NPM RUN TEST:ADOPT
+------------------
+
+ADOPT RUNNER — 9 suites : 9 PASS  0 FAIL (540/540)
+
+GIT STATUS FINAL
+----------------
+
+main (clean)
+HEAD : 6768665 (inchangé)
+?? docs/chantiers/GO_LOCALCMS_DBLAYER_FRONTEND_AUDIT_01/
+?? docs/responses/response_15_GO_LOCALCMS_DBLAYER_FRONTEND_AUDIT_01.txt
+
+VERDICT
+-------
+
+PASS
+
+Frontend audité sans modification           PASS
+10/10 modules JS présents et servis         PASS
+9/9 endpoints frontend ↔ backend MATCH      PASS
+Aucun CORS / URL hardcodée                  PASS
+Cohérence rollback UI ↔ backend             PASS
+GAP_LEGACY_INSTALLER_SIMULE documenté       PASS
+GAP_IA_RUNNER_SIMULE documenté              PASS
+Smokes live 6/6 + 7/7                      PASS
+npm run test:adopt 540/540                  PASS
+Aucun fichier applicatif modifié            PASS
+Aucun secret tracké                         PASS
+
+GAPS RESTANTS
+-------------
+
+GAP_LEGACY_INSTALLER_SIMULE   — MOD_INSTALLER panel "Installer" simulé
+GAP_IA_RUNNER_SIMULE           — IA Runner panel simulé (voulu V1)
+GAP_ROLLBACK_API_ABSENTE       — rollback interne uniquement
+GAP_RESTORE_API_ABSENTE        — restore non exposé
+GAP_ABSOLUTE_PATH_404          — /read chemin absolu → 404 (pas 403)
+GAP_PACKAGE_JSON_MODULE_WARN   — warning Node cosmétique
+
+PROCHAIN GO LOGIQUE
+-------------------
+
+GO_LOCALCMS_DBLAYER_CICD_01
+  npm run test:adopt + smokes live + pytest intégration
+
+POINT DE REPRISE
+----------------
+
+cd /home/ghost/localcms
+git add docs/chantiers/GO_LOCALCMS_DBLAYER_FRONTEND_AUDIT_01/ \
+        docs/responses/response_15_GO_LOCALCMS_DBLAYER_FRONTEND_AUDIT_01.txt
+git commit -m "docs: record LocalCMS db-layer frontend audit PASS"
+git push
