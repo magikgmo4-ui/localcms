@@ -1,0 +1,115 @@
+REPONSE 11 — GO_LOCALCMS_DBLAYER_PARENT_CLOSEOUT_01
+GO : GO_LOCALCMS_DBLAYER_PARENT_CLOSEOUT_01
+Date : 2026-04-28
+Agent : Claude Code CLI (claude-sonnet-4-6)
+========================================================
+
+DIAGNOSTIC INITIAL
+------------------
+
+pwd → /home/ghost/localcms
+git status → go/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01 (clean)
+HEAD → 361e335 feat: add LocalCMS adopt test runner
+.env → gitignored (.gitignore:1)
+npm run test:adopt → 9 suites 540/540 PASS
+
+SYNTHÈSE DU CHANTIER PARENT
+-----------------------------
+
+GO clôturés :
+
+  1. GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01   PASS   c2d3993   645/645
+  2. GO_LOCALCMS_DBLAYER_ENV_SETUP_01          PASS   e06763f   +13 live
+  3. GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01   PASS   cb73b40   +22 live
+  4. GO_LOCALCMS_DBLAYER_BACKUP_ROLLBACK_01    PASS   7f821d5   +22 live
+  5. GO_LOCALCMS_DBLAYER_ADOPT_RUNNER_01       PASS   361e335   +540
+
+  Score cumulé : 1242 validations
+
+DÉCISIONS CLÉS
+--------------
+
+Repo dans /home/ghost/localcms au lieu de /opt/localcms prévu
+  → Droits suffisants, pas de sudo requis
+
+Runner adopt = Node natif (spawnSync), 0 dépendance npm
+  → Tests sans describe/it/expect, vitest/Jest inutiles
+
+GAP_ROLLBACK_API_ABSENTE documenté, non bloquant
+  → Rollback interne au pipeline est suffisant pour V1
+
+INVARIANTS RESPECTÉS
+--------------------
+
+.env non tracké                     OK
+node_modules non tracké             OK
+Aucun fichier applicatif modifié    OK
+Aucun secret versionné              OK
+Aucun artefact runtime tracké       OK
+Branche dédiée tout au long         OK
+main non touché                     OK
+
+COMMANDES STABLES VALIDÉES
+---------------------------
+
+set -a && source .env && set +a
+python3 -m uvicorn main:app --host 127.0.0.1 --port 8000 &
+npm run test:adopt                          → 9 suites 540/540 PASS
+kill $(lsof -ti:8000)
+
+GAP RESTANTS (non bloquants)
+-----------------------------
+
+GAP_ROLLBACK_API_ABSENTE    pas de route /rollback dédiée (voulu V1)
+Restore-from-backup         scénario complet v1→v2→rollback+restore non testé
+install-backups purge        backups sans TTL
+localcms-v5.html             frontend non audité
+CI/CD                        pas de GitHub Actions
+
+FICHIERS CRÉÉS
+--------------
+
+docs/chantiers/GO_LOCALCMS_DBLAYER_PARENT_CLOSEOUT_01/00_PARENT_CLOSEOUT.md
+docs/responses/response_11_GO_LOCALCMS_DBLAYER_PARENT_CLOSEOUT_01.txt
+docs/chantiers/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01/SESSION_REPRISE.txt  (MàJ)
+
+GIT STATUS FINAL
+----------------
+
+?? docs/chantiers/GO_LOCALCMS_DBLAYER_PARENT_CLOSEOUT_01/
+?? docs/responses/response_11_GO_LOCALCMS_DBLAYER_PARENT_CLOSEOUT_01.txt
+M  docs/chantiers/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01/SESSION_REPRISE.txt
+HEAD : 361e335 (inchangé — aucun commit selon contraintes GO)
+
+VERDICT
+-------
+
+PASS
+
+5/5 GO parent clôturés PASS             PASS
+Score cumulé 1242/1242                  PASS
+npm run test:adopt 540/540 revalidé     PASS
+Aucun fichier applicatif modifié        PASS
+.env toujours ignoré                    PASS
+node_modules non tracké                 PASS
+Aucun secret tracké                     PASS
+SESSION_REPRISE mis à jour              PASS
+Closeout écrit                          PASS
+
+PROCHAIN GO LOGIQUE
+-------------------
+
+GO_LOCALCMS_DBLAYER_API_COVERAGE_01
+  Objectif : rollback+restore complet, edge cases API, audit frontend
+ou
+Merge go/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01 → main + tag release
+
+POINT DE REPRISE
+----------------
+
+cd /home/ghost/localcms
+git add docs/chantiers/GO_LOCALCMS_DBLAYER_PARENT_CLOSEOUT_01/ \
+        docs/responses/response_11_GO_LOCALCMS_DBLAYER_PARENT_CLOSEOUT_01.txt \
+        docs/chantiers/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01/SESSION_REPRISE.txt
+git commit -m "docs: record LocalCMS db-layer parent closeout PASS"
+git push

@@ -1,15 +1,36 @@
 SESSION_REPRISE — GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01
+Mise à jour : 2026-04-28 — PARENT CLOSEOUT PASS
+
+═══════════════════════════════════════════════════════════
 
 1_MASTER_TARGET
-Migrer LocalCMS sur db-layer comme repo séparé avec Claude Code CLI en mode worker/cowork-like via tmux.
+Migrer LocalCMS sur db-layer comme repo séparé avec Claude Code CLI
+en mode worker/cowork-like via tmux. ACCOMPLI.
 
-7_CANONICAL_STATE
-Machine cible : db-layer
-Repo cible : /opt/localcms
-Agent : Claude Code CLI
-Session : tmux claude-localcms
+7_CANONICAL_STATE (final)
+Machine : db-layer
+Repo : /home/ghost/localcms          ← /opt/localcms prévu, /home/ghost réel
+Remote : git@github.com:magikgmo4-ui/localcms.git
 Branche : go/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01
-Docs : docs/chantiers/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01/
+HEAD : 361e335 feat: add LocalCMS adopt test runner
+Working tree : propre
+Score cumulé : 1242 validations
+Date closeout : 2026-04-28
+
+GO CLÔTURÉS
+-----------
+1. GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01  PASS  c2d3993  645/645
+2. GO_LOCALCMS_DBLAYER_ENV_SETUP_01         PASS  e06763f  +13 live
+3. GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01  PASS  cb73b40  +22 live
+4. GO_LOCALCMS_DBLAYER_BACKUP_ROLLBACK_01   PASS  7f821d5  +22 live
+5. GO_LOCALCMS_DBLAYER_ADOPT_RUNNER_01      PASS  361e335  +540
+
+COMMANDES STABLES
+-----------------
+set -a && source .env && set +a
+python3 -m uvicorn main:app --host 127.0.0.1 --port 8000 &
+npm run test:adopt
+kill $(lsof -ti:8000)
 
 12_INVARIANTS
 - Ne pas mélanger LocalCMS et opt-trading.
@@ -17,22 +38,32 @@ Docs : docs/chantiers/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01/
 - Ne pas patcher sans état Git.
 - Ne pas refactorer globalement.
 - Toujours documenter diff, tests, limites, point de reprise.
+- .env non tracké.
+- node_modules non tracké.
 
-16_TODO
-1. Vérifier le repo source LocalCMS actuel.
-2. Installer Claude CLI sur db-layer.
-3. Cloner LocalCMS dans /opt/localcms.
-4. Ouvrir branche dédiée.
-5. Lancer tmux + Claude CLI.
-6. Exécuter baseline smoke.
-7. Remplir BRANCH_STATE et CLOSEOUT.
+GAP RESTANTS (non bloquants)
+----------------------------
+- GAP_ROLLBACK_API_ABSENTE (voulu V1)
+- Scénario restore-from-backup non testé
+- localcms-v5.html non audité
+- CI/CD absent
 
 17_RESUME_POINT
-ssh db-layer
-tmux attach -t claude-localcms || tmux new -s claude-localcms
-cd /opt/localcms
+---------------
+cd /home/ghost/localcms
 git status --short --branch
-claude
+npm run test:adopt
+# → 9 suites 540/540 PASS
 
-GO_PROMPT
-Utiliser prompts/GO_PROMPT_CLAUDE_CODE_DBLAYER_LOCALCMS.txt
+# Committer le closeout si pas encore fait :
+git add docs/chantiers/GO_LOCALCMS_DBLAYER_PARENT_CLOSEOUT_01/ \
+        docs/responses/response_11_GO_LOCALCMS_DBLAYER_PARENT_CLOSEOUT_01.txt \
+        docs/chantiers/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01/SESSION_REPRISE.txt
+git commit -m "docs: record LocalCMS db-layer parent closeout PASS"
+git push
+
+PROCHAIN CHANTIER
+-----------------
+GO_LOCALCMS_DBLAYER_API_COVERAGE_01
+ou
+Merge branche → main + tag release
