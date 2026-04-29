@@ -1,0 +1,207 @@
+REPONSE 16 — GO_LOCALCMS_DBLAYER_CICD_01
+GO : GO_LOCALCMS_DBLAYER_CICD_01
+Date : 2026-04-29
+Agent : Claude Code CLI (claude-sonnet-4-6)
+========================================================
+
+DIAGNOSTIC INITIAL
+------------------
+
+pwd → /home/ghost/localcms
+git status → main (clean, sync origin)
+HEAD → b326781 docs: record LocalCMS db-layer frontend audit PASS
+Tag → v0.1.0-dblayer
+npm run test:adopt → 9 suites 540/540 PASS (baseline)
+Python 3.13.12 / Node v22.22.2
+
+BRANCHE
+-------
+
+git checkout -b go/GO_LOCALCMS_DBLAYER_CICD_01
+
+FICHIERS LUS
+------------
+
+package.json                        → script test:adopt seul
+requirements.txt                    → fastapi, uvicorn, pydantic, aiofiles
+run.sh                              → uvicorn main:app port 8000
+main.py                             → FastAPI + routers + StaticFiles
+tests/shared-explorer.smoke.js      → 6 smokes, MOCK ou LIVE via BACKEND_URL
+tests/cms-installer.smoke.js        → 7 smokes, MOCK ou LIVE via BACKEND_URL
+tests/integration_test_pipeline.py  → 15 tests, self-contained /tmp
+tests/integration_test_shared_explorer.py → 23 tests, self-contained /tmp
+.env                                → LOCALCMS_SHARED_ROOT + LOCALCMS_MODULES_DIR + PORT
+
+FICHIERS CRÉÉS
+--------------
+
+scripts/run-ci-local.sh
+  - Runtime CI isolé dans /tmp/localcms_ci_XXXXXX
+  - Fixtures : readme.md, big.log (>5MB), install-queue/
+  - Export LOCALCMS_SHARED_ROOT, LOCALCMS_MODULES_DIR
+  - 5 étapes : Python intégration (×2) → npm test → uvicorn + /health → smokes live
+  - trap EXIT : uvicorn arrêté + runtime supprimé même en cas d'échec
+
+.github/workflows/localcms-ci.yml
+  - Trigger : push main/go/**, PR → main
+  - Ubuntu latest, Python 3.13, Node 22
+  - pip install -r requirements.txt
+  - bash scripts/run-ci-local.sh
+
+EXÉCUTION CI LOCALE
+-------------------
+
+bash scripts/run-ci-local.sh
+
+1/5 — integration_test_pipeline.py
+  CMS Module Installer V1 — Tests d'intégration pipeline réel
+  I1  Scan: liste les .zip présents                                     ✓
+  I2  Inspect: manifeste lu depuis zip réel                             ✓
+  I3  Precheck: bundle valide → 0 erreur                                ✓
+  I4  Precheck: manifest absent → ValueError                            ✓
+  I5  Precheck: path traversal dans dest → rejeté                       ✓
+  I6  Precheck: target_key inconnu → rejeté                             ✓
+  I7  Pipeline complet: install réussie + fichier présent               ✓
+  I8  Backup: réinstall → backup réel créé et contenu vérifié           ✓
+  I9  Staging: créé dans zone isolée puis nettoyé après install         ✓
+  I10 Rollback: install fail → rollback déclenché                       ✓
+  I11 Logs: structurés, conformes, écrits dans LOG_DIR                  ✓
+  I12 Sécurité: path traversal dans nom bundle → HTTPException 400/403  ✓
+  I13 Bundle inexistant → HTTPException 404                             ✓
+  I14 sanity_check valide → post_check ok + champ retourné              ✓
+  I15 sanity_check invalide → precheck failed                           ✓
+  RÉSULTAT : 15/15 tests passés
+
+2/5 — integration_test_shared_explorer.py
+  Shared Explorer Backend — Tests d'intégration
+  L1  list_directory : racine                                ✓
+  L2  list_directory : sous-dossier                          ✓
+  L3  list_directory : structure entries                     ✓
+  L4  list_directory : path traversal refusé (403)           ✓
+  L5  list_directory : chemin inexistant (404)               ✓
+  R1  read_file : fichier texte autorisé                     ✓
+  R2  read_file : fichier JSON                               ✓
+  R3  read_file : extension binaire image refusée (403)      ✓
+  R4  read_file : extension archive refusée en preview (403) ✓
+  R5  read_file : fichier > 5 MB refusé (413)               ✓
+  R6  read_file : nom bloqué .env (403)                      ✓
+  D1  download_file : réponse valide FileResponse            ✓
+  D2  download_file : header Content-Disposition correct     ✓
+  D3  download_file : archive .zip autorisée                 ✓
+  D4  download_file : path traversal refusé (403)            ✓
+  D5  download_file : fichier inexistant (404)               ✓
+  S1  search_files : aucun paramètre (400)                   ✓
+  S2  search_files : match simple                            ✓
+  S3  search_files : case-insensitive                        ✓
+  S4  search_files : filtre extension .md                    ✓
+  S5  search_files : filtre extension .json                  ✓
+  S6  search_files : query sans match → résultats vides      ✓
+  S7  search_files : filtre date futur → résultats vides     ✓
+  RÉSULTAT : 23/23 tests passés
+  (Warning non bloquant : datetime.utcnow() deprecated Python 3.12+)
+
+3/5 — npm run test:adopt
+  ADOPT RUNNER — 9 suites : 9 PASS  0 FAIL (540/540)
+
+4/5 — uvicorn démarré PID=97812
+  /health → OK (2s)
+
+5a/5 — shared-explorer.smoke.js (LIVE @ http://127.0.0.1:8000)
+  S1 Chargement logique module          ✓
+  S2 Listing racine /shared             ✓
+  S3 Lecture fichier texte autorisé     ✓
+  S4 Path traversal refusé (403)        ✓
+  S5 Gros fichier preview refusé (413)  ✓
+  S6 Logs présents après actions        ✓
+  6/6 smoke tests passés
+
+5b/5 — cms-installer.smoke.js (LIVE @ http://127.0.0.1:8000)
+  S1 Scan retourne bundles[]            ✓
+  S2 Inspect retourne le manifeste      ✓
+  S3 Precheck sur bundle valide → ok    ✓
+  S4 Precheck bundle vide → erreur      ✓
+  S5 Install retourne steps pipeline    ✓
+  S6 History retourne logs              ✓
+  S7 Install avec sanity_check          ✓
+  7/7 smokes passés
+
+uvicorn arrêté, runtime /tmp/localcms_ci_1yQMsZ nettoyé.
+
+GIT STATUS FINAL
+----------------
+
+go/GO_LOCALCMS_DBLAYER_CICD_01 (base main b326781)
+?? .github/
+?? scripts/run-ci-local.sh
+?? docs/chantiers/GO_LOCALCMS_DBLAYER_CICD_01/
+?? docs/responses/response_16_GO_LOCALCMS_DBLAYER_CICD_01.txt
+
+Aucun fichier applicatif modifié.
+.env → non tracké (.gitignore:1)
+node_modules → absent.
+
+GITHUB ACTIONS
+--------------
+
+.github/workflows/localcms-ci.yml
+  trigger : push main/go/**, PR → main
+  Ubuntu latest / Python 3.13 / Node 22
+  pip install -r requirements.txt
+  bash scripts/run-ci-local.sh
+
+En CI distante sans runtime local :
+  - install-queue vide → installer smokes S2/S3/S5/S7 skip gracieux (404 branche)
+  - S1/S4/S6 restent actifs → couverture partielle maintenue
+
+GAPS RESTANTS
+-------------
+
+GAP_UTCNOW_DEPRECATION    — warning Python 3.12+ dans integration_test_shared_explorer.py
+GAP_CICD_NO_BUNDLE_FIXTURES — installer smokes partiels en GitHub Actions (no bundles)
+GAP_LEGACY_INSTALLER_SIMULE — hérité
+GAP_IA_RUNNER_SIMULE        — voulu V1
+GAP_ROLLBACK_API_ABSENTE    — voulu V1
+GAP_RESTORE_API_ABSENTE     — voulu V1
+GAP_PACKAGE_JSON_MODULE_WARN — cosmétique
+
+VERDICT
+-------
+
+PASS
+
+Script CI local créé                    PASS
+Script CI local exécuté PASS            PASS
+GitHub Actions workflow créé            PASS
+integration_test_pipeline 15/15         PASS
+integration_test_shared_explorer 23/23  PASS
+npm run test:adopt 540/540              PASS
+shared-explorer.smoke.js live 6/6       PASS
+cms-installer.smoke.js live 7/7         PASS
+Aucun fichier applicatif modifié        PASS
+Aucun secret tracké                     PASS
+.env ignoré                             PASS
+node_modules non tracké                 PASS
+Runtime CI isolé + cleanup garanti      PASS
+
+PROCHAIN GO LOGIQUE
+-------------------
+
+GO_LOCALCMS_DBLAYER_BUNDLE_FIXTURES_01
+  Versionner des bundles de test dans tests/fixtures/ pour couvrir
+  les smokes installer en CI GitHub sans runtime local.
+
+ou
+
+GO_LOCALCMS_DBLAYER_V2_SCOPE_01
+  Définir le périmètre V2 (rollback API, restore API, IA runner réel).
+
+POINT DE REPRISE
+----------------
+
+cd /home/ghost/localcms
+git add .github/ \
+        scripts/run-ci-local.sh \
+        docs/chantiers/GO_LOCALCMS_DBLAYER_CICD_01/ \
+        docs/responses/response_16_GO_LOCALCMS_DBLAYER_CICD_01.txt
+git commit -m "feat: add LocalCMS CI pipeline (script + GitHub Actions)"
+git push -u origin go/GO_LOCALCMS_DBLAYER_CICD_01

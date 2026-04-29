@@ -1,0 +1,33 @@
+name: LocalCMS CI
+
+on:
+  push:
+    branches: ["main", "go/**"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    name: LocalCMS — tests & smokes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run CI suite (integration + adopt + smokes live)
+        run: bash scripts/run-ci-local.sh
