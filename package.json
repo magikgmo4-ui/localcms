@@ -1,0 +1,8 @@
+{
+  "name": "localcms",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:adopt": "node scripts/run-adopt.js"
+  }
+}

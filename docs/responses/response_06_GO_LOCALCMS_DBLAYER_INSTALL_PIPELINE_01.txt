@@ -1,0 +1,164 @@
+REPONSE 06 — GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01
+GO : GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01
+Date : 2026-04-26
+Agent : Claude Code CLI (claude-sonnet-4-6)
+========================================================
+
+DIAGNOSTIC INITIAL
+------------------
+
+pwd → /home/ghost/localcms
+git status → go/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01 (clean)
+HEAD → f124672 docs: archive LocalCMS env setup push response
+remote → git@github.com:magikgmo4-ui/localcms.git
+.env → gitignored (.gitignore:1)
+
+ANALYSE
+-------
+
+Variables .env opérationnelles :
+  LOCALCMS_SHARED_ROOT=/home/ghost/localcms_runtime/shared
+  LOCALCMS_MODULES_DIR=/home/ghost/localcms_runtime/modules
+
+Install-queue : SHARED_ROOT / "install-queue" = /home/ghost/localcms_runtime/shared/install-queue
+État initial : vide
+
+Smoke tests attendus en LIVE :
+  S2 : inspect test-module-v1.0.0.zip
+  S3 : precheck test-module-v1.0.0.zip → result ok
+  S5 : install test-module-v1.0.0.zip → steps présents
+  S7 : install hello-mod-v1.0.0.zip → sanity_check + post_check ok
+
+BUNDLES CRÉÉS (hors git)
+------------------------
+
+test-module-v1.0.0.zip (483 bytes)
+  manifest.json :
+    id: test_module, version: 1.0.0, group: tools
+    target_key: modules_dir
+    files: [{src: module.js, dest: test-module.js}]
+  module.js : // test_module v1.0.0
+
+hello-mod-v1.0.0.zip (524 bytes)
+  manifest.json :
+    id: hello_mod, version: 1.0.0, group: tools
+    target_key: modules_dir
+    files: [{src: module.js, dest: hello-mod.js}]
+    sanity_check: hello_mod_sanity
+  module.js : // hello_mod v1.0.0 + export function hello_mod_sanity()
+
+bad-module-v1.0.0.zip (395 bytes) — intentionnellement invalide
+  manifest.json :
+    id: bad-module  (tirets → invalide)
+    version: 1.0    (non semver → invalide)
+    group: custom_group  (non autorisé → invalide)
+    files: [{dest: bad.exe}]  (extension .exe → invalide)
+
+Outil : python3 zipfile standard — bundles hors repo git.
+
+SERVEUR LANCÉ
+-------------
+
+set -a && source .env && set +a
+python3 -m uvicorn main:app --host 127.0.0.1 --port 8000 &
+→ PID 26151, démarrage OK
+
+ROUTES HTTP TESTÉES
+-------------------
+
+GET  /health                                     → 200 {"status":"ok"}
+GET  /api/installer/scan                         → 200 {"bundles":[3],"count":3}
+GET  /api/installer/inspect?bundle=test-module-v1.0.0.zip → 200 manifest+files_in_zip
+POST /api/installer/precheck {test-module}       → 200 {"result":"ok","errors":[]}
+POST /api/installer/precheck {bad-module}        → 200 {"result":"failed","errors":[4 items]}
+POST /api/installer/precheck {"bundle":""}       → 400 "Le bundle doit être un fichier .zip"
+POST /api/installer/install {test-module}        → 200 {"result":"ok","steps":{7 ok}}
+POST /api/installer/install {hello-mod}          → 200 {"result":"ok","sanity_check":"hello_mod_sanity","steps":{post_check:ok}}
+GET  /api/installer/history                      → 200 {"logs":[12],"count":12}
+
+Erreurs bad-module détectées par precheck :
+  - id invalide — seuls [a-z0-9_] autorisés
+  - version invalide — format X.Y.Z requis
+  - group 'custom_group' non autorisé
+  - files[0].dest extension non autorisée : .exe
+
+Fichiers installés dans LOCALCMS_MODULES_DIR :
+  /home/ghost/localcms_runtime/modules/test-module.js  (90 bytes)
+  /home/ghost/localcms_runtime/modules/hello-mod.js    (153 bytes)
+
+SMOKE TESTS LIVE (BACKEND_URL=http://127.0.0.1:8000)
+-----------------------------------------------------
+
+S1 — Scan retourne bundles[]                                  ✓
+S2 — Inspect retourne le manifeste                            ✓
+S3 — Precheck sur bundle valide → result ok                   ✓
+S4 — Precheck bundle vide → erreur retournée                  ✓
+S5 — Install retourne steps du pipeline                       ✓
+S6 — History retourne logs avec champs obligatoires           ✓
+S7 — Install avec sanity_check : champ retourné + post_check  ✓
+TOTAL : 7/7 PASS
+
+TESTS UNITAIRES (mock)
+----------------------
+
+T1  — Manifeste valide retourne 0 erreur           ✓
+T2  — Champ manquant détecté (target_key)          ✓
+T3  — id avec tirets rejeté                        ✓
+T4  — version non semver rejetée                   ✓
+T5  — group non autorisé rejeté                    ✓
+T6  — target_key inconnue rejetée                  ✓
+T7  — path traversal dans dest rejeté              ✓
+T8  — chemin absolu dans dest rejeté               ✓
+T9  — extension .exe dans dest rejetée             ✓
+T10 — src absent du zip détecté                    ✓
+T11 — files vide rejeté                            ✓
+T12 — extensions autorisées acceptées              ✓
+T13 — format log conforme                          ✓
+T14 — sanity_check valide accepté                  ✓
+T15 — sanity_check invalide rejeté                 ✓
+TOTAL : 15/15 PASS
+
+ARRÊT SERVEUR
+-------------
+
+kill $(lsof -ti:8000) → uvicorn arrêté proprement
+
+GIT STATUS FINAL
+----------------
+
+rien à valider, la copie de travail est propre
+HEAD : f124672 (inchangé)
+Nouveaux fichiers non encore commités :
+  docs/chantiers/GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01/00_INSTALL_PIPELINE_BASELINE.md
+  docs/responses/response_06_GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01.txt
+
+VERDICT
+-------
+
+PASS
+
+Score : 22/22 tests PASS (7 smoke LIVE + 15 unitaires) | 9/9 routes HTTP validées
+Score cumulé : 645 (baseline) + 13 (env setup) + 22 (pipeline) = 680 validations
+
+Aucun fichier applicatif modifié.
+Aucun secret tracké.
+Aucun artefact runtime tracké.
+
+PROCHAIN GO LOGIQUE
+-------------------
+
+GO_LOCALCMS_DBLAYER_BACKUP_ROLLBACK_01 (optionnel)
+  ou
+GO_LOCALCMS_DBLAYER_ADOPT_RUNNER_01 (configurer runner pour adopt.test.js)
+
+POINT DE REPRISE
+----------------
+
+cd /home/ghost/localcms
+git status --short --branch
+# HEAD : f124672 + docs non commités
+# Runtime : install-queue 3 bundles, modules/ 2 fichiers
+# Prochain : commit docs pipeline, puis GO suivant
+
+set -a && source .env && set +a
+python3 -m uvicorn main:app --host 127.0.0.1 --port 8000

@@ -1,0 +1,65 @@
+REPONSE 08 — Commit + Push GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01
+GO : GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01
+Date : 2026-04-26
+Agent : Claude Code CLI (claude-sonnet-4-6)
+========================================================
+
+Demande utilisateur : vérifier git, commiter les docs pipeline, pusher.
+
+ETAPE 2 — Vérification Git
+---------------------------
+git status --short --branch :
+  ## go/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01 (sync origin)
+  ?? docs/chantiers/GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01/
+  ?? docs/responses/response_06_GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01.txt
+  ?? docs/responses/response_07_GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01.txt
+
+git diff --stat : (vide) → OK pour commit.
+
+ETAPE 3 — Commit + Push
+------------------------
+Commande :
+  git add docs/chantiers/GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01/ \
+          docs/responses/response_06_GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01.txt \
+          docs/responses/response_07_GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01.txt
+  git commit -m "docs: record LocalCMS db-layer install pipeline PASS"
+
+Résultat :
+  [go/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01 cb73b40] docs: record LocalCMS db-layer install pipeline PASS
+  3 files changed, 795 insertions(+)
+  create mode 100644 docs/chantiers/GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01/00_INSTALL_PIPELINE_BASELINE.md
+  create mode 100644 docs/responses/response_06_GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01.txt
+  create mode 100644 docs/responses/response_07_GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01.txt
+
+Push :
+  f124672..cb73b40 → origin/go/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01
+
+ETAT FINAL
+----------
+  Branche : go/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01
+  HEAD     : cb73b40
+  Remote   : à jour (origin sync)
+  Git      : propre (working tree clean)
+
+git log --oneline -7 :
+  cb73b40 docs: record LocalCMS db-layer install pipeline PASS
+  f124672 docs: archive LocalCMS env setup push response
+  e06763f docs: record LocalCMS db-layer env setup PASS
+  c2d3993 docs: record LocalCMS db-layer baseline PASS
+  588d7c6 docs: open LocalCMS db-layer Claude CLI migration
+  9aa4c3f docs(localcms): add full test campaign closeout — PASS 1640 assertions
+  7f9bfc3 docs(localcms): clean continuity docs formatting and head refs
+
+7_CANONICAL_STATE
+-----------------
+  GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01  : PASS
+  GO_LOCALCMS_DBLAYER_ENV_SETUP_01         : PASS + pushé
+  GO_LOCALCMS_DBLAYER_INSTALL_PIPELINE_01  : PASS + pushé
+  Working tree                             : clean
+  Prochain GO recommandé                   : GO_LOCALCMS_DBLAYER_BACKUP_ROLLBACK_01
+
+PROCHAIN GO
+-----------
+  cd "$HOME/localcms"
+  claude
+  → coller le prompt GO_LOCALCMS_DBLAYER_BACKUP_ROLLBACK_01

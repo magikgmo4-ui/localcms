@@ -1,0 +1,182 @@
+REPONSE 09 — GO_LOCALCMS_DBLAYER_BACKUP_ROLLBACK_01
+GO : GO_LOCALCMS_DBLAYER_BACKUP_ROLLBACK_01
+Date : 2026-04-26
+Agent : Claude Code CLI (claude-sonnet-4-6)
+========================================================
+
+DIAGNOSTIC INITIAL
+------------------
+
+pwd → /home/ghost/localcms
+git status → go/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01 (clean)
+HEAD → a4ef0a4 docs: archive LocalCMS install pipeline push response
+.env → gitignored
+
+ANALYSE ARCHITECTURE BACKUP/ROLLBACK
+-------------------------------------
+
+Lu dans api/cms_installer.py :
+
+  BACKUP_DIR = SHARED_ROOT / "install-backups"
+             = /home/ghost/localcms_runtime/shared/install-backups/
+
+  Backup    : step 4 automatique si fichier dest préexistant dans target_path
+              → backup_path = BACKUP_DIR / f"{module_id}_{ts}"
+              → shutil.copy2(existing_file, backup_path / filename)
+
+  Rollback  : step 7 automatique si exception dans shutil.copy2 ou mkdir
+              → unlink(installed_files partiels)
+              → restaure depuis backup si disponible
+              → steps["rollback"] = {"status": "ok"}
+              → return {"result": "rollback", ...}
+
+  CONSTAT : Pas de route /api/installer/rollback dédiée.
+            Rollback 100% interne au pipeline install.
+            → GAP_ROLLBACK_API_ABSENTE documenté (non bloquant, voulu V1)
+
+ETAT RUNTIME AU DÉPART
+-----------------------
+
+modules/
+  test-module.js  (90 bytes — v1)
+  hello-mod.js    (153 bytes)
+
+install-backups/
+  hello_mod_20260426T195951249902/    (résiduel GO précédent)
+  test_module_20260426T195951240368/  (résiduel GO précédent)
+
+install-queue/
+  bad-module-v1.0.0.zip, hello-mod-v1.0.0.zip, test-module-v1.0.0.zip
+
+SERVEUR LANCÉ
+-------------
+
+set -a && source .env && set +a
+python3 -m uvicorn main:app --host 127.0.0.1 --port 8000 &
+→ PID 30032, démarrage OK
+
+BUNDLES CRÉÉS (hors git)
+------------------------
+
+test-module-v2.0.0.zip (495 bytes)
+  id: test_module, version: 2.0.0
+  files: [{src: module.js, dest: test-module.js}]
+  → Scénario A : upgrade test-module.js v1→v2
+
+rollback-test-v1.0.0.zip (609 bytes)
+  id: rollback_test, version: 1.0.0
+  files:
+    [{src: file1.js, dest: rollback_file1.js},
+     {src: file2.js, dest: fake_dir/rollback_file2.js}]
+  → Scénario B : fake_dir préexiste comme FICHIER → mkdir raise [Errno 17]
+
+DÉCLENCHEUR ROLLBACK
+---------------------
+
+echo "obstacle" > /home/ghost/localcms_runtime/modules/fake_dir
+→ fake_dir créé comme fichier (9 bytes)
+→ dest_path.parent = modules/fake_dir → mkdir(exist_ok=True) lève FileExistsError
+
+SCENARIO A — BACKUP RÉEL (v1→v2)
+----------------------------------
+
+État avant :
+  modules/test-module.js = // test_module v1.0.0
+
+POST /api/installer/install {"bundle":"test-module-v2.0.0.zip"}
+  → HTTP 200
+  → result: "ok"
+  → steps.backup.status: "ok"
+  → steps.precheck/staging/validate/install/finalize: "ok"
+
+Vérification backup :
+  install-backups/test_module_20260426T213455442533/
+    test-module.js (90 bytes — contenu v1 original)
+
+Vérification module installé :
+  modules/test-module.js → // test_module v2.0.0 / export const version = '2.0.0'
+
+RÉSULTAT SCÉNARIO A : PASS
+
+SCENARIO B — ROLLBACK AUTOMATIQUE
+-----------------------------------
+
+État avant :
+  modules/fake_dir = FICHIER (9 bytes)
+  modules/rollback_file1.js : absent
+
+POST /api/installer/install {"bundle":"rollback-test-v1.0.0.zip"}
+  → HTTP 200
+  → result: "rollback"
+  → steps:
+      precheck:  {status: "ok"}
+      backup:    {status: "skipped"}
+      staging:   {status: "ok"}
+      validate:  {status: "ok"}
+      install:   {status: "failed", error: "[Errno 17] File exists: '.../fake_dir'"}
+      rollback:  {status: "ok"}
+
+Vérification post-rollback :
+  modules/rollback_file1.js : ABSENT (supprimé par rollback unlink) → CONFIRMÉ
+
+Nettoyage :
+  rm /home/ghost/localcms_runtime/modules/fake_dir
+
+RÉSULTAT SCÉNARIO B : PASS
+
+SMOKE TESTS LIVE (BACKEND_URL=http://127.0.0.1:8000)
+-----------------------------------------------------
+
+S1–S7 : 7/7 PASS
+
+TESTS UNITAIRES
+---------------
+
+T1–T15 : 15/15 PASS
+
+ARRÊT SERVEUR
+-------------
+
+kill $(lsof -ti:8000) → uvicorn arrêté proprement
+
+GIT STATUS FINAL
+----------------
+
+rien à valider, la copie de travail est propre
+HEAD : a4ef0a4 (inchangé)
+
+Nouveaux fichiers non commités :
+  docs/chantiers/GO_LOCALCMS_DBLAYER_BACKUP_ROLLBACK_01/00_BACKUP_ROLLBACK_BASELINE.md
+  docs/responses/response_09_GO_LOCALCMS_DBLAYER_BACKUP_ROLLBACK_01.txt
+
+VERDICT
+-------
+
+PASS
+
+Backup réel déclenché et vérifié         PASS
+Contenu backup v1 préservé               PASS
+Module mis à jour vers v2                PASS
+Rollback déclenché sur install failure   PASS
+rollback_file1.js supprimé par rollback  PASS
+GAP_ROLLBACK_API_ABSENTE documenté       PASS
+Smoke LIVE 7/7                           PASS
+Tests unitaires 15/15                    PASS
+Aucun fichier applicatif modifié         PASS
+
+Score cumulé : 702 validations (680 + 22)
+
+PROCHAIN GO LOGIQUE
+-------------------
+
+GO_LOCALCMS_DBLAYER_ADOPT_RUNNER_01
+  Objectif : configurer package.json + vitest pour les 10 adopt.test.js
+
+POINT DE REPRISE
+----------------
+
+cd /home/ghost/localcms
+git add docs/chantiers/GO_LOCALCMS_DBLAYER_BACKUP_ROLLBACK_01/ \
+        docs/responses/response_09_GO_LOCALCMS_DBLAYER_BACKUP_ROLLBACK_01.txt
+git commit -m "docs: record LocalCMS db-layer backup rollback PASS"
+git push

@@ -1,0 +1,46 @@
+Tu es Claude Code CLI sur db-layer, machine Ubuntu.
+
+Contexte :
+- Repo courant : LocalCMS.
+- Ce repo est séparé de opt-trading.
+- Objectif : migrer et stabiliser le travail LocalCMS sur db-layer.
+- Desktop Claude non requis.
+- Fonctionnement attendu : cowork-like via CLI + tmux + Git.
+
+Règles obligatoires :
+1. Commencer par afficher :
+   - pwd
+   - git status --short --branch
+   - git remote -v
+   - git branch -vv
+   - git log --oneline -5
+2. Ne jamais travailler directement sur main ou branche canonique.
+3. Utiliser une branche dédiée :
+   go/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01
+4. Lire les docs/chantiers existants si présents.
+5. Ne pas mélanger LocalCMS avec opt-trading.
+6. Avant tout patch :
+   - annoncer les fichiers ciblés
+   - expliquer le plan minimal
+   - indiquer les tests/smokes prévus
+7. Ne pas refactorer globalement.
+8. Après patch :
+   - afficher git diff --stat
+   - afficher git status --short --branch
+   - exécuter les tests/smokes disponibles
+   - produire un verdict PASS/FAIL
+9. Documenter le résultat dans :
+   docs/chantiers/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01/
+10. Terminer avec :
+   - fichiers modifiés
+   - commandes exécutées
+   - résultats réels
+   - limites restantes
+   - prochain GO logique
+   - point de reprise.
+
+Phase actuelle attendue :
+- Auditer la capacité de LocalCMS à tourner sur db-layer.
+- Identifier la stack réelle.
+- Proposer le smoke minimal.
+- Ne pas patcher tant que le baseline n'est pas documenté.
