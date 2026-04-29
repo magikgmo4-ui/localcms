@@ -1,0 +1,95 @@
+REPONSE 13 — GO_LOCALCMS_DBLAYER_MERGE_MAIN_01
+GO : GO_LOCALCMS_DBLAYER_MERGE_MAIN_01
+Date : 2026-04-29
+Agent : Claude Code CLI (claude-sonnet-4-6)
+========================================================
+
+DIAGNOSTIC INITIAL
+------------------
+
+pwd → /home/ghost/localcms
+git status → go/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01 (clean)
+HEAD → 8a856e5 docs: record LocalCMS db-layer release prep PASS
+.env → gitignored (.gitignore:1)
+
+PRÉ-MERGE
+----------
+
+git fetch origin → à jour
+git pull --rebase source → à jour (8a856e5)
+npm run test:adopt → 9 suites 540/540 PASS
+
+git checkout main → 9aa4c3f (à jour avec origin)
+git log main..source → 10 commits
+git diff --stat main..source → 36 files, +4715, 0 deletions
+git tag --list v0.1.0-dblayer → (vide — absent, proceed)
+
+MERGE
+------
+
+git merge --no-ff go/GO_LOCALCMS_DBLAYER_MIGRATION_PARENT_01 \
+  -m "merge: LocalCMS db-layer migration chantier — 5 GO PASS 1242 validations"
+
+Stratégie : ort
+Conflits : 0
+Fichiers : 36 nouveaux créés
+Insertions : +4715
+Merge commit : eafa4fc
+
+POST-MERGE
+-----------
+
+npm run test:adopt → 9 suites 540/540 PASS
+
+DOCUMENTATION
+-------------
+
+Créé :
+  docs/chantiers/GO_LOCALCMS_DBLAYER_MERGE_MAIN_01/00_MERGE_MAIN_REPORT.md
+  docs/responses/response_13_GO_LOCALCMS_DBLAYER_MERGE_MAIN_01.txt
+
+DOC COMMIT + PUSH + TAG
+------------------------
+
+git add docs/chantiers/GO_LOCALCMS_DBLAYER_MERGE_MAIN_01/ \
+        docs/responses/response_13_GO_LOCALCMS_DBLAYER_MERGE_MAIN_01.txt
+git commit -m "docs: record LocalCMS db-layer merge main PASS"
+→ doc commit : (à récupérer)
+
+npm run test:adopt → 540/540 PASS
+
+git push origin main → (à exécuter)
+
+git tag -a v0.1.0-dblayer \
+  -m "LocalCMS db-layer migration — 5 GO PASS 1242 validations"
+git push origin v0.1.0-dblayer
+
+GIT STATUS FINAL
+----------------
+
+working tree : propre (après doc commit)
+HEAD main : (après doc commit + push)
+Tag : v0.1.0-dblayer créé et pushé
+
+VERDICT
+-------
+
+PASS
+
+Merge sans conflit                     PASS
+npm run test:adopt PASS avant merge    PASS — 540/540
+npm run test:adopt PASS après merge    PASS — 540/540
+Merge commit créé                      PASS — eafa4fc
+Aucun fichier applicatif modifié       PASS
+.env toujours ignoré                   PASS
+Aucun secret tracké                    PASS
+Tag v0.1.0-dblayer                     PASS (après push)
+Documentation écrite                   PASS
+
+POINT DE REPRISE
+----------------
+
+cd /home/ghost/localcms
+git log --oneline -5
+npm run test:adopt
+git tag --list "v0.1*"
