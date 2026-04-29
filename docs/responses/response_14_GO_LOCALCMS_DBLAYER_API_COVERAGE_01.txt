@@ -1,0 +1,150 @@
+REPONSE 14 — GO_LOCALCMS_DBLAYER_API_COVERAGE_01
+GO : GO_LOCALCMS_DBLAYER_API_COVERAGE_01
+Date : 2026-04-29
+Agent : Claude Code CLI (claude-sonnet-4-6)
+========================================================
+
+DIAGNOSTIC INITIAL
+------------------
+
+pwd → /home/ghost/localcms
+git status → main (clean, sync origin)
+HEAD → b94c09e docs: record LocalCMS db-layer merge main PASS
+Tag → v0.1.0-dblayer
+.env → gitignored
+npm run test:adopt → 9 suites 540/540 PASS (baseline)
+
+ROUTES INVENTORIÉES (10 routes + /health)
+------------------------------------------
+
+GET  /health
+GET  /api/shared/list
+GET  /api/shared/read
+GET  /api/shared/download
+GET  /api/shared/search
+GET  /api/installer/scan
+GET  /api/installer/inspect
+POST /api/installer/precheck
+POST /api/installer/install
+GET  /api/installer/history
+
+ROLLBACK/RESTORE : AUCUNE ROUTE HTTP (voir GAP section)
+
+SERVEUR
+-------
+
+set -a && source .env && set +a
+python3 -m uvicorn main:app --host 127.0.0.1 --port 8000 &
+/health → {"status":"ok"}
+
+RÉSULTATS SHARED (8 cas + 5 sécurité)
+----------------------------------------
+
+S1  /list racine          200  count=6 entries
+S2  /list install-queue   200  count=5 bundles
+S3  /search q=test        200  30 résultats
+S4  /read log JSON        200  content+truncated
+S5  /download log JSON    200  fichier servi
+S6  /read zip binaire     403  Access denied (binaire bloqué)
+S7  /list nonexistent     404  dossier absent
+
+PATH TRAVERSAL (5 cas) :
+PT1 /list  ../../../etc/passwd  → 403  BLOQUÉ
+PT2 /read  .env                 → 403  BLOQUÉ
+PT3 /read  ../.env              → 403  BLOQUÉ
+PT4 /read  /etc/passwd          → 404  (absolu → SHARED_ROOT, non exposé)
+PT5 /download ../.env           → 403  BLOQUÉ
+
+RÉSULTATS INSTALLER (11 cas)
+-----------------------------
+
+I1  /scan                              200  count=5
+I2  /inspect test-module-v1.0.0.zip   200  manifest retourné
+I3  /inspect bad-module-v1.0.0.zip    200  manifest retourné (non validé ici)
+I4  /inspect nothere.zip              404  bundle absent
+I5  /precheck test-module-v1.0.0.zip  200  result=ok errors=[]
+I6  /precheck bad-module-v1.0.0.zip   200  result=failed 4 erreurs
+I7  /install  hello-mod-v1.0.0.zip    200  result=ok 7 steps PASS
+I8  /install  nonexistent.zip         404  Bundle introuvable
+I9  /install  ../../../etc/passwd     400  path traversal bloqué
+I10 /install  bundle=""               400  string vide bloquée
+I11 /history                          200  51 logs
+
+ROLLBACK/RESTORE
+----------------
+
+GET /api/installer/rollback  → 404  ROUTE ABSENTE
+GET /api/installer/restore   → 404  ROUTE ABSENTE
+
+_rollback() existe dans cms_installer.py:181 — interne à /install step 7 uniquement.
+→ GAP_ROLLBACK_API_ABSENTE confirmé (voulu V1)
+→ GAP_RESTORE_API_ABSENTE confirmé (voulu V1)
+
+SMOKES LIVE
+-----------
+
+shared-explorer.smoke.js → 6/6 PASS
+cms-installer.smoke.js   → 7/7 PASS
+
+NPM RUN TEST:ADOPT
+------------------
+
+ADOPT RUNNER — 9 suites : 9 PASS  0 FAIL (540/540)
+
+ARRÊT SERVEUR
+-------------
+
+kill $(lsof -ti:8000) → uvicorn arrêté
+
+GIT STATUS FINAL
+----------------
+
+main (clean)
+HEAD : b94c09e (inchangé)
+?? docs/chantiers/GO_LOCALCMS_DBLAYER_API_COVERAGE_01/
+?? docs/responses/response_14_GO_LOCALCMS_DBLAYER_API_COVERAGE_01.txt
+
+VERDICT
+-------
+
+PASS
+
+/health PASS                           PASS
+Shared live 8 routes                   PASS
+Path traversal bloqué PT1–PT5          PASS
+Binaires bloqués /read                 PASS
+Installer live 11 routes               PASS
+Inputs dangereux bloqués I9/I10        PASS
+Rollback/restore status établi         PASS — GAP documenté
+Smokes live 6/6 + 7/7                 PASS
+npm run test:adopt 540/540             PASS
+Aucun fichier applicatif modifié       PASS
+Aucun secret tracké                    PASS
+
+Total routes testées : 20
+Total cas testés : 24
+
+GAPS RESTANTS
+-------------
+
+GAP_ROLLBACK_API_ABSENTE   — rollback interne uniquement (voulu V1)
+GAP_RESTORE_API_ABSENTE    — restore interne uniquement (voulu V1)
+GAP_ABSOLUTE_PATH_404      — /shared/read chemin absolu → 404 (pas 403)
+GAP_INSPECT_NO_VALIDATION  — /inspect retourne manifest sans valider
+GAP_PACKAGE_JSON_MODULE_WARN — warning Node "type":"module" absent
+
+PROCHAIN GO LOGIQUE
+-------------------
+
+GO_LOCALCMS_DBLAYER_FRONTEND_AUDIT_01
+  ou
+GO_LOCALCMS_DBLAYER_CICD_01
+
+POINT DE REPRISE
+----------------
+
+cd /home/ghost/localcms
+git add docs/chantiers/GO_LOCALCMS_DBLAYER_API_COVERAGE_01/ \
+        docs/responses/response_14_GO_LOCALCMS_DBLAYER_API_COVERAGE_01.txt
+git commit -m "docs: record LocalCMS db-layer API coverage PASS"
+git push
