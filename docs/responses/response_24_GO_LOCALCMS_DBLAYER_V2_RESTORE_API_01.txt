@@ -1,0 +1,112 @@
+REPONSE 24 — GO_LOCALCMS_DBLAYER_V2_RESTORE_API_01
+GO : GO_LOCALCMS_DBLAYER_V2_RESTORE_API_01
+Date : 2026-04-29
+Agent : Claude Code CLI (claude-sonnet-4-6)
+========================================================
+
+DIAGNOSTIC INITIAL
+------------------
+
+pwd → /home/ghost/localcms
+git status → go/GO_LOCALCMS_DBLAYER_V2_RESTORE_API_01 (branche créée depuis main 649bb0c)
+HEAD base → 649bb0c docs: record LocalCMS rollback API GitHub Actions verify PASS
+
+IMPLÉMENTATION
+--------------
+
+Fichiers modifiés (4) :
+
+api/cms_installer.py (+94 lignes)
+  - VALID_BACKUP_RE = re.compile(r"^([a-z0-9_]+)_(\d{8}T\d{12})$")
+  - class RestoreRequest(BaseModel): module_id, backup_name
+  - GET /api/installer/backups (filtre optionnel ?module_id=, tri décroissant)
+  - POST /api/installer/restore (backup_name explicite, validations sécurité, copy2)
+
+tests/integration_test_pipeline.py (+150 lignes)
+  - VALID_BACKUP_RE (constante locale)
+  - run_backups_api(module_id=None) — miroir GET /backups
+  - run_restore_api(module_id, backup_name) — miroir POST /restore
+  - I19–I26 (8 nouveaux tests)
+
+tests/cms-installer.smoke.js (+90 lignes)
+  - MOCK_BACKUPS constant
+  - mockFetch : GET /api/installer/backups + POST /api/installer/restore
+  - S9 — Backups GET → result ok, backups[]
+  - S10 — Restore POST backup_name explicite → result ok
+
+scripts/run-ci-local.sh (+1/-1)
+  - résumé final : 8/8 → 10/10
+
+SÉCURITÉ
+--------
+
+GET /backups
+  module_id         → VALID_ID_RE [a-z0-9_]
+  VALID_BACKUP_RE   → seuls les dossiers conformes listés
+  path confinement  → d.resolve().relative_to(BACKUP_DIR.resolve())
+
+POST /restore
+  module_id         → VALID_ID_RE [a-z0-9_]
+  backup_name       → pas de / \ ..
+  backup_name       → startswith(f"{module_id}_")
+  path confinement  → backup_src.resolve().relative_to(BACKUP_DIR.resolve())
+
+RÉSULTATS CI
+------------
+
+bash scripts/run-ci-local.sh
+  integration_test_pipeline.py          26/26 PASS  (I1–I26)
+  integration_test_shared_explorer.py   23/23 PASS
+  npm run test:adopt                    540/540 PASS
+  shared-explorer.smoke.js (live)       6/6 PASS
+  cms-installer.smoke.js (live)         10/10 PASS
+  LocalCMS CI — PASS
+
+GIT STATUS FINAL
+----------------
+
+go/GO_LOCALCMS_DBLAYER_V2_RESTORE_API_01 (non commité, conformément aux contraintes)
+  M api/cms_installer.py          +94/-0
+  M tests/integration_test_pipeline.py  +150/-0
+  M tests/cms-installer.smoke.js  +90/-1
+  M scripts/run-ci-local.sh       +1/-1
+.env → non tracké
+node_modules → non présent
+localcms-v5.html → non modifié
+
+VERDICT
+-------
+
+PASS
+
+GET /api/installer/backups exposé                PASS
+POST /api/installer/restore exposé               PASS
+VALID_BACKUP_RE ajouté (api + test)              PASS
+RestoreRequest Pydantic ajouté                   PASS
+Path confinement backup_src → BACKUP_DIR         PASS
+backup_name startswith module_id_                PASS
+I19–I26 : 8/8 PASS                               PASS
+S9–S10 : 2/2 PASS (mock + live)                  PASS
+CI 26/26 + 23/23 + 540/540 + 6/6 + 10/10        PASS
+localcms-v5.html non modifié                     PASS
+.env non tracké                                  PASS
+node_modules non tracké                          PASS
+Ne commit pas                                    PASS
+Ne push pas                                      PASS
+Documentation écrite                             PASS
+Réponse TXT écrite                               PASS
+
+PROCHAIN GO LOGIQUE
+--------------------
+
+GO_LOCALCMS_DBLAYER_V2_RESTORE_API_MERGE_MAIN_01
+  Merger go/GO_LOCALCMS_DBLAYER_V2_RESTORE_API_01 dans main
+  Base : main HEAD 649bb0c
+
+POINT DE REPRISE
+----------------
+
+cd "$HOME/localcms"
+git status --short --branch
+git diff --stat HEAD
+bash scripts/run-ci-local.sh

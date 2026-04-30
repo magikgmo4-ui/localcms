@@ -48,6 +48,7 @@ TARGET_PATHS = { "modules_dir": TARGET_DIR }
 MANIFEST_FILENAME   = "manifest.json"
 ALLOWED_BUNDLE_EXTS = {".js", ".json", ".md", ".txt", ".css"}
 VALID_ID_RE         = re.compile(r"^[a-z0-9_]+$")
+VALID_BACKUP_RE     = re.compile(r"^([a-z0-9_]+)_(\d{8}T\d{12})$")
 VALID_VERSION_RE    = re.compile(r"^\d+\.\d+\.\d+$")
 VALID_GROUPS        = {"tools","system","backend","dev","git","menus","network"}
 MAX_BUNDLE_BYTES    = 10 * 1024 * 1024
@@ -290,6 +291,64 @@ def run_rollback_api(module_id):
         "result":         "ok",
         "module_id":      module_id,
         "backup_used":    backup_src.name,
+        "restored_files": restored_files,
+    }
+
+def run_backups_api(module_id=None):
+    """Logique du GET /api/installer/backups (sans FastAPI)."""
+    if module_id is not None and (not module_id or not VALID_ID_RE.match(module_id)):
+        raise HTTPException(400, "module_id invalide — seuls [a-z0-9_] autorisés")
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    backups = []
+    for d in sorted(BACKUP_DIR.iterdir(), reverse=True):
+        if not d.is_dir():
+            continue
+        try:
+            d.resolve().relative_to(BACKUP_DIR.resolve())
+        except ValueError:
+            continue
+        m = VALID_BACKUP_RE.match(d.name)
+        if not m:
+            continue
+        bk_module_id, ts = m.group(1), m.group(2)
+        if module_id is not None and bk_module_id != module_id:
+            continue
+        files = [f.name for f in sorted(d.iterdir()) if f.is_file()]
+        backups.append({
+            "module_id":   bk_module_id,
+            "backup_name": d.name,
+            "timestamp":   ts,
+            "files":       files,
+        })
+    return {"result": "ok", "backups": backups, "count": len(backups)}
+
+def run_restore_api(module_id, backup_name):
+    """Logique du POST /api/installer/restore (sans FastAPI)."""
+    if not module_id or not VALID_ID_RE.match(module_id):
+        raise HTTPException(400, "module_id invalide — seuls [a-z0-9_] autorisés")
+    if not backup_name or "/" in backup_name or "\\" in backup_name or ".." in backup_name:
+        raise HTTPException(400, "backup_name invalide")
+    if not backup_name.startswith(f"{module_id}_"):
+        raise HTTPException(400, f"backup_name ne correspond pas au module_id : {module_id}")
+    backup_src = BACKUP_DIR / backup_name
+    try:
+        backup_src.resolve().relative_to(BACKUP_DIR.resolve())
+    except ValueError:
+        raise HTTPException(403, "Path violation")
+    if not backup_src.exists() or not backup_src.is_dir():
+        _emit_log("restore", "", module_id, "restore", "not_found")
+        raise HTTPException(404, f"Backup introuvable : {backup_name}")
+    target_path = TARGET_PATHS["modules_dir"]
+    target_path.mkdir(parents=True, exist_ok=True)
+    restored_files = []
+    for f in backup_src.iterdir():
+        shutil.copy2(f, target_path / f.name)
+        restored_files.append(f.name)
+    _emit_log("restore", "", module_id, "restore", "ok")
+    return {
+        "result":         "ok",
+        "module_id":      module_id,
+        "backup_used":    backup_name,
         "restored_files": restored_files,
     }
 
@@ -578,6 +637,97 @@ def test_i18():
     except HTTPException as e:
         a(e.status_code == 404, f"Attendu 404, obtenu {e.status_code}")
 t("I18 — Rollback API: aucun backup → HTTPException 404", test_i18)
+
+# I19 — Backups API: liste tous les backups triés décroissant
+def test_i19():
+    mod_id  = "list_mod"
+    bk_dir1 = BACKUP_DIR / f"{mod_id}_20260101T000000000000"
+    bk_dir2 = BACKUP_DIR / f"{mod_id}_20260102T000000000000"
+    for bk_dir in [bk_dir1, bk_dir2]:
+        bk_dir.mkdir(parents=True, exist_ok=True)
+        (bk_dir / "list-mod.js").write_text("/* v */")
+    result = run_backups_api()
+    a(result["result"] == "ok",            "result doit être ok")
+    a(isinstance(result["backups"], list), "backups doit être une liste")
+    names = [b["backup_name"] for b in result["backups"]]
+    a(f"{mod_id}_20260102T000000000000" in names, "Backup le plus récent attendu")
+    a(f"{mod_id}_20260101T000000000000" in names, "Backup le plus ancien attendu")
+    idx1 = names.index(f"{mod_id}_20260102T000000000000")
+    idx2 = names.index(f"{mod_id}_20260101T000000000000")
+    a(idx1 < idx2, "Le backup le plus récent doit être listé en premier")
+t("I19 — Backups API: liste tous les backups triés décroissant", test_i19)
+
+# I20 — Backups API: filtre module_id → seuls ses backups retournés
+def test_i20():
+    result = run_backups_api(module_id="list_mod")
+    a(result["result"] == "ok", "result doit être ok")
+    a(all(b["module_id"] == "list_mod" for b in result["backups"]),
+      "Tous les backups filtrés doivent appartenir à list_mod")
+    a(result["count"] == len(result["backups"]), "count doit correspondre à len(backups)")
+t("I20 — Backups API: filtre module_id → seuls ses backups retournés", test_i20)
+
+# I21 — Backups API: module sans backup → liste vide
+def test_i21():
+    result = run_backups_api(module_id="module_sans_backup_xyz")
+    a(result["result"] == "ok", "result doit être ok")
+    a(result["backups"] == [],  "Aucun backup attendu")
+    a(result["count"]   == 0,   "count doit être 0")
+t("I21 — Backups API: module sans backup → liste vide", test_i21)
+
+# I22 — Restore API: backup valide → fichier restauré et result=ok
+def test_i22():
+    mod_id      = "restore_mod"
+    backup_name = f"{mod_id}_20260201T000000000000"
+    bk_dir      = BACKUP_DIR / backup_name
+    bk_dir.mkdir(parents=True, exist_ok=True)
+    orig_content = "/* restore original */"
+    (bk_dir / "restore-mod.js").write_text(orig_content)
+    target_file = TARGET_DIR / "restore-mod.js"
+    target_file.parent.mkdir(parents=True, exist_ok=True)
+    target_file.write_text("/* current version */")
+    result = run_restore_api(mod_id, backup_name)
+    a(result["result"]      == "ok",        f"Restore doit retourner ok, obtenu: {result}")
+    a(result["module_id"]   == mod_id,      "module_id incorrect")
+    a(result["backup_used"] == backup_name, "backup_used incorrect")
+    a("restore-mod.js" in result["restored_files"], "Fichier absent de restored_files")
+    a(target_file.read_text() == orig_content, "Contenu non restauré depuis backup")
+t("I22 — Restore API: backup valide → fichier restauré et result=ok", test_i22)
+
+# I23 — Restore API: module_id invalide → HTTPException 400
+def test_i23():
+    try:
+        run_restore_api("../evil", "valid_20260101T000000000000")
+        a(False, "Doit lever HTTPException 400")
+    except HTTPException as e:
+        a(e.status_code == 400, f"Attendu 400, obtenu {e.status_code}")
+t("I23 — Restore API: module_id invalide → HTTPException 400", test_i23)
+
+# I24 — Restore API: backup_name path traversal → HTTPException 400
+def test_i24():
+    try:
+        run_restore_api("test_mod", "../evil_backup")
+        a(False, "Doit lever HTTPException 400")
+    except HTTPException as e:
+        a(e.status_code == 400, f"Attendu 400, obtenu {e.status_code}")
+t("I24 — Restore API: backup_name path traversal → HTTPException 400", test_i24)
+
+# I25 — Restore API: backup_name ne correspond pas au module_id → HTTPException 400
+def test_i25():
+    try:
+        run_restore_api("test_mod", "other_module_20260101T000000000000")
+        a(False, "Doit lever HTTPException 400")
+    except HTTPException as e:
+        a(e.status_code == 400, f"Attendu 400, obtenu {e.status_code}")
+t("I25 — Restore API: backup_name ne correspond pas → HTTPException 400", test_i25)
+
+# I26 — Restore API: backup inexistant → HTTPException 404
+def test_i26():
+    try:
+        run_restore_api("test_mod", "test_mod_99990101T000000000000")
+        a(False, "Doit lever HTTPException 404")
+    except HTTPException as e:
+        a(e.status_code == 404, f"Attendu 404, obtenu {e.status_code}")
+t("I26 — Restore API: backup inexistant → HTTPException 404", test_i26)
 
 # ─── Cleanup ──────────────────────────────────────────────────────────────
 

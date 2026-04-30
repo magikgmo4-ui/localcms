@@ -55,6 +55,7 @@ VALID_ID_RE        = re.compile(r"^[a-z0-9_]+$")
 VALID_VERSION_RE   = re.compile(r"^\d+\.\d+\.\d+$")
 VALID_GROUPS       = {"tools", "system", "backend", "dev", "git", "menus", "network"}
 MAX_BUNDLE_BYTES   = 10 * 1024 * 1024   # 10 MB — bundles de modules, pas d'archives géantes
+VALID_BACKUP_RE    = re.compile(r"^([a-z0-9_]+)_(\d{8}T\d{12})$")
 
 installer_router = APIRouter()
 
@@ -67,6 +68,11 @@ class BundleRequest(BaseModel):
 
 class RollbackRequest(BaseModel):
     module_id: str
+
+
+class RestoreRequest(BaseModel):
+    module_id:   str
+    backup_name: str
 
 
 # ─── Log helper (symétrique à shared_explorer.py) ────────────────────────────
@@ -517,5 +523,93 @@ async def rollback_module(body: RollbackRequest):
         "result":         "ok",
         "module_id":      module_id,
         "backup_used":    backup_src.name,
+        "restored_files": restored_files,
+    }
+
+
+@installer_router.get("/backups")
+async def list_backups(module_id: Optional[str] = None):
+    """
+    Lister les backups disponibles dans BACKUP_DIR.
+    GET /api/installer/backups
+    GET /api/installer/backups?module_id=my_module
+    """
+    if module_id is not None and (not module_id or not VALID_ID_RE.match(module_id)):
+        raise HTTPException(400, "module_id invalide — seuls [a-z0-9_] autorisés")
+    try:
+        BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+        backups = []
+        for d in sorted(BACKUP_DIR.iterdir(), reverse=True):
+            if not d.is_dir():
+                continue
+            try:
+                d.resolve().relative_to(BACKUP_DIR.resolve())
+            except ValueError:
+                continue
+            m = VALID_BACKUP_RE.match(d.name)
+            if not m:
+                continue
+            bk_module_id, ts = m.group(1), m.group(2)
+            if module_id is not None and bk_module_id != module_id:
+                continue
+            files = [f.name for f in sorted(d.iterdir()) if f.is_file()]
+            backups.append({
+                "module_id":   bk_module_id,
+                "backup_name": d.name,
+                "timestamp":   ts,
+                "files":       files,
+            })
+        return {"result": "ok", "backups": backups, "count": len(backups)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@installer_router.post("/restore")
+async def restore_module(body: RestoreRequest):
+    """
+    Restaurer un backup explicitement ciblé par backup_name.
+    POST /api/installer/restore  body: {"module_id": "my_module", "backup_name": "my_module_20260429T143000000000"}
+    """
+    module_id   = body.module_id
+    backup_name = body.backup_name
+
+    if not module_id or not VALID_ID_RE.match(module_id):
+        raise HTTPException(400, "module_id invalide — seuls [a-z0-9_] autorisés")
+
+    if not backup_name or "/" in backup_name or "\\" in backup_name or ".." in backup_name:
+        raise HTTPException(400, "backup_name invalide")
+
+    if not backup_name.startswith(f"{module_id}_"):
+        raise HTTPException(400, f"backup_name ne correspond pas au module_id : {module_id}")
+
+    backup_src = BACKUP_DIR / backup_name
+    try:
+        backup_src.resolve().relative_to(BACKUP_DIR.resolve())
+    except ValueError:
+        raise HTTPException(403, "Path violation")
+
+    if not backup_src.exists() or not backup_src.is_dir():
+        _emit_log("restore", "", module_id, "restore", "not_found")
+        raise HTTPException(404, f"Backup introuvable : {backup_name}")
+
+    target_path = TARGET_PATHS["modules_dir"]
+    target_path.mkdir(parents=True, exist_ok=True)
+
+    restored_files: list[str] = []
+    try:
+        for f in backup_src.iterdir():
+            shutil.copy2(f, target_path / f.name)
+            restored_files.append(f.name)
+    except Exception as e:
+        _emit_log("restore", "", module_id, "restore", "failed", str(e))
+        raise HTTPException(500, f"Restore échoué : {e}")
+
+    _emit_log("restore", "", module_id, "restore", "ok")
+    return {
+        "result":         "ok",
+        "module_id":      module_id,
+        "backup_used":    backup_name,
         "restored_files": restored_files,
     }
