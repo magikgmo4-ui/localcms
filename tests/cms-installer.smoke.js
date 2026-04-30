@@ -1,6 +1,6 @@
 /**
  * cms-installer.smoke.js — CMS Module Installer V1
- * 7 smoke tests : mock HTTP + live backend optionnel
+ * 10 smoke tests : mock HTTP + live backend optionnel
  *
  * Usage :
  *   node tests/cms-installer.smoke.js              # mode MOCK (pas de backend)
@@ -58,6 +58,15 @@ const MOCK_HISTORY_LOGS = [
     module_id: 'test_module',
     pipeline_step: 'finalize',
     result: 'ok',
+  },
+];
+
+const MOCK_BACKUPS = [
+  {
+    module_id:   'test_module',
+    backup_name: 'test_module_20260101T000000000000',
+    timestamp:   '20260101T000000000000',
+    files:       ['test-module.js'],
   },
 ];
 
@@ -181,6 +190,41 @@ function mockFetch(url, options) {
         result:         'ok',
         module_id,
         backup_used:    `${module_id}_20260101T000000000000`,
+        restored_files: ['test-module.js'],
+      }),
+    });
+  }
+
+  // GET /api/installer/backups
+  if (method === 'GET' && path === '/api/installer/backups') {
+    const filter = params.get('module_id');
+    if (filter !== null && !/^[a-z0-9_]+$/.test(filter)) {
+      return Promise.resolve({ ok: false, status: 400, json: () => Promise.resolve({ detail: 'module_id invalide' }) });
+    }
+    const filtered = filter ? MOCK_BACKUPS.filter(b => b.module_id === filter) : MOCK_BACKUPS;
+    return Promise.resolve({
+      ok: true, status: 200,
+      json: () => Promise.resolve({ result: 'ok', backups: filtered, count: filtered.length }),
+    });
+  }
+
+  // POST /api/installer/restore
+  if (method === 'POST' && path === '/api/installer/restore') {
+    const body        = options && options.body ? JSON.parse(options.body) : {};
+    const module_id   = body.module_id   || '';
+    const backup_name = body.backup_name || '';
+    if (!module_id || !/^[a-z0-9_]+$/.test(module_id)) {
+      return Promise.resolve({ ok: false, status: 400, json: () => Promise.resolve({ detail: 'module_id invalide' }) });
+    }
+    if (!backup_name || !backup_name.startsWith(`${module_id}_`)) {
+      return Promise.resolve({ ok: false, status: 400, json: () => Promise.resolve({ detail: 'backup_name invalide' }) });
+    }
+    return Promise.resolve({
+      ok: true, status: 200,
+      json: () => Promise.resolve({
+        result:         'ok',
+        module_id,
+        backup_used:    backup_name,
         restored_files: ['test-module.js'],
       }),
     });
@@ -329,6 +373,50 @@ await smoke('S8 — Rollback POST → result ok', async () => {
   assert(typeof data.module_id === 'string',  'module_id doit être présent');
   assert(typeof data.backup_used === 'string','backup_used doit être présent');
   assert(Array.isArray(data.restored_files),  'restored_files doit être un tableau');
+});
+
+// S9 — Backups : GET /api/installer/backups → result=ok, backups[]
+await smoke('S9 — Backups GET → result ok, backups[]', async () => {
+  const res  = await fetchFn(`${BASE}/api/installer/backups`);
+  assert(res.ok, `Backups HTTP ${res.status}`);
+  const data = await res.json();
+  assert(data.result === 'ok',               `result attendu 'ok', obtenu : ${data.result}`);
+  assert(Array.isArray(data.backups),        'backups doit être un tableau');
+  assert(typeof data.count === 'number',     'count doit être un nombre');
+  assert(data.count === data.backups.length, 'count doit correspondre à backups.length');
+  if (data.backups.length > 0) {
+    const b = data.backups[0];
+    assert('module_id'   in b, 'backup doit contenir module_id');
+    assert('backup_name' in b, 'backup doit contenir backup_name');
+    assert('timestamp'   in b, 'backup doit contenir timestamp');
+    assert('files'       in b, 'backup doit contenir files');
+  }
+});
+
+// S10 — Restore : POST /api/installer/restore avec backup_name explicite
+await smoke('S10 — Restore POST backup_name explicite → result ok', async () => {
+  let backup_name;
+  if (MOCK_MODE) {
+    backup_name = MOCK_BACKUPS[0].backup_name;
+  } else {
+    const listRes  = await fetchFn(`${BASE}/api/installer/backups?module_id=test_module`);
+    if (!listRes.ok) { console.log('    (GET /backups échoué en live — skip S10)'); return; }
+    const listData = await listRes.json();
+    if (listData.backups.length === 0) { console.log('    (aucun backup test_module en live — skip S10)'); return; }
+    backup_name = listData.backups[0].backup_name;
+  }
+  const res = await fetchFn(`${BASE}/api/installer/restore`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ module_id: 'test_module', backup_name }),
+  });
+  assert(res.ok, `Restore HTTP ${res.status}`);
+  const data = await res.json();
+  assert(data.result === 'ok',               `result attendu 'ok', obtenu : ${data.result}`);
+  assert(typeof data.module_id === 'string', 'module_id doit être présent');
+  assert(typeof data.backup_used === 'string', 'backup_used doit être présent');
+  assert(data.backup_used === backup_name,   `backup_used attendu '${backup_name}', obtenu : ${data.backup_used}`);
+  assert(Array.isArray(data.restored_files), 'restored_files doit être un tableau');
 });
 
 /* ─── Résumé ─────────────────────────────────────────────────────────── */
