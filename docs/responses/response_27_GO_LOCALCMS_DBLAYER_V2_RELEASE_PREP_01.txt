@@ -1,0 +1,154 @@
+REPONSE 27 — GO_LOCALCMS_DBLAYER_V2_RELEASE_PREP_01
+GO : GO_LOCALCMS_DBLAYER_V2_RELEASE_PREP_01
+Date : 2026-04-30
+Agent : Claude Code CLI (claude-sonnet-4-6)
+========================================================
+
+DIAGNOSTIC INITIAL
+------------------
+
+pwd → /home/ghost/localcms
+git status → main (clean, sync origin)
+HEAD → 277f281 docs: record LocalCMS restore API GitHub Actions verify PASS
+v0.1.0-dblayer → présent (pointe b94c09e)
+v0.2.0-dblayer → ABSENT ✓
+.env → .gitignore:1:.env ✓
+node_modules → non présent ✓
+
+SYNCHRONISATION
+---------------
+
+git fetch origin → à jour
+git pull --rebase origin main → Déjà à jour
+HEAD : 277f281 ✓
+
+CI LOCALE
+---------
+
+bash scripts/run-ci-local.sh
+  integration_test_pipeline.py          26/26 PASS
+  integration_test_shared_explorer.py   23/23 PASS
+  npm run test:adopt (9 suites)          540/540 PASS
+  shared-explorer.smoke.js (live)       6/6 PASS
+  cms-installer.smoke.js (live)         10/10 PASS
+  LocalCMS CI — PASS
+
+INVENTAIRE COMMITS DEPUIS v0.1.0-dblayer (16 commits)
+------------------------------------------------------
+
+277f281  docs    record LocalCMS restore API GitHub Actions verify PASS
+02587dc  docs    record LocalCMS restore API merge main PASS
+0da703b  merge   LocalCMS V2 restore API — backups inventory and explicit restore  ← P2
+64b0031  feat    expose installer restore API
+649bb0c  docs    record LocalCMS rollback API GitHub Actions verify PASS
+1ebc178  docs    record LocalCMS rollback API merge main PASS
+f06799a  merge   LocalCMS V2 rollback API — POST /api/installer/rollback           ← P1
+da4b50c  feat    expose installer rollback API
+aaa05c6  docs    record LocalCMS db-layer V2 scope PASS
+53ef3d6  docs    record LocalCMS CI GitHub Actions verify PASS
+3990cb7  docs    record LocalCMS CI merge main PASS
+ef263af  merge   LocalCMS CI pipeline — script, GitHub Actions, installer fixtures
+10c9ac7  feat    add CI installer fixtures
+b2c2705  feat    add LocalCMS CI pipeline
+b326781  docs    record LocalCMS db-layer frontend audit PASS
+6768665  docs    record LocalCMS db-layer API coverage PASS
+
+ENDPOINTS V2 INTÉGRÉS
+----------------------
+
+POST /api/installer/rollback    merged + GitHub Actions PASS  (P1 — run 25107813480)
+GET  /api/installer/backups     merged + GitHub Actions PASS  (P2 — run 25143741568)
+POST /api/installer/restore     merged + GitHub Actions PASS  (P2 — run 25143741568)
+
+TESTS AJOUTÉS EN V2
+-------------------
+
+integration_test_pipeline.py :
+  V1 : I1–I15 (15 tests)
+  V2 : I1–I26 (26 tests) — +I16/I17/I18 rollback API + I19–I26 backups/restore API
+
+cms-installer.smoke.js :
+  V1 : S1–S7 (7 smokes)
+  V2 : S1–S10 (10 smokes) — +S8 rollback + S9 backups + S10 restore
+
+integration_test_shared_explorer.py : 23/23 — inchangé
+shared-explorer.smoke.js : 6/6 — inchangé
+npm run test:adopt : 540/540 — inchangé
+
+GITHUB ACTIONS VÉRIFIÉS
+------------------------
+
+Rollback merge → run 25107813480 / commit 1ebc178 / success
+Restore merge  → run 25143741568 / commit 02587dc / success
+Historique main : 5/5 runs success
+
+TAG v0.2.0-dblayer
+------------------
+
+Statut : ABSENT ✓
+Commandes proposées (NON exécutées) :
+  git tag -a v0.2.0-dblayer -m "LocalCMS db-layer V2 — rollback and restore APIs"
+  git push origin v0.2.0-dblayer
+
+GAPS RESTANTS (hors release V2)
+--------------------------------
+
+GAP_ABSOLUTE_PATH_404           SHOULD P3  — /shared/read chemin absolu → 404 pas 403
+GAP_LEGACY_INSTALLER_SIMULE     SHOULD P4  — panel Installer frontend simulé
+GAP_PACKAGE_JSON_MODULE_WARN    SHOULD P5  — "type":"module" absent package.json
+GAP_UTCNOW_DEPRECATION          SHOULD P5  — datetime.utcnow() deprecated Python 3.12+
+GAP_INSTALL_BACKUPS_TTL         COULD  P6  — pas de purge TTL backups/logs
+
+GIT STATUS FINAL
+----------------
+
+main (clean, sync origin)
+HEAD : 277f281
+?? docs/chantiers/GO_LOCALCMS_DBLAYER_V2_RELEASE_PREP_01/
+?? docs/responses/response_27_GO_LOCALCMS_DBLAYER_V2_RELEASE_PREP_01.txt
+Aucun fichier applicatif modifié.
+Tag v0.2.0-dblayer : non créé.
+
+VERDICT
+-------
+
+PASS
+
+main clean et sync origin                   PASS
+CI locale PASS                              PASS  (26/26+23/23+540/540+6/6+10/10)
+tag v0.2.0-dblayer absent                   PASS
+P1 rollback API établi                      PASS  (run 25107813480 success)
+P2 restore API établi                       PASS  (run 25143741568 success)
+GitHub Actions P1/P2 PASS                   PASS  (5/5 runs main success)
+Inventaire commits complet (16)             PASS
+Endpoints V2 documentés (3)                 PASS
+Tests documentés (+11 intégration +3 smoke) PASS
+Gaps restants documentés                    PASS
+Commandes tag proposées non exécutées       PASS
+Rapport release prep écrit                  PASS
+Réponse TXT écrite                          PASS
+Aucun fichier applicatif modifié            PASS
+.env non tracké                             PASS
+
+PROCHAIN GO LOGIQUE
+--------------------
+
+GO_LOCALCMS_DBLAYER_V2_RELEASE_TAG_01
+  Exécuter les commandes de tag proposées :
+    git tag -a v0.2.0-dblayer -m "LocalCMS db-layer V2 — rollback and restore APIs"
+    git push origin v0.2.0-dblayer
+  Base : main HEAD 277f281
+
+POINT DE REPRISE
+----------------
+
+cd "$HOME/localcms"
+git add \
+  docs/chantiers/GO_LOCALCMS_DBLAYER_V2_RELEASE_PREP_01/ \
+  docs/responses/response_27_GO_LOCALCMS_DBLAYER_V2_RELEASE_PREP_01.txt
+git commit -m "docs: record LocalCMS V2 release prep PASS"
+git push
+
+# Puis, après validation humaine :
+git tag -a v0.2.0-dblayer -m "LocalCMS db-layer V2 — rollback and restore APIs"
+git push origin v0.2.0-dblayer
