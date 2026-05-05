@@ -1,0 +1,48 @@
+GO_LOCALCMS_DBLAYER_P6_INSTALL_BACKUPS_TTL_FIX_01
+==================================================
+DATE    : 2026-05-05
+VERDICT : PASS
+
+PROBLÈME INITIAL
+----------------
+BACKUP_DIR et LOG_DIR croissaient indéfiniment (51+ logs observés).
+Aucune limite, aucune purge automatique.
+
+CORRECTIF — api/cms_installer.py
+---------------------------------
+Constantes ajoutées :
+  MAX_BACKUPS_PER_MODULE = 5
+  MAX_LOGS               = 100
+
+Fonctions ajoutées :
+  _purge_old_logs()            — après chaque écriture log
+  _purge_old_backups(module_id) — après chaque backup réussi
+
+Comportement : best-effort, exception silencieuse, install jamais bloquée.
+TTL par date rejeté : limite par module plus prévisible pour rollback/restore.
+
+CI LOCALE
+---------
+integration_test_pipeline.py          ✓  26/26
+integration_test_shared_explorer.py   ✓  26/26
+npm run test:adopt (9 suites)          ✓  540/540
+shared-explorer.smoke.js (live 6/6)   ✓
+cms-installer.smoke.mjs (live 10/10)  ✓
+LocalCMS CI — PASS
+
+ÉTAT GAPS P3–P6
+---------------
+P3 GAP_ABSOLUTE_PATH_404        : FERMÉ
+P4 GAP_LEGACY_INSTALLER_SIMULE  : FERMÉ
+P5 GAP_PACKAGE_JSON_MODULE_WARN : FERMÉ
+P5 GAP_UTCNOW_DEPRECATION       : FERMÉ
+P6 GAP_INSTALL_BACKUPS_TTL      : FERMÉ
+
+Aucun gap connu restant dans la série post-V2.
+
+POINT DE REPRISE
+----------------
+cd "$HOME/localcms"
+git status --short --branch
+git log --oneline -8
+bash scripts/run-ci-local.sh

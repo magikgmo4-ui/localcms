@@ -54,7 +54,9 @@ ALLOWED_BUNDLE_EXTS = {".js", ".json", ".md", ".txt", ".css"}
 VALID_ID_RE        = re.compile(r"^[a-z0-9_]+$")
 VALID_VERSION_RE   = re.compile(r"^\d+\.\d+\.\d+$")
 VALID_GROUPS       = {"tools", "system", "backend", "dev", "git", "menus", "network"}
-MAX_BUNDLE_BYTES   = 10 * 1024 * 1024   # 10 MB — bundles de modules, pas d'archives géantes
+MAX_BUNDLE_BYTES        = 10 * 1024 * 1024  # 10 MB — bundles de modules, pas d'archives géantes
+MAX_BACKUPS_PER_MODULE  = 5                 # backups les plus récents conservés par module
+MAX_LOGS                = 100               # logs d'installation conservés au total
 VALID_BACKUP_RE    = re.compile(r"^([a-z0-9_]+)_(\d{8}T\d{12})$")
 
 installer_router = APIRouter()
@@ -101,9 +103,36 @@ def _emit_log(
         ts  = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
         log_path = LOG_DIR / f"install_{module_id or 'unknown'}_{ts}.json"
         log_path.write_text(json.dumps(entry, ensure_ascii=False, indent=2))
+        _purge_old_logs()
     except Exception:
         pass  # log best-effort
     return entry
+
+
+def _purge_old_logs() -> None:
+    try:
+        logs = sorted(
+            [f for f in LOG_DIR.iterdir() if f.is_file() and f.suffix == ".json"],
+            reverse=True,
+        )
+        for old in logs[MAX_LOGS:]:
+            old.unlink(missing_ok=True)
+    except Exception:
+        pass
+
+
+def _purge_old_backups(module_id: str) -> None:
+    try:
+        dirs = sorted(
+            [d for d in BACKUP_DIR.iterdir()
+             if d.is_dir() and VALID_BACKUP_RE.match(d.name)
+             and VALID_BACKUP_RE.match(d.name).group(1) == module_id],
+            reverse=True,
+        )
+        for old in dirs[MAX_BACKUPS_PER_MODULE:]:
+            shutil.rmtree(old, ignore_errors=True)
+    except Exception:
+        pass
 
 
 # ─── Helpers internes ────────────────────────────────────────────────────────
@@ -362,6 +391,7 @@ async def install_bundle(body: BundleRequest):
                     shutil.copy2(src, backup_path / src.name)
                 _step("backup", "ok")
                 _emit_log("install", bundle, module_id, "backup", "ok")
+                _purge_old_backups(module_id)
             except Exception as e:
                 _step("backup", "failed", str(e))
                 _emit_log("install", bundle, module_id, "backup", "failed", str(e))
