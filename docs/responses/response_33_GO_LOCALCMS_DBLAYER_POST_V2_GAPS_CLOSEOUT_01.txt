@@ -1,0 +1,66 @@
+GO_LOCALCMS_DBLAYER_POST_V2_GAPS_CLOSEOUT_01
+============================================
+DATE    : 2026-05-05
+VERDICT : PASS
+
+ÉTAT GIT
+--------
+Branche : main
+Sync    : main...origin/main synchronisé
+Tag     : v0.2.0-dblayer présent (local + origin)
+HEAD    : 7fd7fad fix: GAP_INSTALL_BACKUPS_TTL
+
+RELEASE V2
+----------
+Tag     : v0.2.0-dblayer
+Commit  : 3c908875
+Doc     : 766eacc
+
+SÉQUENCE GAPS POST-V2
+---------------------
+P3 GAP_ABSOLUTE_PATH_404
+  Fix    : 1cfc1e3
+  Doc    : 09c0af5
+  Résumé : os.path.isabs() avant strip("/"), chemins absolus → 403
+  Tests  : L6, R7, D6 ajoutés (23 → 26)
+
+P4 GAP_LEGACY_INSTALLER_SIMULE
+  Fix    : 6c0d1fa
+  Résumé : MOD_INSTALLER supprimé de localcms-v5.html (~155 lignes)
+  Note   : gros diff Git = normalisation CRLF→LF, fonctionnel intact
+
+P5 GAP_PACKAGE_JSON_MODULE_WARN + GAP_UTCNOW_DEPRECATION
+  Fix    : f0e285b
+  Résumé : rename smoke.js → .mjs, datetime.utcnow() remplacé
+  Note   : package.json non modifié (adopt tests CommonJS)
+
+P6 GAP_INSTALL_BACKUPS_TTL
+  Fix    : 7fd7fad
+  Résumé : MAX_BACKUPS_PER_MODULE=5, MAX_LOGS=100, purge best-effort
+
+CI FINALE
+---------
+integration_test_pipeline.py          ✓  26/26
+integration_test_shared_explorer.py   ✓  26/26
+npm run test:adopt (9 suites)          ✓  540/540
+shared-explorer.smoke.js (live 6/6)   ✓
+cms-installer.smoke.mjs (live 10/10)  ✓
+LocalCMS CI — PASS
+
+GAPS RESTANTS
+-------------
+Aucun dans la série P3–P6 post-V2.
+GAP_IA_RUNNER_SIMULE : hors scope, non planifié.
+
+FICHIERS CRÉÉS
+--------------
+docs/chantiers/GO_LOCALCMS_DBLAYER_POST_V2_GAPS_CLOSEOUT_01/90_CLOSEOUT.md
+docs/responses/response_33_GO_LOCALCMS_DBLAYER_POST_V2_GAPS_CLOSEOUT_01.txt
+
+POINT DE REPRISE
+----------------
+cd "$HOME/localcms"
+git status --short --branch
+git log --oneline -8
+git tag --list "v0.2.0-dblayer"
+bash scripts/run-ci-local.sh
