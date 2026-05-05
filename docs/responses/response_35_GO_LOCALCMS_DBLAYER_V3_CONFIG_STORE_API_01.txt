@@ -1,0 +1,47 @@
+GO_LOCALCMS_DBLAYER_V3_CONFIG_STORE_API_01
+==========================================
+DATE    : 2026-05-04
+VERDICT : PASS
+
+LIVRAISONS
+----------
+api/config_store.py              — M3 router (list/get/save)
+main.py                          — montage /api/config, version 1.0.2
+tests/integration_test_config_store.py — 8 tests C1–C8
+tests/cms-config.smoke.mjs       — 5 smokes MOCK+LIVE
+scripts/run-ci-local.sh          — étapes 2b + 5c, /shared/config, résumé
+
+CI PASS
+-------
+integration_test_pipeline.py          26/26
+integration_test_shared_explorer.py   26/26
+integration_test_config_store.py       8/8
+npm run test:adopt                   540/540
+shared-explorer.smoke.js (live)        6/6
+cms-installer.smoke.mjs (live)        10/10
+cms-config.smoke.mjs (live)            5/5
+
+COMMIT
+------
+f0c1856  feat: M3 Config Store API — persistence backend for all config modules
+
+ÉTAT GIT
+--------
+Branche : main
+HEAD    : f0c1856
+Sync    : main...origin/main synchronisé
+
+PROCHAIN GO
+-----------
+GO_LOCALCMS_DBLAYER_V3_ENV_GLOBAL_WIRE_01
+  Raccorder MOD_ENV_GLOBAL dans localcms-v5.html :
+  - init() : GET /api/config/env_global → peupler les champs
+  - save() : POST /api/config/env_global { data: {...} }
+  Critère PASS : rechargement page → valeurs persistées
+
+POINT DE REPRISE
+----------------
+cd "$HOME/localcms"
+git status --short --branch
+git log --oneline -8
+bash scripts/run-ci-local.sh
