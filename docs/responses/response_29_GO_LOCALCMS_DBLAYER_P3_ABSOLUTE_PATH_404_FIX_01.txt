@@ -1,0 +1,60 @@
+GO_LOCALCMS_DBLAYER_P3_ABSOLUTE_PATH_404_FIX_01
+================================================
+DATE    : 2026-05-04
+VERDICT : PASS
+
+ÉTAT GIT
+--------
+Branche      : main
+Sync         : main...origin/main synchronisé
+Commit fix   : 1cfc1e3
+Push         : réussi
+
+PROBLÈME INITIAL
+----------------
+GET /api/shared/read?path=/etc/passwd → 404 au lieu de 403.
+_resolve_safe() faisait strip("/") sans rejet préalable des chemins absolus.
+/etc/passwd devenait etc/passwd → SHARED_ROOT/etc/passwd absent → 404.
+
+CORRECTIF — api/shared_explorer.py
+------------------------------------
+Ajout avant relative.strip("/") :
+  if os.path.isabs(relative):
+      _emit_log("path_violation", relative, "denied", "absolute_path_rejected")
+      raise HTTPException(status_code=403, detail="Access denied")
+
+TESTS AJOUTÉS — integration_test_shared_explorer.py
+-----------------------------------------------------
+L6 : list_directory  path=/etc      → 403
+R7 : read_file       path=/etc/passwd → 403
+D6 : download_file   path=/etc/passwd → 403
+Décompte : 23 → 26 tests, 26/26 PASS
+
+CI LOCALE COMPLÈTE
+------------------
+integration_test_pipeline.py          ✓  26/26
+integration_test_shared_explorer.py   ✓  26/26
+npm run test:adopt (9 suites)          ✓  540/540
+shared-explorer.smoke.js (live 6/6)   ✓
+cms-installer.smoke.js  (live 10/10)  ✓
+LocalCMS CI — PASS
+
+FICHIERS CRÉÉS
+--------------
+docs/chantiers/GO_LOCALCMS_DBLAYER_P3_ABSOLUTE_PATH_404_FIX_01/90_CLOSEOUT.md
+docs/responses/response_29_GO_LOCALCMS_DBLAYER_P3_ABSOLUTE_PATH_404_FIX_01.txt
+
+GAPS RESTANTS
+-------------
+P4 GAP_LEGACY_INSTALLER_SIMULE
+P5 GAP_PACKAGE_JSON_MODULE_WARN + GAP_UTCNOW_DEPRECATION
+P6 GAP_INSTALL_BACKUPS_TTL
+
+POINT DE REPRISE
+----------------
+cd "$HOME/localcms"
+git status --short --branch
+git log --oneline -8
+bash scripts/run-ci-local.sh
+
+Prochain candidat : GO_LOCALCMS_DBLAYER_P4_LEGACY_INSTALLER_SIMULE_SCOPE_01
