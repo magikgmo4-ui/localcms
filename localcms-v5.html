@@ -8588,10 +8588,27 @@ const MOD_DEV_CFG = (() => {
 
 /* ═══ MODULES NOUVEAUX INLINE ═══ */
 
-/* ══ MOD_ENV_GLOBAL — bridge transitoire (lit MOD_ENV_GLOBAL_DATA depuis modules/env-global.js) ══ */
+/* ══ MOD_ENV_GLOBAL — bridge M3 (lit MOD_ENV_GLOBAL_DATA depuis modules/env-global.js) ══ */
 const MOD_ENV_GLOBAL = (() => {
   const GROUPS     = MOD_ENV_GLOBAL_DATA.groups;
   let activeGroup  = MOD_ENV_GLOBAL_DATA.meta.activeDefault;
+  let _buf         = {};  /* accumulateur inter-groupes (persiste entre switchs) */
+
+  const _collectGroup = () => {
+    const vals = CFG.readValues([{ fields: GROUPS[activeGroup].fields }]);
+    Object.assign(_buf, vals);
+  };
+
+  const _applyBuf = () => {
+    GROUPS[activeGroup].fields.forEach(f => {
+      if (!(f.id in _buf)) return;
+      const el = document.getElementById(`cfg-${f.id}`);
+      if (!el) return;
+      if (f.type === 'toggle') el.checked = !!_buf[f.id];
+      else el.value = _buf[f.id];
+    });
+  };
+
   const render = () => {
     FN.html('env-global-content', `
       <div style="margin-bottom:12px;font-size:11px;color:var(--text-2);font-family:var(--mono)">
@@ -8611,12 +8628,41 @@ const MOD_ENV_GLOBAL = (() => {
       <div class="c-section" style="margin-top:16px"><span class="c-section__title">Profils sauvegardés</span></div>
       <div id="eg-profiles-list" class="c-card" style="font-size:11px;color:var(--text-2);font-family:var(--mono)">— Aucun profil —</div>
     `);
+    _applyBuf();
   };
-  const setGroup      = (g) => { activeGroup=g; render(); };
-  const save          = () => BUS.emit('log:add','OK','Profil ENV Global sauvegardé');
-  const exportAll     = () => BUS.emit('log:add','OK','Export JSON profil');
-  const importProfile = () => BUS.emit('log:add','INFO','Import profil');
-  const init = () => render();
+
+  const setGroup = (g) => { _collectGroup(); activeGroup = g; render(); };
+
+  const save = () => {
+    _collectGroup();
+    fetch('/api/config/env_global', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: _buf }),
+    })
+      .then(r => r.ok
+        ? BUS.emit('log:add', 'OK', 'Profil ENV Global sauvegardé')
+        : r.json().then(e => BUS.emit('log:add', 'FAIL', `Erreur sauvegarde ENV Global : ${e.detail || r.status}`))
+      )
+      .catch(e => BUS.emit('log:add', 'FAIL', `Erreur réseau ENV Global : ${e.message}`));
+  };
+
+  const exportAll     = () => BUS.emit('log:add', 'OK', 'Export JSON profil');
+  const importProfile = () => BUS.emit('log:add', 'INFO', 'Import profil');
+
+  const init = () => {
+    render();
+    fetch('/api/config/env_global')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && data.data && typeof data.data === 'object') {
+          Object.assign(_buf, data.data);
+          _applyBuf();
+        }
+      })
+      .catch(() => {});
+  };
+
   return { init, render, setGroup, save, exportAll, importProfile };
 })();
 
