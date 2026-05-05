@@ -1,0 +1,54 @@
+GO_LOCALCMS_DBLAYER_P4_LEGACY_INSTALLER_SIMULE_FIX_01
+======================================================
+DATE    : 2026-05-04
+VERDICT : PASS
+
+PROBLÈME INITIAL
+----------------
+MOD_INSTALLER (panel "⬇ Installer") coexistait avec MOD_CMS_INSTALLER (panel "📦 CMS Installer").
+MOD_INSTALLER était entièrement simulé (setTimeout, ./available/ inexistant, aucun appel backend).
+MOD_CMS_INSTALLER est le vrai installateur connecté à /api/installer/*.
+
+CORRECTIF — localcms-v5.html
+-----------------------------
+4 suppressions :
+  1. Nav item  data-panel="installer"          (ligne 486 avant patch)
+  2. Panel div id="panel-installer"            (ligne 597 avant patch)
+  3. Bloc JS /* -- installer.js -- */ … })();  (lignes 4787-4938, ~155 lignes)
+  4. MOD_INSTALLER, dans la liste init         (ligne 9335 avant patch)
+
+Résultat : 9396 → 9241 lignes. MOD_CREATOR, MOD_CMS_INSTALLER inchangés.
+
+IMPACT TESTS
+------------
+Adopt tests : aucune référence à MOD_INSTALLER — 540/540 inchangé
+Smokes live  : 6/6 + 10/10 PASS
+
+CI LOCALE
+---------
+integration_test_pipeline.py          ✓  26/26
+integration_test_shared_explorer.py   ✓  26/26
+npm run test:adopt (9 suites)          ✓  540/540
+shared-explorer.smoke.js (live 6/6)   ✓
+cms-installer.smoke.js  (live 10/10)  ✓
+LocalCMS CI — PASS
+
+ÉTAT GIT
+--------
+Fichiers touchés : localcms-v5.html,
+  docs/chantiers/GO_LOCALCMS_DBLAYER_P4_LEGACY_INSTALLER_SIMULE_FIX_01/00_CLOSEOUT.md,
+  docs/responses/response_30_...txt
+
+GAPS RESTANTS
+-------------
+P5 GAP_PACKAGE_JSON_MODULE_WARN + GAP_UTCNOW_DEPRECATION
+P6 GAP_INSTALL_BACKUPS_TTL
+
+POINT DE REPRISE
+----------------
+cd "$HOME/localcms"
+git status --short --branch
+git log --oneline -8
+bash scripts/run-ci-local.sh
+
+Prochain candidat : GO_LOCALCMS_DBLAYER_P5_WARNINGS_FIX_01

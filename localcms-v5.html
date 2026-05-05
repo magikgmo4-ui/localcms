@@ -483,7 +483,6 @@ body[data-iface=dev] .c-sidebar__icon{background:var(--purple)}
       <div class="c-nav" data-panel="creator"               onclick="BUS.emit('nav:goto','creator')">     <span class="c-nav__icon">✦</span>  Module Creator</div>
       <div class="c-sidebar__label">Shared</div>
       <div class="c-nav" data-panel="shared_explorer"       onclick="BUS.emit('nav:goto','shared_explorer')"><span class="c-nav__icon">📂</span> Shared Explorer</div>
-      <div class="c-nav" data-panel="installer"             onclick="BUS.emit('nav:goto','installer')">   <span class="c-nav__icon">⬇</span>  Installer</div>
       <div class="c-nav" data-panel="cms_installer"         onclick="BUS.emit('nav:goto','cms_installer')"><span class="c-nav__icon">📦</span> CMS Installer</div>
       <div class="c-nav" data-panel="connectors"            onclick="BUS.emit('nav:goto','connectors')">  <span class="c-nav__icon">⬡</span>  Connecteurs</div>
       <div class="c-nav" data-panel="plugin_cfg"            onclick="BUS.emit('nav:goto','plugin_cfg')">  <span class="c-nav__icon">⚙</span>  Plugin Config</div>
@@ -594,7 +593,6 @@ body[data-iface=dev] .c-sidebar__icon{background:var(--purple)}
 <div class="c-panel" id="panel-scripts"><div class="c-section"><span class="c-section__title">▶ Scripts .sh</span></div><div id="scripts-content"></div></div>
 <div class="c-panel" id="panel-modules"><div class="c-section"><span class="c-section__title">⬡ Modules</span></div><div id="modules-content"></div></div>
 <div class="c-panel" id="panel-creator"><div class="c-section"><span class="c-section__title">✦ Module Creator</span></div><div id="creator-content"></div></div>
-<div class="c-panel" id="panel-installer"><div class="c-section"><span class="c-section__title">⬇ Installer</span></div><div id="installer-content"></div></div>
 <div class="c-panel" id="panel-connectors"><div class="c-section"><span class="c-section__title">⬡ Connecteurs</span></div><div id="connectors-content"></div></div>
 <div class="c-panel" id="panel-plugin_cfg"><div class="c-section"><span class="c-section__title">⚙ Plugin Config — Wrapper universel</span></div><div id="plugin-cfg-content"></div></div>
 <div class="c-panel" id="panel-dev_tools"><div class="c-section"><span class="c-section__title">🛠 Dev Tools</span></div><div id="dev-tools-content"></div></div>
@@ -4784,159 +4782,6 @@ const MOD_MENU_DISPLAY = (() => {
 
 })();
 
-/* -- installer.js -- */
-/* ═══════════════════════════════════════════════
-   modules/installer.js — Installateur de modules
-   Sources : local / URL / registre interne.
-   Lit ENV.registry. Émet BUS 'log:add'.
-   ═══════════════════════════════════════════════ */
-
-const MOD_INSTALLER = (() => {
-
-  let activeTab = 'registry';
-  let filterGroup = 'all';
-
-  /* ── Tabs de source ── */
-  const renderTabs = () =>
-    ['registry','local','url'].map(t =>
-      `<div class="c-editor-tab ${t===activeTab?'is-active':''}" onclick="MOD_INSTALLER.setTab('${t}')">
-        ${{registry:'📋 Registre', local:'📁 Local', url:'🌐 URL'}[t]}
-      </div>`
-    ).join('');
-
-  /* ── Filtres par groupe ── */
-  const renderFilters = () => {
-    const groups = ['all', ...new Set(ENV.registry.map(r => r.group))];
-    return groups.map(g =>
-      `<button class="c-log-filter ${g===filterGroup?'is-active':''}" onclick="MOD_INSTALLER.setFilter('${g}')">${g}</button>`
-    ).join('');
-  };
-
-  /* ── Panneau registre ── */
-  const renderRegistry = () => {
-    const items = ENV.registry.filter(r => filterGroup === 'all' || r.group === filterGroup);
-    return `
-      <div class="c-log-filters" style="margin-bottom:10px">${renderFilters()}</div>
-      <div class="l-stack">
-        ${items.map(r => `
-          <div class="c-card c-card--module">
-            <div class="c-mod-icon" style="font-size:18px">${r.installed ? '✓' : '⬇'}</div>
-            <div style="flex:1">
-              <div class="c-mod-name">${r.name} <span class="c-tag" style="margin-left:4px">${r.version}</span></div>
-              <div class="u-mono u-muted" style="font-size:10px;margin-top:2px">${r.desc}</div>
-              <div class="c-mod-meta">
-                <span class="c-tag">${r.group}</span>
-                <span class="c-tag">${r.source}</span>
-                ${r.path ? `<span class="c-tag u-mono" style="font-size:9px">${r.path}</span>` : ''}
-              </div>
-            </div>
-            <div class="l-row">
-              ${r.installed
-                ? `<span class="c-badge c-badge--online">installé</span>
-                   <button class="c-btn c-btn--icon" onclick="MOD_INSTALLER.uninstall('${r.id}')" style="color:var(--red)">✕ Désinstaller</button>`
-                : `<button class="c-btn c-btn--run" onclick="MOD_INSTALLER.install('${r.id}',this)">⬇ Installer</button>`
-              }
-            </div>
-          </div>`).join('')}
-      </div>`;
-  };
-
-  /* ── Panneau local ── */
-  const renderLocal = () => `
-    <div class="c-card">
-      <div class="c-section" style="margin-top:0;margin-bottom:10px"><span class="c-section__title">Installer depuis un chemin local</span></div>
-      ${FN.settingsField({id:'local_path', label:'Chemin du fichier .js', type:'text', value:'./available/mon-module.js'})}
-      ${FN.settingsField({id:'local_name', label:'Nom du module',         type:'text', value:''})}
-      ${FN.settingsField({id:'local_group',label:'Groupe',                type:'select', value:'tools', options:['tools','system','backend','dev','git','menus','network']})}
-      <div class="l-row" style="margin-top:8px">
-        <button class="c-btn c-btn--primary" onclick="MOD_INSTALLER.installLocal()">⬇ Installer</button>
-        <button class="c-btn" onclick="MOD_INSTALLER.scanDir()">🔍 Scanner ./available/</button>
-      </div>
-      <div id="local-scan-result" style="margin-top:10px"></div>
-    </div>`;
-
-  /* ── Panneau URL ── */
-  const renderUrl = () => `
-    <div class="c-card">
-      <div class="c-section" style="margin-top:0;margin-bottom:10px"><span class="c-section__title">Installer depuis une URL ou un dépôt git</span></div>
-      ${FN.settingsField({id:'url_path',  label:'URL du module (.js) ou repo git', type:'text', value:'https://github.com/user/repo/blob/main/module.js'})}
-      ${FN.settingsField({id:'url_branch',label:'Branche (git)',                   type:'text', value:'main'})}
-      ${FN.settingsField({id:'url_name',  label:'Nom du module',                   type:'text', value:''})}
-      <div class="l-row" style="margin-top:8px">
-        <button class="c-btn c-btn--primary" onclick="MOD_INSTALLER.installUrl()">⬇ Télécharger & Installer</button>
-      </div>
-      <div id="url-install-result" style="margin-top:10px"></div>
-    </div>`;
-
-  /* ── Render complet ── */
-  const render = () => {
-    const panels = { registry: renderRegistry(), local: renderLocal(), url: renderUrl() };
-    FN.html('installer-content', `
-      <div class="c-editor-toolbar" style="margin-bottom:12px;border-radius:var(--radius);border:1px solid var(--border)">
-        ${renderTabs()}
-      </div>
-      ${panels[activeTab]}
-    `);
-  };
-
-  /* ── Actions ── */
-  const setTab    = (t) => { activeTab = t; render(); };
-  const setFilter = (g) => { filterGroup = g; render(); };
-
-  const install = (id, btnEl) => {
-    if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⟳ Installation...'; }
-    BUS.emit('log:add','INFO',`Installation : ${id}`);
-    setTimeout(() => {
-      const r = ENV.getRegistry(id);
-      if (r) r.installed = true;
-      BUS.emit('log:add','OK',`Module installé : ${id}`);
-      render();
-    }, 1200);
-  };
-
-  const uninstall = (id) => {
-    const r = ENV.getRegistry(id);
-    if (r) r.installed = false;
-    BUS.emit('log:add','WARN',`Module désinstallé : ${id}`);
-    render();
-  };
-
-  const installLocal = () => {
-    const path = (FN.el('setting-local_path')||{}).value || '';
-    const name = (FN.el('setting-local_name')||{}).value || path.split('/').pop();
-    BUS.emit('log:add','INFO',`Install local : ${path}`);
-    setTimeout(() => BUS.emit('log:add','OK',`Module local installé : ${name}`), 800);
-  };
-
-  const scanDir = () => {
-    BUS.emit('log:add','INFO','Scan ./available/ ...');
-    setTimeout(() => {
-      FN.html('local-scan-result',`
-        <div class="c-table-wrap"><table class="c-table">
-          <thead><tr><th>Fichier</th><th>Action</th></tr></thead>
-          <tbody>
-            <tr><td class="u-mono">chart-view.js</td><td><button class="c-btn c-btn--run" onclick="MOD_INSTALLER.install('chart_view',this)">⬇</button></td></tr>
-            <tr><td class="u-mono">csv-import.js</td><td><button class="c-btn c-btn--run" onclick="MOD_INSTALLER.install('csv_import',this)">⬇</button></td></tr>
-          </tbody>
-        </table></div>`);
-      BUS.emit('log:add','OK','Scan terminé : 2 modules trouvés');
-    }, 600);
-  };
-
-  const installUrl = () => {
-    const url = (FN.el('setting-url_path')||{}).value || '';
-    BUS.emit('log:add','INFO',`Téléchargement : ${url}`);
-    setTimeout(() => {
-      FN.html('url-install-result',`<span class="u-ok">✓ Module téléchargé et installé</span>`);
-      BUS.emit('log:add','OK',`Module URL installé`);
-    }, 1000);
-  };
-
-  const init = () => { render(); };
-
-  return { init, render, setTab, setFilter, install, uninstall, installLocal, scanDir, installUrl };
-
-})();
 
 /* -- module-creator.js -- */
 /* ═══════════════════════════════════════════════
@@ -9332,7 +9177,7 @@ window.addEventListener('DOMContentLoaded', () => {
     MOD_CONNECTORS, MOD_SETTINGS, MOD_CFG_FILES,
     MOD_BACKEND_CFG, MOD_BACKEND_USE, MOD_NET_CFG, MOD_NET_CMDS,
     MOD_GIT_CFG, MOD_GIT_MGR, MOD_MENU_CFG, MOD_MENU_DISPLAY,
-    MOD_INSTALLER, MOD_CREATOR,
+    MOD_CREATOR,
     MOD_SYS_CFG, MOD_APPS_CFG, MOD_SEC_CFG, MOD_DEVTOOLS_CFG, MOD_QUEUE_CFG,
     MOD_PLUGIN_CFG, MOD_USE_IFACE, MOD_DEV_IFACE, MOD_DEV_TOOLS, MOD_DEV_CFG,
     MOD_ENV_GLOBAL, MOD_MACHINES_CFG, MOD_IA_CFG, MOD_DATA_SOURCES,
