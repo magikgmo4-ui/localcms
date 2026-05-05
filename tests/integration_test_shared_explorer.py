@@ -181,8 +181,13 @@ def test_l5():
     raises(lambda: se.list_directory(path="dossier_inexistant_xyz"), 404)
 t("L5 — list_directory : chemin inexistant (404)", test_l5)
 
+def test_l6():
+    """L6 — chemin absolu → 403."""
+    raises(lambda: se.list_directory(path="/etc"), 403)
+t("L6 — list_directory : chemin absolu refusé (403)", test_l6)
+
 # ═══════════════════════════════════════════════════════════════════════════
-# BLOC R — read_file (6 tests)
+# BLOC R — read_file (7 tests)
 # ═══════════════════════════════════════════════════════════════════════════
 
 def test_r1():
@@ -222,8 +227,13 @@ def test_r6():
     raises(lambda: se.read_file(path=".env"), 403)
 t("R6 — read_file : nom bloqué .env (403)", test_r6)
 
+def test_r7():
+    """R7 — chemin absolu → 403."""
+    raises(lambda: se.read_file(path="/etc/passwd"), 403)
+t("R7 — read_file : chemin absolu refusé (403)", test_r7)
+
 # ═══════════════════════════════════════════════════════════════════════════
-# BLOC D — download_file (5 tests)
+# BLOC D — download_file (6 tests)
 # ═══════════════════════════════════════════════════════════════════════════
 
 def test_d1():
@@ -256,6 +266,11 @@ def test_d5():
     """D5 — fichier inexistant → 404."""
     raises(lambda: se.download_file(path="nexiste_pas.txt"), 404)
 t("D5 — download_file : fichier inexistant (404)", test_d5)
+
+def test_d6():
+    """D6 — chemin absolu → 403."""
+    raises(lambda: se.download_file(path="/etc/passwd"), 403)
+t("D6 — download_file : chemin absolu refusé (403)", test_d6)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # BLOC S — search_files (7 tests)

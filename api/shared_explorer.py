@@ -85,6 +85,9 @@ def _resolve_safe(relative: str) -> Path:
     Lève HTTPException 403 ou 400 en cas de violation.
     """
     # Refuser les chemins absolus en entrée
+    if os.path.isabs(relative):
+        _emit_log("path_violation", relative, "denied", "absolute_path_rejected")
+        raise HTTPException(status_code=403, detail="Access denied")
     relative = relative.strip("/").strip()
 
     try:
