@@ -1,0 +1,39 @@
+GO_LOCALCMS_DBLAYER_V3_RELEASE_TAG_01
+======================================
+DATE    : 2026-05-05
+VERDICT : PASS
+
+TAG
+---
+v0.3.0-dblayer → ad03b68
+Poussé sur origin.
+
+TAGS DBLAYER
+------------
+v0.1.0-dblayer → b94c09e  V1 baseline
+v0.2.0-dblayer → 3c908875 V2 rollback/restore + gaps P3-P6
+v0.3.0-dblayer → ad03b68  V3 M3 Config Store + env-global wire
+
+V3 — SÉQUENCE COMPLÈTE
+-----------------------
+d0649dc  docs: LocalCMS V3 scope
+f0c1856  feat: M3 Config Store API
+aeb6c99  docs: record M3 PASS
+88a3cad  feat: wire env-global to M3
+bbf8d13  docs: record env-global wire PASS
+32338f2  chore: release prep V3 — bump main.py to 1.0.3
+ad03b68  docs: record LocalCMS V3 release prep PASS
+
+ÉTAT GIT
+--------
+Branche : main
+HEAD    : ad03b68
+Tag V3  : v0.3.0-dblayer → ad03b68
+Sync    : main...origin/main synchronisé, tag poussé
+
+V3 EST CLOSE.
+
+PROCHAIN CHANTIER
+-----------------
+Aucun chantier planifié.
+Axe potentiel : GAP_IA_RUNNER_SIMULE — panel ia_run (décision externe requise).
