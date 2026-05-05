@@ -1,0 +1,57 @@
+GO_LOCALCMS_DBLAYER_V3_RELEASE_PREP_01
+=======================================
+DATE    : 2026-05-05
+VERDICT : PASS
+
+LIVRAISONS
+----------
+main.py  — version 1.0.2 → 1.0.3, docstring V102 → V103
+
+CI PASS
+-------
+integration_test_pipeline.py          26/26
+integration_test_shared_explorer.py   26/26
+integration_test_config_store.py       8/8
+npm run test:adopt                   540/540
+shared-explorer.smoke.js (live)        6/6
+cms-installer.smoke.mjs (live)        10/10
+cms-config.smoke.mjs (live)            5/5
+
+INVARIANTS V3 VÉRIFIÉS
+-----------------------
+main.py version        = 1.0.3
+M1 et M2               = non modifiés par V3
+adopt                  = 540/540
+binaires / clés privées = aucun via M3
+
+COMMITS V3 — séquence complète
+-------------------------------
+d0649dc  docs: LocalCMS V3 scope
+f0c1856  feat: M3 Config Store API
+aeb6c99  docs: record M3 PASS
+88a3cad  feat: wire env-global to M3
+bbf8d13  docs: record env-global wire PASS
+32338f2  chore: release prep V3 — bump main.py to 1.0.3
+
+COMMIT
+------
+32338f2  chore: release prep V3 — bump main.py to 1.0.3
+
+ÉTAT GIT
+--------
+Branche : main
+HEAD    : 32338f2
+Sync    : main...origin/main synchronisé
+
+PROCHAIN GO
+-----------
+GO_LOCALCMS_DBLAYER_V3_RELEASE_TAG_01
+  git tag -a v0.3.0-dblayer 32338f2 -m "LocalCMS V3 — M3 Config Store API + env-global wire"
+  git push origin v0.3.0-dblayer
+
+POINT DE REPRISE
+----------------
+cd "$HOME/localcms"
+git status --short --branch
+git log --oneline -8
+bash scripts/run-ci-local.sh
