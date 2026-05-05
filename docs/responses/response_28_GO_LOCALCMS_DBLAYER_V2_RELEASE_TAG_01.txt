@@ -1,0 +1,58 @@
+GO_LOCALCMS_DBLAYER_V2_RELEASE_TAG_01
+======================================
+DATE    : 2026-05-04
+VERDICT : PASS
+
+VÉRIFICATIONS
+-------------
+pwd                          : /home/ghost/localcms
+git status                   : main...origin/main (synchronisé)
+tag v0.2.0-dblayer local     : présent
+tag v0.2.0-dblayer remote    : présent (367b979...)
+commit pointé par le tag     : 3c908875c8067c9de93aa1ec8a7c518e828b68fa
+commit message               : docs: record LocalCMS V2 release prep PASS
+commit release prep          : 3c90887
+
+GIT SHOW v0.2.0-dblayer
+-----------------------
+tag v0.2.0-dblayer
+Tagger: ghost <ghost@users.noreply.github.com>
+Message: LocalCMS db-layer V2 — rollback and restore APIs
+commit 3c908875c8067c9de93aa1ec8a7c518e828b68fa
+Author: ghost <ghost@users.noreply.github.com>
+    docs: record LocalCMS V2 release prep PASS
+
+ENDPOINTS V2
+------------
+POST /api/installer/rollback
+GET  /api/installer/backups
+POST /api/installer/restore
+
+SUITES DE TESTS V2
+------------------
+integration_test_pipeline.py        : 15 → 26
+cms-installer.smoke.js              : 7  → 10
+integration_test_shared_explorer.py : 23 → 23
+npm run test:adopt                  : 540 → 540
+
+GAPS RESTANTS HORS V2
+---------------------
+P3 GAP_ABSOLUTE_PATH_404
+P4 GAP_LEGACY_INSTALLER_SIMULE
+P5 GAP_PACKAGE_JSON_MODULE_WARN + GAP_UTCNOW_DEPRECATION
+P6 GAP_INSTALL_BACKUPS_TTL
+
+FICHIERS CRÉÉS
+--------------
+docs/chantiers/GO_LOCALCMS_DBLAYER_V2_RELEASE_TAG_01/00_V2_RELEASE_TAG.md
+docs/responses/response_28_GO_LOCALCMS_DBLAYER_V2_RELEASE_TAG_01.txt
+
+POINT DE REPRISE
+----------------
+Prochain chantier : choisir un gap P3–P6.
+
+cd "$HOME/localcms"
+git status --short --branch
+git log --oneline -8
+git tag --list "v0.2.0-dblayer"
+git show v0.2.0-dblayer --format=short --no-patch
