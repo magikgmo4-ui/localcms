@@ -1,5 +1,5 @@
 """
-main.py — LocalCMS Host Minimal V102
+main.py — LocalCMS Host Minimal V103
 Backend hôte FastAPI pour M1 (shared_explorer), M2 (cms_installer) et M3 (config_store).
 
 Ce fichier est le point d'entrée unique du serveur de validation.
@@ -28,7 +28,7 @@ from api.config_store import config_router
 app = FastAPI(
     title="LocalCMS Host",
     description="Hôte minimal de validation pour M1 (shared_explorer), M2 (cms_installer) et M3 (config_store).",
-    version="1.0.2",
+    version="1.0.3",
 )
 
 # ── M1 : Shared Explorer ──────────────────────────────────────────────────────
