@@ -41,6 +41,7 @@ mkdir -p \
   "${LOCALCMS_SHARED_ROOT}/install-queue" \
   "${LOCALCMS_SHARED_ROOT}/install-backups" \
   "${LOCALCMS_SHARED_ROOT}/install-logs" \
+  "${LOCALCMS_SHARED_ROOT}/config" \
   "${LOCALCMS_SHARED_ROOT}/docs" \
   "${LOCALCMS_MODULES_DIR}"
 
@@ -114,6 +115,12 @@ step "2/5 — Tests Python : integration_test_shared_explorer.py"
 python3 tests/integration_test_shared_explorer.py
 ok "integration_test_shared_explorer.py PASS"
 
+# ── 2b/5 — Tests Python : intégration config store ───────────────────────────
+sep
+step "2b/5 — Tests Python : integration_test_config_store.py"
+python3 tests/integration_test_config_store.py
+ok "integration_test_config_store.py PASS"
+
 # ── 3/5 — npm run test:adopt ──────────────────────────────────────────────────
 sep
 step "3/5 — npm run test:adopt"
@@ -159,13 +166,21 @@ step "5b/5 — Smoke cms-installer.smoke.mjs (live)"
 BACKEND_URL="${BASE_URL}" node tests/cms-installer.smoke.mjs
 ok "cms-installer.smoke.mjs PASS"
 
+# ── 5c/5 — Smoke cms-config (live) ────────────────────────────────────────────
+sep
+step "5c/5 — Smoke cms-config.smoke.mjs (live)"
+BACKEND_URL="${BASE_URL}" node tests/cms-config.smoke.mjs
+ok "cms-config.smoke.mjs PASS"
+
 # ── Résumé final ──────────────────────────────────────────────────────────────
 sep
 printf "\n${BOLD}%s${NC}\n" "$(printf '%*s' "$W" '' | tr ' ' '═')"
 printf "${BOLD}  LocalCMS CI — PASS${NC}\n"
 printf "  integration_test_pipeline.py          ✓\n"
 printf "  integration_test_shared_explorer.py   ✓\n"
+printf "  integration_test_config_store.py      ✓\n"
 printf "  npm run test:adopt (9 suites)          ✓\n"
 printf "  shared-explorer.smoke.js (live 6/6)   ✓\n"
-printf "  cms-installer.smoke.mjs (live 10/10)   ✓\n"
+printf "  cms-installer.smoke.mjs (live 10/10)  ✓\n"
+printf "  cms-config.smoke.mjs    (live 5/5)    ✓\n"
 printf "${BOLD}%s${NC}\n\n" "$(printf '%*s' "$W" '' | tr ' ' '═')"
