@@ -1,0 +1,54 @@
+GO_LOCALCMS_DBLAYER_P5_WARNINGS_FIX_01
+=======================================
+DATE    : 2026-05-05
+VERDICT : PASS
+
+GAP_PACKAGE_JSON_MODULE_WARN
+-----------------------------
+Problème : [MODULE_TYPELESS_PACKAGE_JSON] Warning sur cms-installer.smoke.js
+Cause    : top-level await (ESM) sans "type":"module" dans package.json
+Raison de ne pas patcher package.json : adopt tests utilisent require() CommonJS
+Correctif : rename tests/cms-installer.smoke.js → tests/cms-installer.smoke.mjs
+Fichiers  : tests/cms-installer.smoke.mjs (rename), scripts/run-ci-local.sh (3 refs)
+
+GAP_UTCNOW_DEPRECATION
+-----------------------
+Problème : datetime.utcnow() deprecated Python 3.12+, présent dans 2 fichiers
+Correctifs :
+  api/shared_explorer.py L18 : from datetime import datetime, timezone
+  api/shared_explorer.py L66 : datetime.now(timezone.utc).isoformat().replace('+00:00','Z')
+  tests/integration_test_shared_explorer.py L325 : datetime.now() (naive, compatible search_files)
+Note : datetime.now(timezone.utc) rejeté en test S7 car search_files compare des naives.
+
+CI LOCALE
+---------
+integration_test_pipeline.py          ✓  26/26
+integration_test_shared_explorer.py   ✓  26/26 (S7 PASS)
+npm run test:adopt (9 suites)          ✓  540/540
+shared-explorer.smoke.js (live 6/6)   ✓
+cms-installer.smoke.mjs (live 10/10)  ✓
+MODULE_TYPELESS_PACKAGE_JSON warning  : absent
+DeprecationWarning utcnow             : absent
+LocalCMS CI — PASS
+
+FICHIERS TOUCHÉS
+----------------
+tests/cms-installer.smoke.js → tests/cms-installer.smoke.mjs
+scripts/run-ci-local.sh
+api/shared_explorer.py
+tests/integration_test_shared_explorer.py
+docs/chantiers/GO_LOCALCMS_DBLAYER_P5_WARNINGS_FIX_01/00_CLOSEOUT.md
+docs/responses/response_31_...txt
+
+GAP RESTANT
+-----------
+P6 GAP_INSTALL_BACKUPS_TTL
+
+POINT DE REPRISE
+----------------
+cd "$HOME/localcms"
+git status --short --branch
+git log --oneline -8
+bash scripts/run-ci-local.sh
+
+Prochain candidat : GO_LOCALCMS_DBLAYER_P6_INSTALL_BACKUPS_TTL_SCOPE_01

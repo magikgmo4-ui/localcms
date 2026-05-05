@@ -155,9 +155,9 @@ ok "shared-explorer.smoke.js PASS"
 
 # ── 5b/5 — Smoke cms-installer (live) ────────────────────────────────────────
 sep
-step "5b/5 — Smoke cms-installer.smoke.js (live)"
-BACKEND_URL="${BASE_URL}" node tests/cms-installer.smoke.js
-ok "cms-installer.smoke.js PASS"
+step "5b/5 — Smoke cms-installer.smoke.mjs (live)"
+BACKEND_URL="${BASE_URL}" node tests/cms-installer.smoke.mjs
+ok "cms-installer.smoke.mjs PASS"
 
 # ── Résumé final ──────────────────────────────────────────────────────────────
 sep
@@ -167,5 +167,5 @@ printf "  integration_test_pipeline.py          ✓\n"
 printf "  integration_test_shared_explorer.py   ✓\n"
 printf "  npm run test:adopt (9 suites)          ✓\n"
 printf "  shared-explorer.smoke.js (live 6/6)   ✓\n"
-printf "  cms-installer.smoke.js  (live 10/10)   ✓\n"
+printf "  cms-installer.smoke.mjs (live 10/10)   ✓\n"
 printf "${BOLD}%s${NC}\n\n" "$(printf '%*s' "$W" '' | tr ' ' '═')"

@@ -322,7 +322,7 @@ t("S6 — search_files : query sans match → résultats vides", test_s6)
 
 def test_s7():
     """S7 — filtre date from_ excluant tous les fichiers → résultats vides."""
-    future = (datetime.utcnow() + timedelta(days=365)).isoformat()
+    future = (datetime.now() + timedelta(days=365)).isoformat()
     r = se.search_files(q=None, ext=None, from_=future, to=None)
     a(r["total"] == 0, f"total attendu 0 (from_ futur), obtenu {r['total']}")
 t("S7 — search_files : filtre date futur → résultats vides", test_s7)

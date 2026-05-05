@@ -15,7 +15,7 @@ import os
 import json
 import mimetypes
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 
 from fastapi import APIRouter, HTTPException, Query
@@ -63,7 +63,7 @@ def _emit_log(
     Format: { timestamp, user_id, action, path_relative, result, error? }
     """
     entry: Dict[str, Any] = {
-        "timestamp":     datetime.utcnow().isoformat() + "Z",
+        "timestamp":     datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
         "user_id":       user_id,
         "action":        action,
         "path_relative": path,
