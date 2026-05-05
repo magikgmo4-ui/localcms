@@ -1,0 +1,61 @@
+GO_LOCALCMS_DBLAYER_V3_SCOPE_01
+================================
+DATE    : 2026-05-05
+VERDICT : SCOPE_PASS
+
+OBSERVATION CLÉ
+---------------
+Backend V2 : 2 routers réels (M1 shared_explorer, M2 cms_installer).
+Frontend : 8 modules de config supplémentaires dont TOUS les save() sont des stubs :
+  const save = () => BUS.emit('log:add','OK','Config sauvegardée');
+Données non persistées — rechargement = perte totale.
+
+AXE V3 RETENU
+-------------
+M3 — Config Persistence API (api/config_store.py)
+
+Routes :
+  GET  /api/config/{module_id}  → lire config JSON
+  POST /api/config/{module_id}  → écrire config JSON
+  GET  /api/config              → lister configs sauvegardées
+
+Stockage : /shared/config/{module_id}.json
+Sécurité : module_id validé [a-z0-9_]+, taille 256KB max, pas d'exécution de code
+
+MODULE PILOTE
+-------------
+env-global — 25 champs, 3 groupes, aucun champ sensible, stub save() minimal
+
+AXE ÉCARTÉ
+----------
+GAP_IA_RUNNER_SIMULE — dépend décision externe (ollama/openai), aucune décision prise
+
+SÉQUENCE GOs V3
+---------------
+GO_LOCALCMS_DBLAYER_V3_CONFIG_STORE_API_01  — M3 backend + tests
+GO_LOCALCMS_DBLAYER_V3_ENV_GLOBAL_WIRE_01   — raccorder env-global
+GO_LOCALCMS_DBLAYER_V3_RELEASE_PREP_01      — release prep
+GO_LOCALCMS_DBLAYER_V3_RELEASE_TAG_01       — tag v0.3.0-dblayer
+
+CRITÈRE PASS V3
+---------------
+GET /api/config/env_global → 200 ou 404
+POST /api/config/env_global → 200 { result: "ok" }
+GET /api/config → 200 { configs: [...] }
+MOD_ENV_GLOBAL.save() appelle POST (pas le stub BUS)
+CI PASS — adopt 540/540 + nouveaux tests M3
+
+ÉTAT GIT
+--------
+Branche : main
+Sync    : main...origin/main synchronisé
+HEAD    : f1fc848
+
+POINT DE REPRISE
+----------------
+cd "$HOME/localcms"
+git status --short --branch
+git log --oneline -8
+bash scripts/run-ci-local.sh
+
+Premier GO V3 : GO_LOCALCMS_DBLAYER_V3_CONFIG_STORE_API_01
