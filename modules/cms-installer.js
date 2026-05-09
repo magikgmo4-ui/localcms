@@ -149,7 +149,7 @@ const MOD_CMS_INSTALLER = (() => {
 
   const _renderPipeline = () => {
     if (!pipelineState) return '';
-    const { steps, result, error, sanity_check } = pipelineState;
+    const { steps, result, error, sanity_check, module_id } = pipelineState;
     const stepsToShow = PIPELINE_ORDER.filter(s => s in steps || (s !== 'rollback'));
     const resultColor = result === 'ok' ? 'var(--green)' : result === 'rollback' ? 'var(--yellow)' : 'var(--red)';
     const resultLabel = result === 'ok' ? '✓ Installation réussie' : result === 'rollback' ? '⚠ Rollback effectué' : `✕ Échec — ${error || ''}`;
@@ -182,6 +182,14 @@ const MOD_CMS_INSTALLER = (() => {
                </div>`
             : ''}
         </div>
+        ${result === 'ok' && (steps.backup || {}).status === 'ok' && module_id
+          ? `<div style="margin-top:10px">
+               <button class="c-btn" onclick="MOD_CMS_INSTALLER.rollback('${_esc(module_id)}')"
+                       style="font-size:11px">
+                 ⟲ Rollback — restaurer version précédente
+               </button>
+             </div>`
+          : ''}
       </div>`;
   };
 
@@ -271,6 +279,7 @@ const MOD_CMS_INSTALLER = (() => {
       const data = await res.json();
       pipelineState = {
         bundle:       filename,
+        module_id:    data.module_id || '',
         steps:        data.steps || {},
         result:       data.result,
         error:        data.error,
@@ -297,6 +306,34 @@ const MOD_CMS_INSTALLER = (() => {
       render();
     } finally {
       installing = false;
+    }
+  };
+
+  const rollback = async (moduleId) => {
+    if (!moduleId) return;
+    if (!confirm(`Rollback du module "${moduleId}" ?\n\nLa version précédente sera restaurée depuis le backup.`)) return;
+    BUS.emit('log:add', 'INFO', `CMS Installer : rollback ${moduleId}`);
+    try {
+      const res = await fetch(`${API}/rollback`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ module_id: moduleId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.result === 'ok') {
+        BUS.emit('log:add', 'OK',
+          `CMS Installer : rollback ${moduleId} — backup ${data.backup_used}`);
+        if (pipelineState) {
+          pipelineState.result = 'rollback';
+          pipelineState.steps  = { ...pipelineState.steps, rollback: { status: 'ok' } };
+        }
+      } else {
+        BUS.emit('log:add', 'ERR',
+          `CMS Installer rollback : ${data.detail || data.result || 'erreur'}`);
+      }
+      render();
+    } catch (e) {
+      BUS.emit('log:add', 'ERR', `CMS Installer rollback : ${e.message}`);
     }
   };
 
@@ -359,6 +396,6 @@ const MOD_CMS_INSTALLER = (() => {
 
   const init = () => { render(); };
 
-  return { init, render, setTab, scan, inspect, installBundle, loadHistory };
+  return { init, render, setTab, scan, inspect, installBundle, rollback, loadHistory };
 
 })();
