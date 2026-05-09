@@ -72,8 +72,13 @@ BACKEND_URL=http://localhost:8000 node tests/cms-installer.smoke.js
 | POST | `/api/installer/precheck` | Valider sans installer |
 | POST | `/api/installer/install` | Pipeline complet |
 | GET | `/api/installer/history` | Historique des installations |
+| POST | `/api/installer/rollback` | Restaurer depuis le backup le plus récent |
+| GET | `/api/installer/backups` | Lister les backups disponibles |
+| POST | `/api/installer/restore` | Restaurer un backup explicitement ciblé |
 
-**Aucun endpoint PUT/DELETE/PATCH.** Pas de rollback manuel.
+**Aucun endpoint PUT/DELETE/PATCH.**
+
+> Guide opérateur complet : `docs/operator/CMS_INSTALLER_V1_OPERATOR_GUIDE.md`
 
 ---
 
