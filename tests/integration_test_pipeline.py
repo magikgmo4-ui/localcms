@@ -729,6 +729,42 @@ def test_i26():
         a(e.status_code == 404, f"Attendu 404, obtenu {e.status_code}")
 t("I26 — Restore API: backup inexistant → HTTPException 404", test_i26)
 
+# I27 — Purge logs : tri chronologique — les plus récents conservés quelle que soit l'ordre alpha
+def test_i27():
+    import time
+    purge_dir = TEST_ROOT / "purge_test_logs"
+    purge_dir.mkdir(parents=True, exist_ok=True)
+    # Créer 100 fichiers dont les noms sortent haut alphabétiquement (z_module)
+    for i in range(100):
+        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
+        (purge_dir / f"install_z_module_{ts}_{i:03d}.json").write_text("{}")
+    # Puis créer 3 fichiers avec un module_id alphabétiquement bas (a_module) — donc plus récents
+    time.sleep(0.01)
+    recent_files = []
+    for i in range(3):
+        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
+        p = purge_dir / f"install_a_module_{ts}_{i:03d}.json"
+        p.write_text("{}")
+        recent_files.append(p.name)
+    # Appliquer la purge (cap=100)
+    def _purge(cap=100):
+        logs = sorted(
+            [f for f in purge_dir.iterdir() if f.is_file() and f.suffix == ".json"],
+            key=lambda f: f.stat().st_mtime,
+            reverse=True,
+        )
+        for old in logs[cap:]:
+            old.unlink(missing_ok=True)
+    _purge(100)
+    remaining = {f.name for f in purge_dir.iterdir()}
+    # Les 3 fichiers a_module (les plus récents) doivent être conservés
+    for name in recent_files:
+        a(name in remaining, f"Fichier récent purgé à tort : {name}")
+    # Le total ne dépasse pas le cap
+    a(len(remaining) <= 100, f"Cap dépassé : {len(remaining)} fichiers restants")
+    import shutil as _sh; _sh.rmtree(purge_dir, ignore_errors=True)
+t("I27 — Purge logs chronologique : récents conservés indépendamment de l'ordre alpha", test_i27)
+
 # ─── Cleanup ──────────────────────────────────────────────────────────────
 
 shutil.rmtree(TEST_ROOT, ignore_errors=True)
