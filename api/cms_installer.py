@@ -113,6 +113,7 @@ def _purge_old_logs() -> None:
     try:
         logs = sorted(
             [f for f in LOG_DIR.iterdir() if f.is_file() and f.suffix == ".json"],
+            key=lambda f: f.stat().st_mtime,
             reverse=True,
         )
         for old in logs[MAX_LOGS:]:
